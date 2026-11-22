@@ -52,7 +52,6 @@ SOFTWARE.
 - 출처: https://github.com/anthropics/skills, 커밋 `e4bb5d960d87126ff3b3a8af1a104b7db67560ba`
 - 라이선스: Apache License 2.0 (각 스킬 폴더의 `LICENSE.txt`)
 - 가져온 파일: `skills/web-artifacts-builder`, `skills/mcp-builder` (원본 그대로)
-- 예전 domain-agent의 `artifacts-builder`는 이 스킬의 옛 이름·옛 판이었다. 최신판으로 바꿔 넣었다.
 
 ## Superpowers (0.4.0에 추가)
 - 출처: https://github.com/obra/superpowers, 커밋 `22f0b463e7a5e579904dd6211a520321035526f7`

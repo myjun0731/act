@@ -1,9 +1,9 @@
 {
   "name": "design-eng",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "디자인 엔지니어링·애니메이션 스킬 7종(Apple식 모션, Emil Kowalski 원칙, 모션 감사·리뷰, UI 라이브러리 선택)과 design-for-ai(목업·디자인 계획) 의존성",
   "author": {
-    "name": "Kim Myoung-jun (EBP)"
+    "name": "Kim Myoung-jun"
   },
   "license": "UNLICENSED",
   "keywords": [

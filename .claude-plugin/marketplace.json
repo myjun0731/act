@@ -1,11 +1,11 @@
 {
   "name": "myoun-pro",
   "owner": {
-    "name": "Kim Myoung-jun (EBP)"
+    "name": "Kim Myoung-jun"
   },
   "metadata": {
     "description": "개인용 Claude Code 올인원 마켓플레이스",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
