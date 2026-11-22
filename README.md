@@ -54,6 +54,7 @@ claude plugin install allinone@myoun-pro
 3. `.claude-plugin/marketplace.json`의 `metadata.version`을 올리고, `CHANGELOG.md`에 `## [새 버전] - 날짜` 섹션을 쓴다.
 4. `main`에 합치고 push한다: `git checkout main`, `git merge --ff-only dev`, `git push`
 5. `python scripts/release.py`로 미리보기 → `python scripts/release.py --push`로 태그 생성·push
+   - GitHub CLI(`gh`)에 로그인돼 있으면 CHANGELOG의 그 버전 섹션으로 GitHub Release도 만들고 Latest로 표시한다.
 
 `release.py`는 다음 경우 태그를 만들지 않고 멈춘다.
 - `main`이 아니거나, 커밋하지 않은 변경이 있거나, `origin/main`과 다를 때

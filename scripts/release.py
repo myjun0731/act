@@ -17,6 +17,7 @@
   python scripts/release.py           # 미리보기 (아무것도 만들지 않음)
   python scripts/release.py --tag     # 로컬에 태그 생성
   python scripts/release.py --push    # 태그 생성 + origin 에 push
+                                       (gh 로그인돼 있으면 CHANGELOG 섹션으로 GitHub Release 도 만든다)
 """
 import argparse, json, shutil, subprocess, sys
 from pathlib import Path
@@ -39,6 +40,20 @@ def git(*args, check=True):
 
 def load(p):
     return json.loads(Path(p).read_text(encoding="utf-8"))
+
+
+def changelog_section(text, ver):
+    import re
+    m = re.search(r"^## \[" + re.escape(ver) + r"\][^\n]*\n(.*?)(?=^## \[|\Z)", text, re.S | re.M)
+    return m.group(1).strip() if m else ""
+
+
+def find_gh():
+    gh = shutil.which("gh")
+    if gh:
+        return gh
+    p = Path(r"C:\Program Files\GitHub CLI\gh.exe")
+    return str(p) if p.exists() else None
 
 
 def main():
@@ -136,6 +151,22 @@ def main():
     if a.push:
         git("push", "origin", *[t for t, _ in new_tags])
         print("origin 에 push 완료.")
+        if any(t == mtag for t, _ in new_tags):
+            gh = find_gh()
+            if not gh:
+                print("gh 가 없어 GitHub Release 는 건너뜀.")
+                return
+            notes = changelog_section(changelog, mver) + (
+                "\n\n설치를 이 버전으로 고정하려면:\n```\n"
+                f"claude plugin marketplace add myjun0731/claude-pro@{mtag}\n"
+                "claude plugin install allinone@myoun-pro\n```\n")
+            r = subprocess.run([gh, "release", "create", mtag, "--verify-tag", "--latest",
+                                "--title", f"claude-pro {mver}", "--notes-file", "-"],
+                               cwd=ROOT, input=notes, capture_output=True, text=True, encoding="utf-8")
+            if r.returncode == 0:
+                print("GitHub Release 생성: " + r.stdout.strip())
+            else:
+                print("GitHub Release 생성 실패 (태그는 올라갔음): " + r.stderr.strip())
 
 
 if __name__ == "__main__":
