@@ -4,7 +4,8 @@
     "name": "Kim Myoung-jun (EBP)"
   },
   "metadata": {
-    "description": "개인용 Claude Code 올인원 마켓플레이스"
+    "description": "개인용 Claude Code 올인원 마켓플레이스",
+    "version": "1.0.0"
   },
   "plugins": [
     {
