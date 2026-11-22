@@ -16,7 +16,7 @@ Spring Boot·Java 백엔드와 DB 작업에 쓰는 범용 스킬·에이전트 �
 
 ## 설치
 ```
-/plugin install dev-toolkit --marketplace MYJUN2007/claude-pro
+/plugin install dev-toolkit --marketplace myjun0731/claude-pro
 ```
 
 ## 출처

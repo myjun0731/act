@@ -3,7 +3,7 @@
 Obsidian 볼트를 Claude에서 읽고 쓰게 해 주는 MCP 서버 플러그인. 서버는 PyPI의 `mcp-obsidian` 0.2.3을 `uvx`로 실행한다.
 
 ```
-/plugin install obsidian --marketplace MYJUN2007/claude-pro
+/plugin install obsidian --marketplace myjun0731/claude-pro
 ```
 
 ## 준비

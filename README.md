@@ -3,10 +3,10 @@
 개인용 Claude Code 플러그인 마켓플레이스 (비공개).
 
 ```
-/plugin install allinone --marketplace MYJUN2007/claude-pro
+/plugin install allinone --marketplace myjun0731/claude-pro
 ```
 
-셸에서는 `claude plugin install allinone --marketplace https://github.com/MYJUN2007/claude-pro.git`
+셸에서는 `claude plugin install allinone --marketplace https://github.com/myjun0731/claude-pro.git`
 
 새 PC라면 먼저 공식 마켓플레이스가 등록돼 있어야 한다. `claude`를 대화형으로 한 번 실행하면 자동으로 등록되고, 바로 셸에서 설치하려면 아래를 먼저 실행한다.
 

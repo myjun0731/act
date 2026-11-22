@@ -17,7 +17,7 @@
 
 ## 설치
 ```
-/plugin install core --marketplace MYJUN2007/claude-pro
+/plugin install core --marketplace myjun0731/claude-pro
 ```
 설치한 뒤 `/core:setup`을 한 번 실행한다. 미리보기를 먼저 보여 주고, 동의해야 적용한다.
 

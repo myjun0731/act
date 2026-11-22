@@ -3,7 +3,7 @@
 내용은 없고 의존성만 있는 메타 플러그인. 이것 하나만 설치하면 아래가 함께 설치·활성화된다.
 
 ```
-/plugin install allinone --marketplace MYJUN2007/claude-pro
+/plugin install allinone --marketplace myjun0731/claude-pro
 ```
 
 설치한 뒤 `/core:setup`을 한 번 실행한다.
