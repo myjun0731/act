@@ -46,5 +46,9 @@
   "statusLine": {
     "managed": true,
     "padding": 0
-  }
+  },
+  "_payload_comment": "payloadMarketplaces: core 와 같은 마켓플레이스 외에 settings-payload·rules-payload 를 받아들일 마켓플레이스. 권한까지 바뀔 수 있으니 직접 관리하는 것만 적는다.",
+  "payloadMarketplaces": [
+    "domain"
+  ]
 }

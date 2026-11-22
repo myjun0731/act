@@ -32,4 +32,4 @@ ECC에서 가져온 스킬 4개의 커밋·변경점·라이선스는 `THIRD_PAR
 - `~/.claude/settings.json`: `env`, `permissions.allow`(합집합), `statusLine`, `extraKnownMarketplaces.<이름>.autoUpdate`. 고치기 전에 `settings.json.bak-core-<시각>`으로 백업한다.
 - `~/.claude/managed/core/`: 상태줄 스크립트, 적용 버전 기록
 - `~/.claude/rules/<플러그인>/`: 같은 마켓플레이스 플러그인의 `rules-payload/` 사본
-- `~/.claude/settings.json`: 같은 마켓플레이스 플러그인의 `settings-payload/*.json`을 합침 (`_`로 시작하는 키는 설명용이라 무시)
+- `~/.claude/settings.json`: 같은 마켓플레이스와 `settings/base.json`의 `payloadMarketplaces`에 적힌 마켓플레이스(기본 없음)에서 **사용자 범위로 설치된** 플러그인의 `settings-payload/*.json`을 합침 (`_`로 시작하는 키는 설명용이라 무시). 그 밖의 마켓플레이스는 권한까지 바꿀 수 있어 받아들이지 않는다

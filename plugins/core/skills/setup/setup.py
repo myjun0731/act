@@ -66,21 +66,43 @@ def find_marketplace(plugins_dir):
     return None, reg
 
 
-def payload_sources(marketplace, reg, kind="rules-payload"):
-    """(플러그인 이름, <kind> 폴더 경로) 목록. kind: rules-payload | settings-payload"""
+PLUGINS_DIR = None  # main() 에서 채운다
+
+
+def plugin_dir(name, mkt, entry, core_mkt):
+    """설치된 플러그인의 실제 폴더. 폴더 방식 마켓플레이스는 기록상 cache 경로지만 원본 폴더에서 로드된다."""
+    if mkt == core_mkt and (PLUGIN_ROOT.parent / name).is_dir():
+        return PLUGIN_ROOT.parent / name
+    info = load_json(PLUGINS_DIR / "known_marketplaces.json", {}).get(mkt) or {}
+    loc = info.get("installLocation") or (info.get("source") or {}).get("path")
+    if loc:
+        m = load_json(Path(loc) / ".claude-plugin" / "marketplace.json", {})
+        for e in m.get("plugins", []):
+            src = e.get("source")
+            if e.get("name") == name and isinstance(src, str) and (Path(loc) / src).is_dir():
+                return (Path(loc) / src).resolve()
+    return Path(entry.get("installPath", ""))
+
+
+def payload_sources(marketplace, reg, kind="rules-payload", trusted=()):
+    """(플러그인 이름, <kind> 폴더 경로) 목록. kind: rules-payload | settings-payload
+
+    core 와 같은 마켓플레이스, 그리고 base.json 의 payloadMarketplaces 에 적힌 마켓플레이스만 본다.
+    settings 조각은 권한 허용목록까지 바꿀 수 있어서, 아무 마켓플레이스나 믿지 않는다.
+    사용자 범위(scope=user)로 설치된 플러그인만 대상이다."""
     out = []
     if marketplace:
+        allowed = {marketplace, *trusted}
         for key, entries in reg.items():
             name, _, mkt = key.partition("@")
-            if mkt != marketplace or not entries:
+            if mkt not in allowed:
                 continue
-            p = Path(entries[-1].get("installPath", "")) / kind
-            # 폴더 방식 마켓플레이스는 기록상 cache 경로라 원본 형제 폴더도 본다
-            q = PLUGIN_ROOT.parent / name / kind
-            if q.is_dir():
-                p = q
+            users = [e for e in entries or [] if e.get("scope") == "user"]
+            if not users:
+                continue
+            p = plugin_dir(name, mkt, users[-1], marketplace) / kind
             if p.is_dir():
-                out.append((name, p))
+                out.append((name if mkt == marketplace else f"{name}@{mkt}", p))
     else:  # 등록 정보가 없을 때(--plugin-dir 로 띄운 로컬 테스트): 형제 폴더를 본다
         for d in sorted(PLUGIN_ROOT.parent.iterdir()):
             if (d / kind).is_dir():
@@ -88,8 +110,8 @@ def payload_sources(marketplace, reg, kind="rules-payload"):
     return out
 
 
-def rules_sources(marketplace, reg):
-    return payload_sources(marketplace, reg, "rules-payload")
+def rules_sources(marketplace, reg, trusted=()):
+    return payload_sources(marketplace, reg, "rules-payload", trusted)
 
 
 def deep_merge(dst, src, path, log):
@@ -122,8 +144,10 @@ def main():
     ap.add_argument("--home", default=str(Path.home()))
     a = ap.parse_args()
 
+    global PLUGINS_DIR
     claude = Path(a.home) / ".claude"
     plugins_dir = claude / "plugins"
+    PLUGINS_DIR = plugins_dir
     settings_p = claude / "settings.json"
     managed = claude / "managed" / "core"
     base = load_json(PLUGIN_ROOT / "settings" / "base.json", {})
@@ -182,7 +206,8 @@ def main():
         notes.append("이 core 의 설치 기록을 못 찾음(로컬 테스트로 보임) → 자동 업데이트 설정 생략")
 
     # 5) rules
-    rules = rules_sources(marketplace, reg)
+    trusted = tuple(base.get("payloadMarketplaces") or [])
+    rules = rules_sources(marketplace, reg, trusted)
     rules_todo = []
     for name, p in rules:
         files = {f.relative_to(p).as_posix(): f.read_bytes()
@@ -194,7 +219,7 @@ def main():
             log.append(f"rules: {name} → ~/.claude/rules/{name}/ ({len(files)}개 파일)")
 
     # 6) settings-payload: 같은 마켓플레이스 플러그인이 내놓은 settings 조각을 합친다
-    for name, p in payload_sources(marketplace, reg, "settings-payload"):
+    for name, p in payload_sources(marketplace, reg, "settings-payload", trusted):
         for f in sorted(p.glob("*.json")):
             frag = load_json(f, {})
             sub = []
