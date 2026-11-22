@@ -8,6 +8,7 @@
   2. 상태줄 스크립트를 고정 경로(~/.claude/managed/core/)에 복사하고 statusLine 을 그쪽으로 지정
      - 사용자가 이미 다른 statusLine 을 쓰고 있으면 건드리지 않음 (--force-statusline 으로 교체)
   3. 같은 마켓플레이스에서 설치된 플러그인의 rules-payload/ 를 ~/.claude/rules/<플러그인>/ 로 복사
+     settings-payload/*.json 은 settings.json 에 합친다 (dict 재귀, list 합집합)
   4. 이 마켓플레이스가 git 기반이면 자동 업데이트를 켬 (extraKnownMarketplaces.<이름>.autoUpdate)
   5. settings.json 을 고치기 전에 settings.json.bak-core-<시각> 으로 백업
 
@@ -65,22 +66,53 @@ def find_marketplace(plugins_dir):
     return None, reg
 
 
-def rules_sources(marketplace, reg):
-    """(플러그인 이름, rules-payload 경로) 목록."""
+def payload_sources(marketplace, reg, kind="rules-payload"):
+    """(플러그인 이름, <kind> 폴더 경로) 목록. kind: rules-payload | settings-payload"""
     out = []
     if marketplace:
         for key, entries in reg.items():
             name, _, mkt = key.partition("@")
             if mkt != marketplace or not entries:
                 continue
-            p = Path(entries[-1].get("installPath", "")) / "rules-payload"
+            p = Path(entries[-1].get("installPath", "")) / kind
+            # 폴더 방식 마켓플레이스는 기록상 cache 경로라 원본 형제 폴더도 본다
+            q = PLUGIN_ROOT.parent / name / kind
+            if q.is_dir():
+                p = q
             if p.is_dir():
                 out.append((name, p))
     else:  # 등록 정보가 없을 때(--plugin-dir 로 띄운 로컬 테스트): 형제 폴더를 본다
         for d in sorted(PLUGIN_ROOT.parent.iterdir()):
-            if (d / "rules-payload").is_dir():
-                out.append((d.name, d / "rules-payload"))
+            if (d / kind).is_dir():
+                out.append((d.name, d / kind))
     return out
+
+
+def rules_sources(marketplace, reg):
+    return payload_sources(marketplace, reg, "rules-payload")
+
+
+def deep_merge(dst, src, path, log):
+    """src 를 dst 에 합친다. dict 는 재귀, list 는 합집합(순서 유지), 그 외는 값이 다를 때만 덮어쓴다."""
+    for k, v in src.items():
+        if k.startswith("_"):
+            continue  # _comment 같은 설명용 키
+        here = f"{path}.{k}" if path else k
+        if isinstance(v, dict):
+            if not isinstance(dst.get(k), dict):
+                dst[k] = {}
+            deep_merge(dst[k], v, here, log)
+        elif isinstance(v, list):
+            cur = dst.setdefault(k, [])
+            if not isinstance(cur, list):
+                dst[k] = cur = []
+            added = [x for x in v if x not in cur]
+            if added:
+                cur.extend(added)
+                log.append(f"{here} 에 {len(added)}개 추가")
+        elif dst.get(k) != v:
+            log.append(f"{here} = {v!r} (이전: {dst.get(k)!r})")
+            dst[k] = v
 
 
 def main():
@@ -160,6 +192,15 @@ def main():
         if files != have:
             rules_todo.append((name, p))
             log.append(f"rules: {name} → ~/.claude/rules/{name}/ ({len(files)}개 파일)")
+
+    # 6) settings-payload: 같은 마켓플레이스 플러그인이 내놓은 settings 조각을 합친다
+    for name, p in payload_sources(marketplace, reg, "settings-payload"):
+        for f in sorted(p.glob("*.json")):
+            frag = load_json(f, {})
+            sub = []
+            deep_merge(new, frag, "", sub)
+            log.extend(f"[{name}/{f.name}] {s}" for s in sub)
+
     sl_src = PLUGIN_ROOT / "scripts" / "statusline.py"
     sl_stale = not sl_target.exists() or sl_target.read_bytes() != sl_src.read_bytes()
     applied_stale = load_json(managed / "applied.json", {}).get("version") != version

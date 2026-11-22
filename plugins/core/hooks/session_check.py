@@ -12,7 +12,38 @@ except Exception:
     pass
 
 
+def enabled_plugins(cwd):
+    """user → project → local 순으로 enabledPlugins 를 합쳐 켜진 '<이름>@<마켓>' 목록을 돌려준다."""
+    files = [Path.home() / ".claude" / "settings.json"]
+    if cwd:
+        files += [Path(cwd) / ".claude" / "settings.json", Path(cwd) / ".claude" / "settings.local.json"]
+    state = {}
+    for f in files:
+        try:
+            state.update(json.loads(f.read_text(encoding="utf-8")).get("enabledPlugins") or {})
+        except Exception:
+            pass
+    return [k for k, v in state.items() if v and "@" in k]
+
+
+def duplicates(cwd):
+    by_name = {}
+    for key in enabled_plugins(cwd):
+        name, _, mkt = key.partition("@")
+        by_name.setdefault(name, []).append(mkt)
+    return {n: m for n, m in by_name.items() if len(m) > 1}
+
+
 def main():
+    try:
+        payload = json.loads(sys.stdin.read() or "{}")
+    except Exception:
+        payload = {}
+    dup = duplicates(payload.get("cwd"))
+    if dup:
+        items = ", ".join(f"{n} ({' / '.join(m)})" for n, m in sorted(dup.items()))
+        print(f"[core] 같은 이름의 플러그인이 여러 마켓플레이스에서 켜져 있습니다: {items}. "
+              "스킬·커맨드가 중복되니 사용자에게 한쪽을 끄도록(claude plugin disable <이름>@<마켓>) 알려 주세요.")
     root = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
     managed = Path.home() / ".claude" / "managed" / "core"
     try:

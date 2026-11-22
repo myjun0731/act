@@ -20,12 +20,12 @@ claude plugin marketplace add anthropics/claude-plugins-official
 
 | 플러그인 | 상태 | 내용 |
 |---|---|---|
-| allinone | 0.3.0 | 메타 플러그인: core·dev-toolkit·design-eng·overkill·recursive-research + 공식 플러그인 8종 |
-| dev-toolkit | 0.4.0 | Java·Spring·DB 10, 레거시·품질 4, 설계·협업 6, 개발 워크플로 5, 도구 3 스킬, 커버리지 커맨드, 리뷰 에이전트 3, 규칙 원본 |
-| core | 0.2.0 | 비밀파일 가드·prettier 훅, 상태줄, /remember·/recall, /core:setup, 설정 정리·스킬 점검 스킬 4 |
-| design-eng | 0.1.0 | 디자인·애니메이션 스킬 7종, design-for-ai(외부 원본) 의존성 |
+| allinone | 0.3.1 | 메타 플러그인: core·dev-toolkit·design-eng·overkill·recursive-research + 공식 플러그인 8종 |
+| dev-toolkit | 0.4.1 | Java·Spring·DB 10, 레거시·품질 4, 설계·협업 6, 개발 워크플로 5, 도구 3 스킬, 커버리지 커맨드, 리뷰 에이전트 3, 규칙 원본 |
+| core | 0.3.0 | 비밀파일 가드·prettier 훅, 상태줄, /remember·/recall, /core:setup, 설정 정리·스킬 점검 스킬 4 |
+| design-eng | 0.1.1 | 디자인·애니메이션 스킬 7종, design-for-ai(외부 원본) 의존성 |
 | overkill · recursive-research | 외부 | 원본 저장소를 커밋 고정으로 가리킴 (MIT) |
-| obsidian | 0.1.0 | Obsidian MCP (API 키는 설치 시 입력, allinone 미포함) |
+| obsidian | 0.1.1 | Obsidian MCP (API 키는 설치 시 입력, allinone 미포함) |
 
 ## 버전 관리
 

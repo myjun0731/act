@@ -1,6 +1,6 @@
 ---
 name: setup
-description: core 플러그인 초기 설정. 플러그인으로 배포할 수 없는 권한 허용목록, 상태줄, env, 규칙(rules) 파일을 ~/.claude 에 병합하고 자동 업데이트를 켠다. "core 설정", "초기 설정 적용", "/core:setup" 요청에 쓴다.
+description: core 플러그인 초기 설정. 플러그인으로 배포할 수 없는 권한 허용목록, 상태줄, env, 규칙(rules) 파일, 다른 플러그인이 내놓은 settings 조각을 ~/.claude 에 병합하고 자동 업데이트를 켠다. "core 설정", "초기 설정 적용", "/core:setup" 요청에 쓴다.
 disable-model-invocation: true
 ---
 
