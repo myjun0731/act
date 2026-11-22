@@ -1,0 +1,50 @@
+{
+  "_comment": "core:setup이 ~/.claude/settings.json에 병합하는 값. 플러그인으로 배포할 수 없는 설정만 둔다.",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cd:*)",
+      "Bash(df:*)",
+      "Bash(du:*)",
+      "Bash(echo:*)",
+      "Bash(file:*)",
+      "Bash(find:*)",
+      "Bash(git branch:*)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(git log:*)",
+      "Bash(git remote:*)",
+      "Bash(git show:*)",
+      "Bash(git stash list:*)",
+      "Bash(git status:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(java -version)",
+      "Bash(javac -version)",
+      "Bash(ls:*)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npm ls:*)",
+      "Bash(npm view:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(pip list:*)",
+      "Bash(pip show:*)",
+      "Bash(pwd)",
+      "Bash(python --version)",
+      "Bash(python3 --version)",
+      "Bash(rg:*)",
+      "Bash(stat:*)",
+      "Bash(tail:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(which:*)"
+    ]
+  },
+  "statusLine": {
+    "managed": true,
+    "padding": 0
+  }
+}

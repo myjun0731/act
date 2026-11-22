@@ -1,0 +1,69 @@
+{
+  "name": "myoun-pro",
+  "owner": {
+    "name": "Kim Myoung-jun (EBP)"
+  },
+  "metadata": {
+    "description": "개인용 Claude Code 올인원 마켓플레이스"
+  },
+  "plugins": [
+    {
+      "name": "allinone",
+      "source": "./plugins/allinone",
+      "description": "개인용 올인원 (core·dev-toolkit + 공식 플러그인 7종)"
+    },
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "description": "공통 기반: 비밀파일 가드·prettier 훅, 상태줄, 메모리 커맨드, /core:setup, 설정 정리·스킬 점검"
+    },
+    {
+      "name": "dev-toolkit",
+      "source": "./plugins/dev-toolkit",
+      "description": "Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 28개, 테스트 커버리지 커맨드, 리뷰 에이전트"
+    },
+    {
+      "name": "design-eng",
+      "source": "./plugins/design-eng",
+      "description": "디자인 엔지니어링·애니메이션 스킬 7종 + design-for-ai"
+    },
+    {
+      "name": "design-for-ai",
+      "source": {
+        "source": "github",
+        "repo": "ryanthedev/design-for-ai",
+        "ref": "main",
+        "sha": "37d7ae63d1afa45eb57ec90bc246cef6dd60c033"
+      },
+      "description": "디자인 조사·계획·목업·리뷰 (ryanthedev/design-for-ai, 외부 원본)"
+    },
+    {
+      "name": "obsidian",
+      "source": "./plugins/obsidian",
+      "description": "Obsidian MCP 서버 (API 키는 설치 시 입력)"
+    },
+    {
+      "name": "overkill",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/santiago-vargas-de-kruijf/claude-overkill.git",
+        "path": "plugins/overkill",
+        "sha": "60c7bbbab99669e3fc39e60cdf4f05d473ab194c"
+      },
+      "description": "더 고급·극대화된 대안을 복잡도 점수와 함께 제시 (외부 원본, MIT)"
+    },
+    {
+      "name": "recursive-research",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Anjos2/recursive-research.git",
+        "path": "plugins/recursive-research",
+        "sha": "15ed326ae7162c674d7a1e477724148fa4435528"
+      },
+      "description": "출처 등급·체크포인트를 갖춘 재귀 심층 조사 (외부 원본, MIT)"
+    }
+  ],
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official"
+  ]
+}

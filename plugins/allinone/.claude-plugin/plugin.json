@@ -1,0 +1,48 @@
+{
+  "name": "allinone",
+  "version": "0.3.0",
+  "description": "개인용 올인원: 이 플러그인 하나를 설치하면 core·dev-toolkit·design-eng·overkill·recursive-research와 공식 플러그인 8종이 함께 설치된다",
+  "author": {
+    "name": "Kim Myoung-jun (EBP)"
+  },
+  "license": "UNLICENSED",
+  "dependencies": [
+    "core",
+    "dev-toolkit",
+    "design-eng",
+    "overkill",
+    "recursive-research",
+    {
+      "name": "pr-review-toolkit",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "feature-dev",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "code-modernization",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "security-guidance",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "jdtls-lsp",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "context7",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "playwright",
+      "marketplace": "claude-plugins-official"
+    },
+    {
+      "name": "skill-creator",
+      "marketplace": "claude-plugins-official"
+    }
+  ]
+}
