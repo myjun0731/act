@@ -75,6 +75,7 @@ def main():
 
     # 3) 플러그인별 버전 확인
     new_tags = []
+    unbumped = False
     for e in mkt.get("plugins", []):
         src = e.get("source")
         if not (isinstance(src, str) and src.startswith("./")):
@@ -90,13 +91,14 @@ def main():
         if tag in existing:
             if git("diff", "--quiet", tag, "HEAD", "--", rel, check=False).returncode != 0:
                 errors.append(f"{name}: {tag} 이후 내용이 바뀌었는데 version 이 {ver} 그대로입니다. plugin.json 의 version 을 올리세요.")
+                unbumped = True
         else:
             new_tags.append((tag, f"{name} {ver}"))
 
     if mver and mtag in existing:
         if new_tags:
             errors.append(f"{mtag} 태그가 이미 있습니다. 플러그인 버전이 바뀌었으면 metadata.version 도 올리세요.")
-        else:
+        elif not unbumped:
             warns.append(f"{mtag} 은 이미 릴리스됐고 바뀐 플러그인도 없습니다.")
     elif mver:
         new_tags.append((mtag, f"claude-pro {mver}"))
