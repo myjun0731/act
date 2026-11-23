@@ -4,15 +4,15 @@
 
 ## [1.3.0] - 2026-11-23
 
-**⚠️ 파괴적 변경 — 마켓플레이스 이름 변경: `myoun-pro` → `claude-pro`** (레포명과 일치시킴).
-- 설치 명령이 `@myoun-pro` → `@claude-pro` 로 바뀐다. 소스 경로(`myjun0731/claude-pro`)는 그대로.
-- 기존에 `@myoun-pro` 로 설치·등록한 사람은 **마켓을 재등록**해야 한다:
+파괴적 변경. 마켓플레이스 이름을 `myoun-pro` 에서 `claude-pro` 로 바꿨다 (레포명과 일치).
+- 설치 명령이 `@myoun-pro` 에서 `@claude-pro` 로 바뀐다. 소스 경로(`myjun0731/claude-pro`)는 그대로.
+- 기존에 `@myoun-pro` 로 설치·등록한 사람은 마켓을 재등록한다.
   ```
   claude plugin marketplace remove myoun-pro
   claude plugin marketplace add myjun0731/claude-pro
   ```
   그 뒤 `claude plugin install <플러그인>@claude-pro` 로 다시 설치.
-- 이름 변경으로 README가 바뀐 `allinone`(0.3.1→0.3.2)·`obsidian`(0.1.1→0.1.2) 플러그인 버전 올림.
+- 이름 변경으로 README가 바뀐 `allinone`, `obsidian` 플러그인 버전을 각각 0.3.2, 0.1.2 로 올림.
 
 ## [1.2.0] - 2026-11-22
 
