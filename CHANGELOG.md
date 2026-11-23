@@ -12,6 +12,7 @@
   claude plugin marketplace add myjun0731/claude-pro
   ```
   그 뒤 `claude plugin install <플러그인>@claude-pro` 로 다시 설치.
+- 이름 변경으로 README가 바뀐 `allinone`(0.3.1→0.3.2)·`obsidian`(0.1.1→0.1.2) 플러그인 버전 올림.
 
 ## [1.2.0] - 2026-11-22
 
