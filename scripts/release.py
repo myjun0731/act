@@ -159,7 +159,7 @@ def main():
             notes = changelog_section(changelog, mver) + (
                 "\n\n설치를 이 버전으로 고정하려면:\n```\n"
                 f"claude plugin marketplace add myjun0731/claude-pro@{mtag}\n"
-                "claude plugin install allinone@myoun-pro\n```\n")
+                "claude plugin install allinone@claude-pro\n```\n")
             r = subprocess.run([gh, "release", "create", mtag, "--verify-tag", "--latest",
                                 "--title", f"claude-pro {mver}", "--notes-file", "-"],
                                cwd=ROOT, input=notes, capture_output=True, text=True, encoding="utf-8")
