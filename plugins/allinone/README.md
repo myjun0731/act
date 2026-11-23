@@ -16,15 +16,15 @@ claude plugin marketplace add anthropics/claude-plugins-official
 
 이게 없으면 공식 플러그인이 설치되지 않고 allinone이 로드되지 않는다.
 
-나중에 allinone에 의존성이 추가되면 업데이트만으로는 새 플러그인이 설치되지 않는다. 그때는 `claude plugin install <새 플러그인>@myoun-pro`로 따로 설치한다.
+나중에 allinone에 의존성이 추가되면 업데이트만으로는 새 플러그인이 설치되지 않는다. 그때는 `claude plugin install <새 플러그인>@claude-pro`로 따로 설치한다.
 
 | 플러그인 | 마켓플레이스 | 내용 |
 |---|---|---|
-| core | myoun-pro | 비밀파일 가드·prettier 훅, 상태줄, /core:setup, 메모리 커맨드, 설정 정리·스킬 점검 스킬 |
-| design-eng | myoun-pro | 디자인·애니메이션 스킬 7종 (+ design-for-ai 의존성) |
-| overkill | myoun-pro (외부 원본) | 고급 대안 제시 |
-| recursive-research | myoun-pro (외부 원본) | 재귀 심층 조사 |
-| dev-toolkit | myoun-pro | Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 28개, 커맨드 1개, 리뷰 에이전트 3개 |
+| core | claude-pro | 비밀파일 가드·prettier 훅, 상태줄, /core:setup, 메모리 커맨드, 설정 정리·스킬 점검 스킬 |
+| design-eng | claude-pro | 디자인·애니메이션 스킬 7종 (+ design-for-ai 의존성) |
+| overkill | claude-pro (외부 원본) | 고급 대안 제시 |
+| recursive-research | claude-pro (외부 원본) | 재귀 심층 조사 |
+| dev-toolkit | claude-pro | Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 28개, 커맨드 1개, 리뷰 에이전트 3개 |
 | pr-review-toolkit | claude-plugins-official | PR 리뷰 에이전트 6종 (오류 삼킴·주석·테스트·타입·단순화·품질) |
 | feature-dev | claude-plugins-official | 기능 개발 워크플로: 코드 탐색·설계·리뷰 에이전트 |
 | code-modernization | claude-plugins-official | 레거시 평가·비즈니스 규칙 추출·마이그레이션 계획 |

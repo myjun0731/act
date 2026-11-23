@@ -2,6 +2,17 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.3.0] - 2026-11-23
+
+**⚠️ 파괴적 변경 — 마켓플레이스 이름 변경: `myoun-pro` → `claude-pro`** (레포명과 일치시킴).
+- 설치 명령이 `@myoun-pro` → `@claude-pro` 로 바뀐다. 소스 경로(`myjun0731/claude-pro`)는 그대로.
+- 기존에 `@myoun-pro` 로 설치·등록한 사람은 **마켓을 재등록**해야 한다:
+  ```
+  claude plugin marketplace remove myoun-pro
+  claude plugin marketplace add myjun0731/claude-pro
+  ```
+  그 뒤 `claude plugin install <플러그인>@claude-pro` 로 다시 설치.
+
 ## [1.2.0] - 2026-11-22
 
 core 0.4.0
@@ -12,7 +23,7 @@ core 0.4.0
 
 core 0.3.0
 - `/core:setup`: 같은 마켓플레이스 플러그인의 `settings-payload/*.json`을 settings.json에 합친다. dict는 재귀로, list는 합집합으로 합치고 `_`로 시작하는 키는 무시한다. 조직 마켓플레이스의 autoMode 정책 같은 설정을 플러그인으로 나눠 줄 때 쓴다.
-- 세션 시작 점검: 같은 이름의 플러그인이 여러 마켓플레이스에서 동시에 켜져 있으면 알린다 (예: `core@myoun-pro`와 `core@domain`).
+- 세션 시작 점검: 같은 이름의 플러그인이 여러 마켓플레이스에서 동시에 켜져 있으면 알린다 (예: `core@claude-pro`와 `core@<다른 마켓>`).
 
 ## [1.0.1] - 2026-11-22
 

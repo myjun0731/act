@@ -16,7 +16,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 
 이게 없으면 공식 플러그인이 설치되지 않고 allinone이 로드되지 않는다.
 
-나중에 allinone에 의존성이 추가되면 업데이트만으로는 새 플러그인이 설치되지 않는다. 그때는 `claude plugin install <새 플러그인>@myoun-pro`로 따로 설치한다.
+나중에 allinone에 의존성이 추가되면 업데이트만으로는 새 플러그인이 설치되지 않는다. 그때는 `claude plugin install <새 플러그인>@claude-pro`로 따로 설치한다.
 
 | 플러그인 | 상태 | 내용 |
 |---|---|---|
@@ -44,7 +44,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 ### 특정 릴리스로 설치하기
 ```
 claude plugin marketplace add myjun0731/claude-pro@v1.0.0
-claude plugin install allinone@myoun-pro
+claude plugin install allinone@claude-pro
 ```
 `@v1.0.0`을 빼면 `main`의 최신 상태를 따라간다.
 
