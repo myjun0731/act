@@ -10,9 +10,18 @@ Spring Boot·Java 백엔드와 DB 작업에 쓰는 범용 스킬·에이전트 �
 | 스킬: 설계·협업 (6) | api-design, e2e-testing(Playwright), architecture-decision-records, git-workflow, intent-driven-development(인수 기준), conventional-commit-review(커밋 메시지) |
 | 스킬: 개발 워크플로 (5) | systematic-debugging, test-driven-development, verification-before-completion, using-git-worktrees, finishing-a-development-branch (Superpowers) |
 | 스킬: 도구 (3) | pypict(PICT 페어와이즈 테스트 설계), mcp-builder(MCP 서버 개발), web-artifacts-builder(React 단일 HTML 아티팩트) |
+| 스킬: DB 심화·배포 | postgresql-table-design, sql-optimization-patterns, database-migration, docker-patterns, deployment-patterns, canary-watch, hexagonal-architecture, contract-first, backend-patterns, data-throughput-accelerator |
+| 스킬: QA·분석·문서 | browser-qa, ai-regression-testing, test-collaboration, windows-desktop-e2e, codebase-onboarding, dashboard-builder, benchmark, config-health, living-docs-governance, documentation-lookup |
 | 커맨드 (1) | `/dev-toolkit:test-coverage` — 커버리지 공백 분석과 테스트 생성 (JaCoCo·Jest·pytest 등) |
-| 에이전트 (3) | java-reviewer, java-build-resolver, database-reviewer |
+| 에이전트 (16) | 리뷰어: java·security·typescript·react·vue-reviewer, database-reviewer / 전문: java-pro·sql-pro·database-architect·database-optimizer·legacy-modernizer·test-automator / 빌드·설계·문서: java-build-resolver·build-error-resolver·architect·doc-updater |
 | 규칙 원본 | `rules-payload/` (java 4종 + common/security). 플러그인으로는 배포되지 않아 `core:setup`이 복사한다 |
+
+## 동적 워크플로우 (10)
+
+`workflows/`에 멀티에이전트 오케스트레이션 스크립트 10종. 설치하면 슬래시 커맨드가 된다. 구조·전제·규모 가이드는 `workflows/README.md` 참조(오케스트레이터는 규모 `large` 권장).
+
+- **리프 7**: `/dev-toolkit:review-changes` · `sql-db-audit` · `migration-verify` · `impact-analysis` · `codebase-map` · `test-coverage-boost` · `design-approaches`
+- **연계(오케스트레이터) 3**: `/dev-toolkit:pre-merge-gate` · `migration-readiness` · `onboard-pack` (리프를 `workflow()`로 엮음, 중첩 1단)
 
 ## 설치
 ```
