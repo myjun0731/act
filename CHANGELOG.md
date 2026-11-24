@@ -2,6 +2,18 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.6.0] - 2026-11-24
+
+`agentic` 0.1.0 → 0.2.0: ECC(MIT)에서 멀티에이전트·병렬·자율 루프 스킬 7개 내재화.
+- parallel-execution-optimizer — 작업을 의존성 그래프·병렬 레인으로 분해, 쓰기 격리 + 최종 검증
+- agentic-os — Claude Code 위 영속 멀티에이전트 OS(커널·전문에이전트·파일메모리·스케줄)
+- loop-design-check — 자율 루프 실패모드 설계·점검(스피닝·Goodhart·오답완주)
+- continuous-agent-loop — 품질게이트·eval·복구 있는 연속 자율 루프
+- blueprint — 대형 작업을 1-PR 단위 + 의존성 그래프(병렬)로 분해
+- iterative-retrieval — 서브에이전트 컨텍스트 문제 점진 해결
+- cost-aware-llm-pipeline — 복잡도별 모델 라우팅·예산·캐싱
+- 출처는 `plugins/agentic/ATTRIBUTION.md`와 각 frontmatter에 보존.
+
 ## [1.5.0] - 2026-11-24
 
 `dev-toolkit` 0.4.1 → 0.5.0: ECC(MIT)에서 프론트엔드 리뷰어 에이전트 4개와 QA 스킬 4개 선별 내재화.

@@ -1,10 +1,20 @@
 {
   "name": "agentic",
-  "version": "0.1.0",
-  "description": "에이전트 엔지니어링 스킬: 에이전트 보안 하드닝, 12층 아키텍처 감사, 벤치마크 최적화 루프. ECC(MIT)에서 선별 내재화.",
+  "version": "0.2.0",
+  "description": "에이전트 엔지니어링 스킬: 보안 하드닝·아키텍처 감사·벤치마크 최적화 + 멀티에이전트/병렬 오케스트레이션·자율 루프(parallel-execution-optimizer, agentic-os, loop-design-check 등). ECC(MIT) 선별 내재화.",
   "author": {
     "name": "Kim Myoung-jun"
   },
   "license": "MIT",
-  "keywords": ["agent", "evaluation", "security-hardening", "benchmark", "audit", "ecc"]
+  "keywords": [
+    "agent",
+    "evaluation",
+    "security-hardening",
+    "benchmark",
+    "audit",
+    "ecc",
+    "parallel",
+    "orchestration",
+    "autonomous-loop"
+  ]
 }
