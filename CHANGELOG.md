@@ -2,6 +2,13 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.5.0] - 2026-11-24
+
+`dev-toolkit` 0.4.1 → 0.5.0: ECC(MIT)에서 프론트엔드 리뷰어 에이전트 4개와 QA 스킬 4개 선별 내재화.
+- 리뷰어 에이전트: security-reviewer, typescript-reviewer, react-reviewer, vue-reviewer
+- QA 스킬: browser-qa, ai-regression-testing, test-collaboration, windows-desktop-e2e
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`와 각 파일 frontmatter에 보존. install 스크립트·hooks는 미반입.
+
 ## [1.4.0] - 2026-11-24
 
 새 플러그인 `agentic` 0.1.0 추가. ECC(MIT, github.com/affaan-m/ECC)에서 에이전트 엔지니어링 스킬 3개를 선별 내재화.
