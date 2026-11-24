@@ -20,4 +20,4 @@ Spring Boot·Java 백엔드와 DB 작업에 쓰는 범용 스킬·에이전트 �
 ```
 
 ## 출처
-ECC(MIT), Anthropic Agent Skills(Apache 2.0), Superpowers(MIT), pypict-claude-skill(MIT)에서 가져왔다. 가져온 커밋, 바꾼 부분, 라이선스 원문은 `THIRD_PARTY_NOTICES.md`에 있다.
+ECC(MIT), Anthropic Agent Skills(Apache 2.0), Superpowers(MIT), pypict-claude-skill(MIT), wshobson/agents(MIT)에서 가져왔다. 가져온 커밋, 바꾼 부분, 라이선스 원문은 `THIRD_PARTY_NOTICES.md`에 있다.

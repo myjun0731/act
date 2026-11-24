@@ -2,6 +2,16 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.11.0] - 2026-11-24
+
+`dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
+- 에이전트 6개: java-pro, sql-pro, database-architect, database-optimizer, legacy-modernizer, test-automator
+  - 기존 리뷰어(java-reviewer·database-reviewer)를 보완하는 "구현/설계 전문" 에이전트. 메이저 버전 이관엔 legacy-modernizer.
+- 스킬 3개: postgresql-table-design, sql-optimization-patterns, database-migration (각 references/details.md 포함)
+- 에이전트 `name:`의 플러그인 접두사만 제거, 스킬 frontmatter에 `metadata.origin` 추가. 본문은 원본 그대로.
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`·`THIRD_PARTY_NOTICES.md`(커밋 34e50fe, MIT © Seth Hobson)에 보존.
+- 참고: `database-migration`(단수, ORM 마이그레이션)은 기존 `database-migrations`(복수, 범용 패턴)와 이름이 비슷하다.
+
 ## [1.10.0] - 2026-11-24
 
 `dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
