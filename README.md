@@ -18,6 +18,23 @@ claude plugin marketplace add anthropics/claude-plugins-official
 
 나중에 allinone에 의존성이 추가되면 업데이트만으로는 새 플러그인이 설치되지 않는다. 그때는 `claude plugin install <새 플러그인>@claude-pro`로 따로 설치한다.
 
+## 채널/대상별 설치
+
+애플 OS식 4단계 채널(개발자 베타 → 공개 베타 → RC → 정식)을 git 브랜치로 운영한다. 설치할 때 `#<ref>`로 채널을 고른다. 전체 운영은 `RELEASE.md` 참조.
+
+| 대상 | 명령 | 채널 |
+|---|---|---|
+| 일반/안정 | `claude plugin marketplace add myjun0731/claude-pro` | 정식(main) |
+| 공개 베타(팀원) | `claude plugin marketplace add myjun0731/claude-pro#beta` | 공개 베타 |
+| RC 검증 | `claude plugin marketplace add myjun0731/claude-pro#rc` | RC |
+| 메인테이너(나) | `claude plugin marketplace add myjun0731/claude-pro#dev` | 개발자 베타 |
+| 특정 시드 고정 | `claude plugin marketplace add myjun0731/claude-pro#v1.11.0-rc.1` | 그 시드 |
+
+- 무지정 설치는 기본 브랜치 `main` = 정식이다. 팀원은 `#beta`를 **명시**해야 공개 베타를 받는다.
+- 브랜치 ref(`#beta` 등)는 그 채널의 새 시드를 계속 따라가고, 태그 ref(`#v…`)는 그 시드에 고정된다.
+- 채널 전환: `claude plugin marketplace remove claude-pro` 후 다른 ref로 재추가(머신당 1채널).
+- **강제가 아니라 규약이다** — 비공개 레포의 Read 협력자는 모든 브랜치를 볼 수 있어, 채널 구분은 이 설치 안내로 유도한다. 진짜 가림이 필요하면 dev 전용 별도 레포로 분리해야 한다.
+
 | 플러그인 | 상태 | 내용 |
 |---|---|---|
 | allinone | 0.3.1 | 메타 플러그인: core·dev-toolkit·design-eng·overkill·recursive-research + 공식 플러그인 8종 |
@@ -30,10 +47,16 @@ claude plugin marketplace add anthropics/claude-plugins-official
 ## 버전 관리
 
 ### 브랜치
-| 브랜치 | 용도 |
-|---|---|
-| `main` | 릴리스된 상태만 둔다. 설치·자동 업데이트가 따라가는 기본 브랜치 |
-| `dev` | 평소 작업. 다 되면 `main`에 합친 뒤 릴리스한다 |
+애플 OS식 4단계 채널 = 브랜치. 자세한 운영은 `RELEASE.md`.
+
+| 브랜치 | 채널 | 마켓 버전 | 용도 |
+|---|---|---|---|
+| `main` | 정식(GA) | `1.x.y` | 릴리스된 상태만. 무지정 설치·기본 브랜치 |
+| `rc` | 릴리스 후보 | `1.x.y-rc.N` | 정식 직전 프리즈. 깨끗하면 그대로 main |
+| `beta` | 공개 베타 | `1.x.y-beta.N` | 안정화. 팀원 대상 |
+| `dev` | 개발자 베타 | `1.x.y-dev.N` | 평소 작업. 매 시드 발행 |
+
+단계 접미사는 마켓 버전에만 붙고, 플러그인 버전은 평범한 semver다. 채널 격리는 브랜치가 담당한다.
 
 ### 태그
 | 태그 | 예 | 쓰임 |
@@ -43,22 +66,19 @@ claude plugin marketplace add anthropics/claude-plugins-official
 
 ### 특정 릴리스로 설치하기
 ```
-claude plugin marketplace add myjun0731/claude-pro@v1.0.0
+claude plugin marketplace add myjun0731/claude-pro#v1.11.0-rc.1
 claude plugin install allinone@claude-pro
 ```
-`@v1.0.0`을 빼면 `main`의 최신 상태를 따라간다.
+`#<ref>`를 빼면 기본 브랜치 `main`의 최신 정식을 따라간다. 채널은 위 "채널/대상별 설치" 표 참조.
 
-### 릴리스 순서
-1. `dev`에서 작업하고 커밋한다.
-2. 바뀐 플러그인의 `plugin.json` `version`을 올린다.
-3. `.claude-plugin/marketplace.json`의 `metadata.version`을 올리고, `CHANGELOG.md`에 `## [새 버전] - 날짜` 섹션을 쓴다.
-4. `main`에 합치고 push한다: `git checkout main`, `git merge --ff-only dev`, `git push`
-5. `python scripts/release.py`로 미리보기 → `python scripts/release.py --push`로 태그 생성·push
-   - GitHub CLI(`gh`)에 로그인돼 있으면 CHANGELOG의 그 버전 섹션으로 GitHub Release도 만들고 Latest로 표시한다.
-
-`release.py`는 다음 경우 태그를 만들지 않고 멈춘다.
-- `main`이 아니거나, 커밋하지 않은 변경이 있거나, `origin/main`과 다를 때
-- 플러그인 내용이 바뀌었는데 그 플러그인의 `version`을 안 올렸을 때
-- `CHANGELOG.md`에 이번 버전 섹션이 없을 때
-- `claude plugin validate`가 실패할 때
+### 릴리스 (채널형)
+단계별 발행·승격은 `scripts/release.py --stage ...` 와 `scripts/promote.py` 로 한다. 브랜치 가드·버전 접미사·태그·prerelease/latest·CHANGELOG 규칙 등 **전체 절차는 `RELEASE.md`** 를 보라.
+```
+python scripts/release.py --stage dev-beta --push     # dev 시드 (1.x.y-dev.N)
+python scripts/promote.py dev-to-beta --run           # dev → beta 승격
+python scripts/release.py --stage public-beta --push  # beta 시드
+python scripts/promote.py rc-to-ga --run              # rc → main 준비
+python scripts/release.py --stage ga --push           # main 정식 (Latest)
+```
+`--push` 없이 실행하면 미리보기, `--tag`는 로컬 커밋·태그까지만. `ga`에서만 플러그인 버전 미증가를 막고 `<플러그인>--v<버전>` 태그를 만든다.
 
