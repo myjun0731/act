@@ -2,6 +2,13 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.9.0] - 2026-11-24
+
+ECC(MIT)에서 분석·관측·에이전트 하네스 스킬 6개 선별 내재화.
+- `agentic` 0.2.0 → 0.3.0: agent-harness-construction, agent-introspection-debugging
+- `dev-toolkit` 0.7.0 → 0.8.0: codebase-onboarding, dashboard-builder, benchmark, config-health
+- 출처는 각 플러그인 ATTRIBUTION.md와 frontmatter에 보존.
+
 ## [1.8.0] - 2026-11-24
 
 `dev-toolkit` 0.6.0 → 0.7.0: ECC(MIT)에서 아키텍처·데이터·빌드 항목 4개 선별 내재화.

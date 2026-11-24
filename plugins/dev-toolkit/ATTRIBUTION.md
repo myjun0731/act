@@ -15,3 +15,6 @@ QA 스킬: browser-qa, ai-regression-testing, test-collaboration, windows-deskto
 ## 3차 추가 (아키텍처·데이터·빌드)
 스킬: contract-first, data-throughput-accelerator, backend-patterns (출처 ECC, MIT)
 에이전트: build-error-resolver (출처 ECC, MIT; Node/TS 빌드용 — java-build-resolver 보완)
+
+## 4차 추가 (분석·관측·성능·설정)
+codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC, MIT

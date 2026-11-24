@@ -12,3 +12,6 @@
 - blueprint — 출처 community (ECC 경유 재배포), MIT
 
 각 스킬의 SKILL.md frontmatter에 origin/license를 보존했다. 재배포 시 본 표기를 유지할 것.
+
+## 4차 추가 (에이전트 하네스·디버깅)
+agent-harness-construction, agent-introspection-debugging — 출처 ECC, MIT
