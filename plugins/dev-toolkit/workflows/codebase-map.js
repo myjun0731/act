@@ -49,7 +49,7 @@ const scopeText = target ? `대상: ${target}` : '대상: 레포 전체'
 const parted = await agent(
   `${scopeText}\n코드베이스를 하위 영역(계층·모듈: 예 컨트롤러·서비스·매퍼/DAO·도메인·설정·프론트 등)으로 구획하라. ` +
     '각 영역에 name 과 대표 paths 를 담아 areas 로 반환하라. 너무 잘게 쪼개지 말고 8개 이내로.',
-  { schema: AREAS_SCHEMA, label: '영역 구획' },
+  { schema: AREAS_SCHEMA, effort: 'low', label: '영역 구획' },
 )
 let areas = (parted && Array.isArray(parted.areas)) ? parted.areas : []
 if (areas.length > 8) areas = areas.slice(0, 8)

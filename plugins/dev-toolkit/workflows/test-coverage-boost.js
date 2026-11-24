@@ -52,7 +52,7 @@ const scope = target
 const found = await agent(
   `${scope}\n테스트가 없거나 부족한 유닛(클래스·메서드·매퍼)을 식별해 gaps로 반환하라(path·unit·why). ` +
     '이미 충분히 테스트된 것은 제외. test-coverage 접근을 참고하라.',
-  { schema: GAPS_SCHEMA, label: '공백 탐색' },
+  { schema: GAPS_SCHEMA, effort: 'low', label: '공백 탐색' },
 )
 const gaps = (found && Array.isArray(found.gaps)) ? found.gaps : []
 log(`테스트 공백 ${gaps.length}건`)

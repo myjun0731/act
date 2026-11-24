@@ -27,6 +27,7 @@
 - `/dev-toolkit:migration-readiness` — migration-verify+impact-analysis → 이관 준비도(읽기 전용)
 - `/dev-toolkit:onboard-pack` — codebase-map+sql-db-audit → 모듈 온보딩 팩
 - 오케스트레이터는 리프 팬아웃이 합산되므로 규모 `large` 권장.
+- 비용 최적화: 각 워크플로의 기계적 진입 단계(수집·분류·구획)는 `effort: 'low'`로 실행(발견·검증·합성은 기본 effort 유지).
 
 ## [1.10.0] - 2026-11-24
 

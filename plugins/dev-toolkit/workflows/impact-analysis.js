@@ -66,7 +66,7 @@ const scope = target
   : '대상: 현재 작업 트리의 변경(git diff HEAD).'
 const collected = await agent(
   `${scope}\n변경된 심볼(클래스·메서드·엔드포인트), 파일, 영향받을 수 있는 테이블/컬럼을 식별해 changes로 반환하라.`,
-  { schema: CHANGES_SCHEMA, label: '변경 식별' },
+  { schema: CHANGES_SCHEMA, effort: 'low', label: '변경 식별' },
 )
 const changes = (collected && Array.isArray(collected.changes)) ? collected.changes : []
 log(`변경 ${changes.length}건 식별`)
