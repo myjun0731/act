@@ -8,6 +8,7 @@
 |---|---|---|
 | `/dev-toolkit:review-changes` | 변경 파일을 유형별(Java·SQL/매퍼·프론트·이관/스키마)로 분류 → 전문 리뷰어 팬아웃 → 지적 반박 검증 → 심각도순 단일 리포트 | PR 번호·브랜치·경로. 없으면 작업 트리(git diff HEAD) |
 | `/dev-toolkit:sql-db-audit` | SQL/매퍼/DDL 수집 → 정확성·5방언 일관성·PG 이관함정·최적화/스키마 다차원 병렬 감사 → 검증 → 리포트 | 경로·글롭·PR·브랜치. 없으면 작업 트리의 SQL/매퍼/DDL |
+| `/dev-toolkit:migration-verify` | 이관 단위 수집 → 접근/위험·동등성·이관함정·롤백/무중단·테스트공백 검증 → 완전성 보강 1회 → 이관 검증 리포트 | 경로·PR·브랜치. 없으면 작업 트리의 이관 관련 변경 |
 
 ## 구조
 
@@ -18,6 +19,9 @@
   migration·schema→`database-architect`. config·other는 생략.
 - `sql-db-audit`: 수집 1개 → 파일별 4차원 병렬(correctness=`sql-pro`, dialect·pg_trap=기본 워커+스킬,
   optimize=`database-optimizer` 또는 ddl이면 schema=`database-architect`) → 지적별 검증 → 리포트 1개.
+- `migration-verify`: 수집 1개 → 단위별 5차원 병렬(approach_risk=`legacy-modernizer`, equivalence=`sql-pro`,
+  dialect_trap·rollback_safety=기본 워커+스킬, test_gap=`test-automator`) → 지적별 검증 →
+  **완전성 비평가가 미점검 위험을 찾아 1회 보강** → 리포트 1개. 다른 둘과 달리 완전성 루프가 있다.
 
 ## 전제·주의
 

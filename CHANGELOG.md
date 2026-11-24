@@ -12,9 +12,10 @@
 - 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`·`THIRD_PARTY_NOTICES.md`(커밋 34e50fe, MIT © Seth Hobson)에 보존.
 - 참고: `database-migration`(단수, ORM 마이그레이션)은 기존 `database-migrations`(복수, 범용 패턴)와 이름이 비슷하다.
 
-또한 동적 워크플로우 2종을 `plugins/dev-toolkit/workflows/`에 추가(자체 저작물). 내재화한 리뷰어·DB 에이전트를 `agentType`으로 워커 디스패치하는 팬아웃→검증→요약 파이프라인.
+또한 동적 워크플로우 3종을 `plugins/dev-toolkit/workflows/`에 추가(자체 저작물). 내재화한 리뷰어·DB 에이전트를 `agentType`으로 워커 디스패치하는 팬아웃→검증→요약 파이프라인.
 - `/dev-toolkit:review-changes` — 변경 코드 유형별 다차원 리뷰·검증·단일 리포트
 - `/dev-toolkit:sql-db-audit` — SQL/매퍼/DDL 다차원(정확성·5방언·PG 이관함정·최적화/스키마) 감사·검증·리포트
+- `/dev-toolkit:migration-verify` — 이관 단위 검증(접근/위험·동등성·이관함정·롤백/무중단·테스트공백) + 완전성 보강 1회. 도메인 고유 검증은 도메인 플러그인 몫, 여기엔 제네릭 골격.
 - 규모·전제·실행 승인은 `workflows/README.md` 참조. 설치 규모 가이드는 `medium` 이상 권장.
 
 ## [1.10.0] - 2026-11-24
