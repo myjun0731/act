@@ -9,6 +9,9 @@
 | `/dev-toolkit:review-changes` | 변경 파일을 유형별(Java·SQL/매퍼·프론트·이관/스키마)로 분류 → 전문 리뷰어 팬아웃 → 지적 반박 검증 → 심각도순 단일 리포트 | PR 번호·브랜치·경로. 없으면 작업 트리(git diff HEAD) |
 | `/dev-toolkit:sql-db-audit` | SQL/매퍼/DDL 수집 → 정확성·5방언 일관성·PG 이관함정·최적화/스키마 다차원 병렬 감사 → 검증 → 리포트 | 경로·글롭·PR·브랜치. 없으면 작업 트리의 SQL/매퍼/DDL |
 | `/dev-toolkit:migration-verify` | 이관 단위 수집 → 접근/위험·동등성·이관함정·롤백/무중단·테스트공백 검증 → 완전성 보강 1회 → 이관 검증 리포트 | 경로·PR·브랜치. 없으면 작업 트리의 이관 관련 변경 |
+| `/dev-toolkit:impact-analysis` | 변경 식별 → 호출·데이터·화면·모듈 4각도 멀티모달 스위프 → 영향 검증 → 회귀 테스트 계획 | PR·브랜치·경로·심볼. 없으면 작업 트리의 변경 |
+| `/dev-toolkit:codebase-map` | 대상을 영역으로 구획 → 영역별 병렬 리더 요약 → 아키텍트가 아키텍처 맵으로 통합 | 경로·모듈. 없으면 레포 전체 |
+| `/dev-toolkit:test-coverage-boost` | 테스트 공백 탐색 → 유닛별 **새 테스트 파일 생성**(기존 미수정) → 빌드 1회 검증 → 보강 보고 | 경로·모듈. 없으면 작업 트리의 변경 유닛. ⚠️ 레포에 파일 생성 |
 
 ## 구조
 
@@ -22,6 +25,11 @@
 - `migration-verify`: 수집 1개 → 단위별 5차원 병렬(approach_risk=`legacy-modernizer`, equivalence=`sql-pro`,
   dialect_trap·rollback_safety=기본 워커+스킬, test_gap=`test-automator`) → 지적별 검증 →
   **완전성 비평가가 미점검 위험을 찾아 1회 보강** → 리포트 1개. 다른 둘과 달리 완전성 루프가 있다.
+- `impact-analysis`: 변경 식별 1개 → 4각도(caller·data·ui·module) 멀티모달 스위프(기본 워커+change-impact·
+  mybatis-patterns·click-path-audit·module-regression 스킬) → 중복 제거 → 영향 검증 → `module-regression` 기반 회귀 계획.
+- `codebase-map`: 구획 1개 → 영역별 병렬 리더(`architect`+codebase-onboarding) → `architect` 통합. (읽기 전용, Understand 패턴)
+- `test-coverage-boost`: 공백 탐색 1개 → 유닛별 `test-automator`가 **새 테스트 파일 생성**(병렬, 기존 미수정·빌드 안 함) →
+  `java-build-resolver`가 빌드 1회 → 보고. **유일하게 레포를 변경(파일 생성)하는 워크플로** — 커밋 전 리뷰할 것.
 
 ## 전제·주의
 
