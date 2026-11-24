@@ -13,6 +13,21 @@
 | `/dev-toolkit:codebase-map` | 대상을 영역으로 구획 → 영역별 병렬 리더 요약 → 아키텍트가 아키텍처 맵으로 통합 | 경로·모듈. 없으면 레포 전체 |
 | `/dev-toolkit:test-coverage-boost` | 테스트 공백 탐색 → 유닛별 **새 테스트 파일 생성**(기존 미수정) → 빌드 1회 검증 → 보강 보고 | 경로·모듈. 없으면 작업 트리의 변경 유닛. ⚠️ 레포에 파일 생성 |
 
+### 연계(오케스트레이터)
+
+위 6종을 **리프**로 두고, `workflow('dev-toolkit:<리프>', args)` 로 엮어 하나의 판정/문서로 합성한다.
+**중첩은 1단만** — 오케스트레이터는 리프를 호출하지만, 오케스트레이터끼리는 호출할 수 없다.
+리프 팬아웃이 **합산**되므로 에이전트 수가 크다(설치 규모 `large` 권장, 범위는 좁게).
+
+| 커맨드 | 엮는 리프 | 산출 |
+|---|---|---|
+| `/dev-toolkit:pre-merge-gate` | review-changes + sql-db-audit + impact-analysis | 병합/배포 전 **GO/NO-GO 게이트** |
+| `/dev-toolkit:migration-readiness` | migration-verify + impact-analysis | **이관 준비도** 리포트(읽기 전용; 테스트 생성은 test-coverage-boost 별도) |
+| `/dev-toolkit:onboard-pack` | codebase-map + sql-db-audit | 모듈 **온보딩 팩**(구조+DB 품질) |
+
+- 리프는 순차 실행하고(동시성·토큰 예산 공유라 예측 가능), 실패한 리프는 "미실행"으로 표시하고 계속한다.
+- 이름 해석(`dev-toolkit:<리프>`)은 설치 후 런타임에서만 검증된다.
+
 ## 구조
 
 둘 다 **팬아웃 → 검증 → 요약** 파이프라인이다(단계 간 배리어 없음).

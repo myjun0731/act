@@ -21,6 +21,12 @@
 - `/dev-toolkit:test-coverage-boost` — 테스트 공백 탐색 → 유닛별 새 테스트 파일 생성 → 빌드 검증 → 보고(**레포 변경**)
 - 규모·전제·실행 승인은 `workflows/README.md` 참조. 설치 규모 가이드는 `medium` 이상 권장.
 
+그리고 위 6종(리프)을 `workflow()`로 엮는 연계(오케스트레이터) 워크플로 3종 추가. 중첩 1단(오케스트레이터→리프).
+- `/dev-toolkit:pre-merge-gate` — review-changes+sql-db-audit+impact-analysis → 병합 전 GO/NO-GO 게이트
+- `/dev-toolkit:migration-readiness` — migration-verify+impact-analysis → 이관 준비도(읽기 전용)
+- `/dev-toolkit:onboard-pack` — codebase-map+sql-db-audit → 모듈 온보딩 팩
+- 오케스트레이터는 리프 팬아웃이 합산되므로 규모 `large` 권장.
+
 ## [1.10.0] - 2026-11-24
 
 `dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
