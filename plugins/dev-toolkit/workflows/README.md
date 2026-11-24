@@ -12,6 +12,9 @@
 | `/dev-toolkit:impact-analysis` | 변경 식별 → 호출·데이터·화면·모듈 4각도 멀티모달 스위프 → 영향 검증 → 회귀 테스트 계획 | PR·브랜치·경로·심볼. 없으면 작업 트리의 변경 |
 | `/dev-toolkit:codebase-map` | 대상을 영역으로 구획 → 영역별 병렬 리더 요약 → 아키텍트가 아키텍처 맵으로 통합 | 경로·모듈. 없으면 레포 전체 |
 | `/dev-toolkit:test-coverage-boost` | 테스트 공백 탐색 → 유닛별 **새 테스트 파일 생성**(기존 미수정) → 빌드 1회 검증 → 보강 보고 | 경로·모듈. 없으면 작업 트리의 변경 유닛. ⚠️ 레포에 파일 생성 |
+| `/dev-toolkit:design-approaches` | 설계 브리프 → 서로 다른 각도로 N개 접근안 생성 → 심사 패널 채점 → 최고안+장점 접목 설계안(결정 기록) | 설계 브리프(무엇을·목표·제약). 코드 대상 아님 |
+
+> SDLC 매핑: **분석**(codebase-map·impact-analysis) · **설계**(design-approaches) · **테스트**(test-coverage-boost) · **유지보수**(review-changes·sql-db-audit·migration-verify). 구현은 전용 워크플로를 두지 않는다(병렬 코드 생성은 충돌·중복 위험 — `feature-dev`/대화가 적합).
 
 ### 연계(오케스트레이터)
 
@@ -45,6 +48,8 @@
 - `codebase-map`: 구획 1개 → 영역별 병렬 리더(`architect`+codebase-onboarding) → `architect` 통합. (읽기 전용, Understand 패턴)
 - `test-coverage-boost`: 공백 탐색 1개 → 유닛별 `test-automator`가 **새 테스트 파일 생성**(병렬, 기존 미수정·빌드 안 함) →
   `java-build-resolver`가 빌드 1회 → 보고. **유일하게 레포를 변경(파일 생성)하는 워크플로** — 커밋 전 리뷰할 것.
+- `design-approaches`: 3각도(mvp·scale·risk) 접근안 생성(`architect`) → 접근안마다 4렌즈 심사 패널 채점 →
+  최고안 중심 + 장점 접목 설계안 합성(`architect`, ADR 형식). 입력은 코드가 아니라 **설계 브리프**(args).
 
 ## 전제·주의
 
