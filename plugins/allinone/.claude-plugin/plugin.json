@@ -1,6 +1,6 @@
 {
   "name": "allinone",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "개인용 올인원: 이 플러그인 하나를 설치하면 core·dev-toolkit·design-eng·overkill·recursive-research와 공식 플러그인 8종이 함께 설치된다",
   "author": {
     "name": "Kim Myoung-jun"
@@ -12,6 +12,7 @@
     "design-eng",
     "overkill",
     "recursive-research",
+    "agentic",
     {
       "name": "pr-review-toolkit",
       "marketplace": "claude-plugins-official"

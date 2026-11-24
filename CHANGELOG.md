@@ -2,6 +2,15 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.4.0] - 2026-11-24
+
+새 플러그인 `agentic` 0.1.0 추가. ECC(MIT, github.com/affaan-m/ECC)에서 에이전트 엔지니어링 스킬 3개를 선별 내재화.
+- `agent-security-hardening` — untrusted content 처리 에이전트 런타임 보안 하드닝
+- `agent-architecture-audit` — 12층 에이전트 스택 진단(출처 oh-my-agent-check)
+- `benchmark-optimization-loop` — 측정 기반 개선 루프(정확도·속도·비용)
+- 출처·라이선스는 각 SKILL.md frontmatter와 `plugins/agentic/ATTRIBUTION.md`에 보존.
+- `allinone` 0.3.2 → 0.4.0: 의존성에 `agentic` 추가.
+
 ## [1.3.0] - 2026-11-23
 
 파괴적 변경. 마켓플레이스 이름을 `myoun-pro` 에서 `claude-pro` 로 바꿨다 (레포명과 일치).
