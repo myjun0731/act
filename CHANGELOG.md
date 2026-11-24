@@ -12,7 +12,7 @@
 - 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`·`THIRD_PARTY_NOTICES.md`(커밋 34e50fe, MIT © Seth Hobson)에 보존.
 - 참고: `database-migration`(단수, ORM 마이그레이션)은 기존 `database-migrations`(복수, 범용 패턴)와 이름이 비슷하다.
 
-릴리스 도구에 `scripts/check_refs.py`(이름 참조 무결성 검증) 추가 — marketplace.json 로컬 플러그인만 스캔해 워크플로의 `workflow('ns:name')`·`agentType:'ns:name'`·프롬프트 스킬명을 인벤토리와 대조. 리터럴 미해석=ERROR, 타 플러그인 전용 스킬=WARN(단독 설치 누락), 유사중복=INFO. `release.py` validate 직후 호출(try-격리), ERROR는 항상 차단·WARN은 rc/ga에서만 차단. design-approaches 워크플로가 설계·발견한 드리프트(blueprint 교차참조, database-migration(s) 중복)를 자동 포착.
+릴리스 도구에 `scripts/check_refs.py`(이름 참조 무결성 검증) 추가 — marketplace.json 로컬 플러그인만 스캔해 워크플로의 `workflow('ns:name')`·`agentType:'ns:name'`·프롬프트 스킬명을 인벤토리와 대조. 리터럴 미해석=ERROR, 타 플러그인 전용 스킬=WARN(단독 설치 누락), 유사중복=INFO. `release.py` validate 직후 호출(try-격리), ERROR는 항상 차단·WARN은 rc/ga에서만 차단. design-approaches 워크플로가 설계·발견한 드리프트(blueprint 교차참조, database-migration(s) 중복)를 자동 포착. 포착된 `blueprint` 교차참조는 design-approaches.js 프롬프트에서 제거(나머지 4개 설계 스킬은 모두 dev-toolkit에 존재) → refcheck WARN 0.
 
 또한 동적 워크플로우 7종을 `plugins/dev-toolkit/workflows/`에 추가(자체 저작물). 내재화한 리뷰어·DB 에이전트를 `agentType`으로 워커 디스패치하는 팬아웃→검증→합성 파이프라인.
 - `/dev-toolkit:review-changes` — 변경 코드 유형별 다차원 리뷰·검증·단일 리포트

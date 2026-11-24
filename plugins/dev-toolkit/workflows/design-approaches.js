@@ -45,7 +45,7 @@ const approaches = (await parallel(
   ANGLES.map((a) => async () => {
     const out = await agent(
       `설계 브리프:\n${brief}\n\n위 문제를 "${a.ask}" 관점에서 설계하라. ` +
-        'blueprint·api-design·hexagonal-architecture·contract-first·architecture-decision-records 스킬 지침이 있으면 적용. ' +
+        'api-design·hexagonal-architecture·contract-first·architecture-decision-records 스킬 지침이 있으면 적용. ' +
         'name·summary·design(핵심 설계)·tradeoffs·risks 를 반환하라.',
       { agentType: 'dev-toolkit:architect', schema: APPROACH_SCHEMA, phase: '접근안', label: `접근:${a.key}` },
     )
