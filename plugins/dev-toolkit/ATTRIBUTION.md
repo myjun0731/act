@@ -18,3 +18,7 @@ QA 스킬: browser-qa, ai-regression-testing, test-collaboration, windows-deskto
 
 ## 4차 추가 (분석·관측·성능·설정)
 codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC, MIT
+
+## 5차 추가 (문서)
+스킬: living-docs-governance, documentation-lookup (출처 ECC, MIT)
+에이전트: doc-updater (출처 ECC, MIT)

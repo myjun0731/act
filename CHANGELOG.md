@@ -2,6 +2,14 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.10.0] - 2026-11-24
+
+`dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
+- living-docs-governance — 장수명 프로젝트 문서 노후 방지(헌장·맵·상태)
+- documentation-lookup — 최신 라이브러리·프레임워크 문서 조회(Context7)
+- doc-updater (에이전트) — 문서·코드맵(docs/CODEMAPS) 자동 갱신
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`와 각 frontmatter에 보존.
+
 ## [1.9.0] - 2026-11-24
 
 ECC(MIT)에서 분석·관측·에이전트 하네스 스킬 6개 선별 내재화.
