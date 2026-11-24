@@ -2,6 +2,15 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.8.0] - 2026-11-24
+
+`dev-toolkit` 0.6.0 → 0.7.0: ECC(MIT)에서 아키텍처·데이터·빌드 항목 4개 선별 내재화.
+- contract-first — 프론트/백·서비스 간 계약 기반 조율
+- data-throughput-accelerator — 대용량 데이터 이동·ETL·백필 가속
+- backend-patterns — 백엔드 아키텍처·API·DB 패턴
+- build-error-resolver (에이전트) — Node/TS 빌드·타입 오류 해결(java-build-resolver 보완)
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`와 각 frontmatter에 보존.
+
 ## [1.7.0] - 2026-11-24
 
 `dev-toolkit` 0.5.0 → 0.6.0: ECC(MIT)에서 배포·아키텍처 스킬 4개와 에이전트 1개 선별 내재화.

@@ -1,6 +1,6 @@
 {
   "name": "dev-toolkit",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "범용 개발 도구: Java·Spring·DB, 레거시·품질, 설계·협업, 디버깅·TDD·브랜치 워크플로, PICT 테스트 설계, MCP 서버 개발 스킬과 Java/DB 리뷰 에이전트",
   "author": {
     "name": "Kim Myoung-jun"

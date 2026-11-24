@@ -11,3 +11,7 @@ QA 스킬: browser-qa, ai-regression-testing, test-collaboration, windows-deskto
 ## 2차 추가 (배포·아키텍처)
 스킬: docker-patterns, deployment-patterns, canary-watch, hexagonal-architecture (출처 ECC, MIT)
 에이전트: architect (출처 ECC, MIT)
+
+## 3차 추가 (아키텍처·데이터·빌드)
+스킬: contract-first, data-throughput-accelerator, backend-patterns (출처 ECC, MIT)
+에이전트: build-error-resolver (출처 ECC, MIT; Node/TS 빌드용 — java-build-resolver 보완)
