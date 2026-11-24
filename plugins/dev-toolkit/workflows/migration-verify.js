@@ -105,7 +105,7 @@ const collected = await agent(
   `${scope}\n` +
     '이관(마이그레이션 스크립트·DDL 변경·엔티티 정의·매퍼) 단위를 찾아 나열하고 종류(migration/ddl/entity/mapper/other)로 분류하라. ' +
     '생성물·백업은 제외하라.',
-  { schema: COLLECT_SCHEMA, label: '이관 단위 수집' },
+  { schema: COLLECT_SCHEMA, effort: 'low', label: '이관 단위 수집' },
 )
 const units = (collected && Array.isArray(collected.units)) ? collected.units : []
 log(`이관 단위 ${units.length}건 수집`)

@@ -76,7 +76,7 @@ const collected = await agent(
   `${scope}\n` +
     'MyBatis 매퍼 XML, .sql, 마이그레이션/DDL 스크립트를 찾아 나열하고 종류(mapper/sql/ddl)로 분류하라. ' +
     '생성물·백업·벤더 폴더는 제외하라.',
-  { schema: COLLECT_SCHEMA, label: '파일 수집' },
+  { schema: COLLECT_SCHEMA, effort: 'low', label: '파일 수집' },
 )
 const files = (collected && Array.isArray(collected.files)) ? collected.files : []
 log(`SQL/매퍼/DDL ${files.length}건 수집`)

@@ -82,7 +82,7 @@ const classified = await agent(
     'frontend_vue(.vue), frontend_ts(.ts/.js), migration(마이그레이션·DDL 변경 스크립트), ' +
     'schema(스키마/엔티티 정의), config(설정), other. ' +
     '삭제된 파일·바이너리·생성물·락파일은 other로 두거나 제외하라.',
-  { schema: CLASSIFY_SCHEMA, label: '변경 분류' },
+  { schema: CLASSIFY_SCHEMA, effort: 'low', label: '변경 분류' },
 )
 const files = (classified && Array.isArray(classified.files)) ? classified.files : []
 log(`변경 파일 ${files.length}건 분류 완료`)
