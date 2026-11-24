@@ -25,9 +25,9 @@ claude plugin marketplace add anthropics/claude-plugins-official
 | 대상 | 명령 | 채널 |
 |---|---|---|
 | 일반/안정 | `claude plugin marketplace add myjun0731/claude-pro` | 정식(main) |
-| 공개 베타(팀원) | `claude plugin marketplace add myjun0731/claude-pro#beta` | 공개 베타 |
+| 공개 베타 | `claude plugin marketplace add myjun0731/claude-pro#beta` | 공개 베타 |
 | RC 검증 | `claude plugin marketplace add myjun0731/claude-pro#rc` | RC |
-| 메인테이너(나) | `claude plugin marketplace add myjun0731/claude-pro#dev` | 개발자 베타 |
+| 메인테이너 | `claude plugin marketplace add myjun0731/claude-pro#dev` | 개발자 베타 |
 | 특정 시드 고정 | `claude plugin marketplace add myjun0731/claude-pro#v1.11.0-rc.1` | 그 시드 |
 
 - 무지정 설치는 기본 브랜치 `main` = 정식이다. 팀원은 `#beta`를 **명시**해야 공개 베타를 받는다.
