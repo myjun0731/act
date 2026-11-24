@@ -2,6 +2,16 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.7.0] - 2026-11-24
+
+`dev-toolkit` 0.5.0 → 0.6.0: ECC(MIT)에서 배포·아키텍처 스킬 4개와 에이전트 1개 선별 내재화.
+- docker-patterns — Docker/Compose 로컬개발 패턴
+- deployment-patterns — CI/CD·컨테이너·헬스체크·롤백
+- canary-watch — 배포 후 URL·엔드포인트 검증
+- hexagonal-architecture — Ports & Adapters, 도메인 경계·의존성 역전
+- architect (에이전트) — 시스템 설계·확장성·기술결정
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`와 각 frontmatter에 보존.
+
 ## [1.6.0] - 2026-11-24
 
 `agentic` 0.1.0 → 0.2.0: ECC(MIT)에서 멀티에이전트·병렬·자율 루프 스킬 7개 내재화.
