@@ -2,6 +2,15 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.12.0] - 2026-11-25
+
+새 플러그인 `sdlc` 0.1.0 추가(자체 저작물) — 분석 → 설계 → 구현 → 테스트 → 리뷰 → 완료 보고서를 동적 워크플로 단위로 연계.
+- `/sdlc:pipeline` 스킬: 진행 규약. 분석·설계는 **사용자 관문**(품질 루프 후 승인), 설계 승인 뒤 구현·테스트·리뷰·보고서는 Claude가 묻지 않고 게이트 규칙에 따라 호출. 산출물·재개 상태는 대상 레포 `.sdlc/<slug>/`.
+- 워크플로 7종: `analyze`·`design`(품질 루프), `implement`(의존·파일 비중첩 웨이브 병렬 구현 + 빌드 수정), `test`(AC→TC 작성, 실행↔수정 루프, `verify` 모드), `review`(5차원 리뷰 → 반박 검증 → 확정 지적 수정·재테스트), `report`(요구 추적 매트릭스), `deliver`(오케스트레이터: implement → test↔review 최대 N사이클 → report).
+- 품질 루프: 심사 패널(관점별 독립 채점, 기준별 0~100) 가중 평균이 `target` 이상 ∧ 모든 기준 `floor` 이상 ∧ `mustHave` 과반 충족일 때 통과. 미달이면 최고본에서 약한 기준부터 보강 반복, `patience` 연속 무개선 시 정체 종료, `maxRounds` 상한. 수준 프리셋 standard 75/60 · high 85/70 · strict 92/80.
+- `deliver.js` 는 `LEAVES` 배열로 리프를 선언해 `scripts/check_refs.py` 가 `sdlc:<리프>` 참조를 검증한다.
+- `allinone` 0.4.1 → 0.5.0: 의존성에 `sdlc` 추가. 기존 설치는 `claude plugin install sdlc@claude-pro` 로 따로 설치.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
