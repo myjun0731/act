@@ -147,7 +147,10 @@ def extract_and_check(root, plugins, skills_global):
                     else:
                         add("ERROR", "skill", t, rel, f"스킬 '{t}' — 어느 로컬 플러그인에도 없음(오타 의심)")
 
-        # 4) 유사 중복 스킬명(단/복수)
+    # 4) 유사 중복 스킬명(단/복수) — 워크플로 유무와 무관하게 모든 로컬 플러그인에 적용한다.
+    #    (위 루프는 workflows 디렉터리가 없으면 continue 로 건너뛰므로, 워크플로 없는
+    #     플러그인의 스킬 단/복수 혼동을 놓치지 않도록 별도 루프로 분리한다.)
+    for pname, inv in plugins.items():
         sk = inv["skills"]
         for s in sorted(sk):
             if s + "s" in sk:
