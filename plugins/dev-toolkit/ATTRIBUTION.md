@@ -22,3 +22,14 @@ codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC,
 ## 5차 추가 (문서)
 스킬: living-docs-governance, documentation-lookup (출처 ECC, MIT)
 에이전트: doc-updater (출처 ECC, MIT)
+
+---
+
+아래 항목은 wshobson/agents(https://github.com/wshobson/agents, MIT License, © 2024 Seth Hobson)에서 선별 내재화했다.
+(ECC가 아닌 별도 소스. 커밋·라이선스 원문은 `THIRD_PARTY_NOTICES.md` 참조.)
+
+## 6차 추가 (스택 심화 — wshobson/agents, MIT)
+에이전트: java-pro, sql-pro, database-architect, database-optimizer, legacy-modernizer, test-automator
+스킬: postgresql-table-design, sql-optimization-patterns, database-migration
+- 에이전트의 `name:`에서 플러그인 접두사만 제거(예: `database-design-database-architect` → `database-architect`), 본문은 원본 그대로.
+- 스킬은 `references/details.md`까지 함께 가져왔고, frontmatter에 `metadata.origin: wshobson/agents`를 추가.

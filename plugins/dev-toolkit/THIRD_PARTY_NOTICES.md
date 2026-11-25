@@ -66,3 +66,56 @@ SOFTWARE.
 - 출처: https://github.com/omkamal/pypict-claude-skill, 커밋 `fbda212bca79dfa7611be12527b102c89cc8faeb`
 - 라이선스: MIT, Omar Kamal Hosney (`skills/pypict/LICENSE`)
 - 가져온 파일: `SKILL.md`, `scripts/`, `references/`, `examples/` → `skills/pypict/` (원본 그대로)
+
+## wshobson/agents (0.10.0에 추가)
+- 출처: https://github.com/wshobson/agents, 커밋 `34e50fee32114afd9475f25d81492712f08cb71c` (2026-11-23)
+- 라이선스: MIT, Copyright (c) 2024 Seth Hobson (아래 원문)
+
+### 가져온 파일
+- 에이전트: `agents/java-pro.md`, `agents/sql-pro.md`, `agents/database-architect.md`,
+  `agents/database-optimizer.md`, `agents/legacy-modernizer.md`, `agents/test-automator.md`
+- 스킬: `skills/postgresql-table-design`, `skills/sql-optimization-patterns`, `skills/database-migration`
+  (각각 `SKILL.md` + `references/details.md`)
+
+### 변경한 내용
+- 에이전트 `name:`에서 원본의 플러그인 접두사를 제거했다
+  (`database-design-database-architect` → `database-architect`,
+  `database-migrations-database-optimizer` → `database-optimizer`,
+  `framework-migration-legacy-modernizer` → `legacy-modernizer`,
+  `unit-testing-test-automator` → `test-automator`).
+  `java-pro`, `sql-pro`는 원본부터 접두사가 없었다.
+- 스킬 frontmatter에 `metadata.origin: wshobson/agents`를 추가했다.
+- 그 외 본문은 원본 그대로.
+
+### 비고
+- 원본은 같은 에이전트를 여러 플러그인에 중복 수록한다. `database-architect`는 `database-design`,
+  `database-optimizer`는 `database-migrations`, `legacy-modernizer`는 `framework-migration`,
+  `test-automator`는 `unit-testing` 변형을 가져왔다(변형 간 차이는 `name:`/`model:`뿐).
+- `skills/database-migration`(단수)은 ECC에서 온 기존 `skills/database-migrations`(복수)와 이름이 비슷하다.
+  전자는 ORM(Sequelize/TypeORM/Prisma) 마이그레이션 중심, 후자는 범용 스키마 마이그레이션 패턴.
+
+### 원본 라이선스
+
+```
+MIT License
+
+Copyright (c) 2024 Seth Hobson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

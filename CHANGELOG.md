@@ -2,6 +2,35 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.11.0] - 2026-11-24
+
+`dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
+- 에이전트 6개: java-pro, sql-pro, database-architect, database-optimizer, legacy-modernizer, test-automator
+  - 기존 리뷰어(java-reviewer·database-reviewer)를 보완하는 "구현/설계 전문" 에이전트. 메이저 버전 이관엔 legacy-modernizer.
+- 스킬 3개: postgresql-table-design, sql-optimization-patterns, database-migration (각 references/details.md 포함)
+- 에이전트 `name:`의 플러그인 접두사만 제거, 스킬 frontmatter에 `metadata.origin` 추가. 본문은 원본 그대로.
+- 출처는 `plugins/dev-toolkit/ATTRIBUTION.md`·`THIRD_PARTY_NOTICES.md`(커밋 34e50fe, MIT © Seth Hobson)에 보존.
+- 참고: `database-migration`(단수, ORM 마이그레이션)은 기존 `database-migrations`(복수, 범용 패턴)와 이름이 비슷하다.
+
+릴리스 도구에 `scripts/check_refs.py`(이름 참조 무결성 검증) 추가 — marketplace.json 로컬 플러그인만 스캔해 워크플로의 `workflow('ns:name')`·`agentType:'ns:name'`·프롬프트 스킬명을 인벤토리와 대조. 리터럴 미해석=ERROR, 타 플러그인 전용 스킬=WARN(단독 설치 누락), 유사중복=INFO. `release.py` validate 직후 호출(try-격리), ERROR는 항상 차단·WARN은 rc/ga에서만 차단. design-approaches 워크플로가 설계·발견한 드리프트(blueprint 교차참조, database-migration(s) 중복)를 자동 포착. 포착된 `blueprint` 교차참조는 design-approaches.js 프롬프트에서 제거(나머지 4개 설계 스킬은 모두 dev-toolkit에 존재) → refcheck WARN 0. 워크플로 내용이 바뀌었으므로 `dev-toolkit` 0.10.0 → 0.10.1 범프(브랜치 추적 채널에서 `claude plugin update`가 버전 문자열 변화로 수정을 받도록).
+
+또한 동적 워크플로우 7종을 `plugins/dev-toolkit/workflows/`에 추가(자체 저작물). 내재화한 리뷰어·DB 에이전트를 `agentType`으로 워커 디스패치하는 팬아웃→검증→합성 파이프라인.
+- `/dev-toolkit:review-changes` — 변경 코드 유형별 다차원 리뷰·검증·단일 리포트
+- `/dev-toolkit:sql-db-audit` — SQL/매퍼/DDL 다차원(정확성·5방언·PG 이관함정·최적화/스키마) 감사·검증·리포트
+- `/dev-toolkit:migration-verify` — 이관 단위 검증(접근/위험·동등성·이관함정·롤백/무중단·테스트공백) + 완전성 보강 1회. 도메인 고유 검증은 도메인 플러그인 몫, 여기엔 제네릭 골격.
+- `/dev-toolkit:impact-analysis` — 변경 영향 4각도 멀티모달 스위프 → 검증 → 회귀 테스트 계획
+- `/dev-toolkit:codebase-map` — 영역 구획 → 병렬 리더 → 아키텍처 맵 통합(읽기 전용, 온보딩)
+- `/dev-toolkit:test-coverage-boost` — 테스트 공백 탐색 → 유닛별 새 테스트 파일 생성 → 빌드 검증 → 보고(**레포 변경**)
+- `/dev-toolkit:design-approaches` — 설계 브리프 → N개 접근안 생성 → 심사 패널 채점 → 설계안(ADR) 합성. SDLC 설계 단계
+- 규모·전제·실행 승인은 `workflows/README.md` 참조. 설치 규모 가이드는 `medium` 이상 권장.
+
+그리고 리프 워크플로를 `workflow()`로 엮는 연계(오케스트레이터) 워크플로 3종 추가. 중첩 1단(오케스트레이터→리프).
+- `/dev-toolkit:pre-merge-gate` — review-changes+sql-db-audit+impact-analysis → 병합 전 GO/NO-GO 게이트
+- `/dev-toolkit:migration-readiness` — migration-verify+impact-analysis → 이관 준비도(읽기 전용)
+- `/dev-toolkit:onboard-pack` — codebase-map+sql-db-audit → 모듈 온보딩 팩
+- 오케스트레이터는 리프 팬아웃이 합산되므로 규모 `large` 권장.
+- 비용 최적화: 각 워크플로의 기계적 진입 단계(수집·분류·구획)는 `effort: 'low'`로 실행(발견·검증·합성은 기본 effort 유지).
+
 ## [1.10.0] - 2026-11-24
 
 `dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
