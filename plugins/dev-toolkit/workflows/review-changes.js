@@ -128,7 +128,8 @@ const perFile = await pipeline(
     const r = reviewerFor(file.type)
     if (!r) return { file: file, findings: [] }
     const out = await agent(
-      `파일 ${file.path} 를 ${r.ask}. 발견한 문제만 findings로 반환하고(각 항목에 file·line·severity·category·summary·detail), 문제가 없으면 빈 배열을 반환하라.`,
+      `${scope}\n파일 ${file.path} 를 ${r.ask}. 위 검토 대상이 PR·브랜치면 그 변경(hunk)에 집중하고 범위 밖 기존 코드의 노이즈 지적은 피하라. ` +
+        '발견한 문제만 findings로 반환하고(각 항목에 file·line·severity·category·summary·detail), 문제가 없으면 빈 배열을 반환하라.',
       { agentType: r.agentType, schema: FINDINGS_SCHEMA, phase: '리뷰', label: `리뷰:${file.path}` },
     )
     return { file: file, findings: (out && Array.isArray(out.findings)) ? out.findings : [] }
