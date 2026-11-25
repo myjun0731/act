@@ -37,7 +37,8 @@
 - test-coverage-boost: 생성된 새 테스트가 0건이면 빌드·테스트 단계를 **건너뜀**.
 - 문서 최신화: `README.md`·`plugins/allinone/README.md` 플러그인 표를 실제 상태로 — 버전(dev-toolkit 0.10.2·allinone 0.4.0·obsidian 0.1.2), `agentic` 플러그인 행 추가, dev-toolkit 구성(스킬 48·동적 워크플로 10·에이전트 16) 반영.
 
-## [1.10.0] - 2026-11-24
+정식 승격 전 남은 워크플로(pre-merge-gate·migration-readiness·test-coverage-boost)를 모두 실행해 검증(오케스트레이터 2종 리프 중첩 체이닝 확인, 총 79 에이전트·오류 0). 이 과정에서 test-coverage-boost가 `scripts/check_refs.py`의 잠복 버그를 포착·수정:
+- check_refs: 유사중복(INFO) 검사가 `if not wf_dir.is_dir(): continue` 안쪽에 있어 **workflows 디렉터리가 없는 플러그인(agentic·core·design-eng)에 미도달**했다. 별도 루프로 분리해 모든 로컬 플러그인에 적용(ERROR/WARN 게이트엔 영향 없음, INFO 완전성 수정).
 
 `dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
 - living-docs-governance — 장수명 프로젝트 문서 노후 방지(헌장·맵·상태)
