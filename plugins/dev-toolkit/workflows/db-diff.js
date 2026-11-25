@@ -137,6 +137,46 @@ function projectSnapshot(s) {
   }
 }
 
+// ---- 결정적 구조 델타: 완전성 보장(LLM 열거 누락 방지) ----
+// 테이블·컬럼·인덱스의 존재 집합과 PK 변경을 JS로 계산해 에이전트에 건넨다.
+// → "삭제된 테이블"처럼 중요한 차이를 모델이 놓치지 않도록, 열거는 결정적으로 하고 심각도만 판단시킨다.
+function nameList(arr) {
+  const s = []
+  if (Array.isArray(arr)) for (const x of arr) if (x && x.name != null) s.push(pStr(x.name))
+  return s
+}
+function diffNames(baseNames, otherNames) {
+  const bset = {}, oset = {}
+  for (const n of baseNames) bset[n] = true
+  for (const n of otherNames) oset[n] = true
+  return {
+    onlyBase: baseNames.filter((n) => !oset[n]),
+    onlyOther: otherNames.filter((n) => !bset[n]),
+    shared: baseNames.filter((n) => oset[n]),
+  }
+}
+function tableByName(tables) {
+  const m = {}
+  if (Array.isArray(tables)) for (const t of tables) if (t && t.name != null) m[pStr(t.name)] = t
+  return m
+}
+function structuralDelta(base, other) {
+  const bt = tableByName(base.tables), ot = tableByName(other.tables)
+  const td = diffNames(Object.keys(bt), Object.keys(ot))
+  const perTable = {}
+  for (const t of td.shared) {
+    const cd = diffNames(nameList(bt[t].columns), nameList(ot[t].columns))
+    const id = diffNames(nameList(bt[t].indexes), nameList(ot[t].indexes))
+    const bpk = pStrArr(bt[t].primaryKey).join(','), opk = pStrArr(ot[t].primaryKey).join(',')
+    perTable[t] = {
+      columnsOnlyInBase: cd.onlyBase, columnsOnlyInOther: cd.onlyOther, sharedColumns: cd.shared,
+      indexesOnlyInBase: id.onlyBase, indexesOnlyInOther: id.onlyOther,
+      primaryKeyChanged: (bpk !== opk) ? { base: bpk, other: opk } : null,
+    }
+  }
+  return { tablesOnlyInBase: td.onlyBase, tablesOnlyInOther: td.onlyOther, sharedTables: td.shared, perTable: perTable }
+}
+
 const rawArgs = (typeof args === 'string' && args.trim())
   ? args.trim()
   : (args && typeof args === 'object') ? JSON.stringify(args) : ''
@@ -207,12 +247,20 @@ const perPair = await pipeline(
     const dims = dimsFor(pair.base.dialect, pair.other.dialect)
     const baseL = safeLabel(pair.base.label)
     const otherL = safeLabel(pair.other.label)
+    const delta = structuralDelta(pair.base, pair.other)
     const results = await parallel(
       dims.map((d) => async () => {
+        const isSchema = (d.key === 'schema')
+        const payload = isSchema
+          ? { base: pair.base, other: pair.other, structuralDelta: delta }
+          : { base: pair.base, other: pair.other }
+        const completeness = isSchema
+          ? '입력의 structuralDelta 는 결정적으로 계산된 구조 차이 목록(테이블·컬럼·인덱스의 추가/삭제, PK 변경)이다. 그 목록의 **모든 항목을 하나도 빠짐없이** findings에 반영하라(기준선에만 있는 테이블=삭제=높음, 대상에만 있는 테이블=추가=낮음~보통, 인덱스 삭제=보통, 컬럼 추가/삭제는 nullable·기본값으로 판단). 더해 공유 컬럼의 타입·NULL 허용·기본값·PK 변경의 이관 심각도를 분석하라. '
+          : ''
         const out = await agent(
-          '기준선 "' + baseL + '" 와 대상 "' + otherL + '" 의 정규 스키마 스냅샷을 비교한다. ' + d.ask + '\n' +
+          '기준선 "' + baseL + '" 와 대상 "' + otherL + '" 의 정규 스키마 스냅샷을 비교한다. ' + d.ask + '\n' + completeness +
             "발견한 차이만 findings로 반환하고(object=테이블 또는 테이블.컬럼, category='" + d.key + "'), 차이가 없으면 빈 배열을 반환하라. 구조 차이만 다루고 실제 데이터 값은 쓰지 마라.\n" +
-            dataBlock({ base: pair.base, other: pair.other }),
+            dataBlock(payload),
           { agentType: d.agentType, schema: FINDINGS_SCHEMA, phase: '차이분석', label: '분석:' + d.key + ':' + otherL },
         )
         const fs = (out && Array.isArray(out.findings)) ? out.findings : []
