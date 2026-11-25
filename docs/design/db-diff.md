@@ -142,4 +142,6 @@ db-diff는 "label에 대한 정규 스냅샷을 공급받는다"는 포트에만
 3. normType 정규화는 산문 스킬 기반 LLM 판단(결정적 매핑 아님) → 방언 diff는 자문, 반박 검증이 거름. 기대치 명시.
 4. instructed 2회차는 수동 왕복(워크플로가 외부 DB 조회 도구를 직접 못 부름) → 재투입 `note` 필수.
 
-**1차 구현 범위(확정)**: 스키마 diff + 방언 diff(provided/instructed 어댑터, JS측 금지키 거부 가드). data_profile·도메인 어댑터·migration-readiness 합류는 후속.
+**1차 구현 범위(확정)**: 스키마 diff + 방언 diff(provided/instructed 어댑터). 보안은 **허용목록 투영**(계약 외 필드 전부 폐기 — 데니리스트 우회 불가) + **간접 프롬프트 주입 방어**(스냅샷을 신뢰불가 데이터 delimit 블록으로, 라벨 strict charset 제한)로 구현. data_profile·도메인 어댑터·migration-readiness 합류는 후속.
+
+> 보안 리뷰 반영(security-guidance): ① 데니리스트→허용목록 투영 교체, ② 외부 DB 식별자의 프롬프트 주입 방어. 둘 다 "보안 최우선" 설계 의도와 일치.
