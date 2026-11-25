@@ -1,0 +1,98 @@
+export const meta = {
+  name: 'design-approaches',
+  description: '설계 문제에 대해 서로 다른 각도로 N개 접근안을 생성하고, 심사 패널이 기준별로 채점한 뒤, 최고안을 중심으로 나머지의 장점을 접목해 설계안(+결정 기록)으로 합성한다',
+  whenToUse: '새 기능·리팩터·아키텍처 결정의 설계안을 비교·확정할 때(SDLC 설계 단계). 입력(args)에 설계 브리프(무엇을 설계할지·목표·제약)를 넘긴다. 코드 대상이 아니라 설계 문제 서술이 입력이다.',
+  phases: [
+    { title: '접근안', detail: '서로 다른 각도로 N개 접근안 생성' },
+    { title: '심사', detail: '기준별 심사 패널 채점' },
+    { title: '합성', detail: '최고안 + 장점 접목 설계안' },
+  ],
+}
+
+const APPROACH_SCHEMA = {
+  type: 'object',
+  required: ['name', 'summary'],
+  properties: {
+    name: { type: 'string' },
+    summary: { type: 'string' },
+    design: { type: 'string' },
+    tradeoffs: { type: 'string' },
+    risks: { type: 'string' },
+  },
+}
+
+const SCORE_SCHEMA = {
+  type: 'object',
+  required: ['score'],
+  properties: { score: { type: 'integer' }, rationale: { type: 'string' } },
+}
+
+const brief = (typeof args === 'string' && args.trim())
+  ? args.trim()
+  : (args && typeof args === 'object' && args.brief) ? String(args.brief).trim() : ''
+if (!brief) return { note: '설계 브리프를 args로 넘겨주세요(무엇을 설계할지·목표·제약).' }
+
+// 생성 각도 (서로 다른 관점의 독립 접근안)
+const ANGLES = [
+  { key: 'mvp', ask: 'MVP·단순성 우선 — 가장 작고 빠르게 가치를 주는 설계' },
+  { key: 'scale', ask: '확장성·유지보수 우선 — 성장과 변경에 강한 설계(hexagonal·contract-first 고려)' },
+  { key: 'risk', ask: '위험 최소 우선 — 되돌리기 쉽고 실패가 격리되는 설계' },
+]
+
+// 1) 접근안 생성 ----------------------------------------------------------
+phase('접근안')
+const approaches = (await parallel(
+  ANGLES.map((a) => async () => {
+    const out = await agent(
+      `설계 브리프:\n${brief}\n\n위 문제를 "${a.ask}" 관점에서 설계하라. ` +
+        'api-design·hexagonal-architecture·contract-first·architecture-decision-records 스킬 지침이 있으면 적용. ' +
+        'name·summary·design(핵심 설계)·tradeoffs·risks 를 반환하라.',
+      { agentType: 'dev-toolkit:architect', schema: APPROACH_SCHEMA, phase: '접근안', label: `접근:${a.key}` },
+    )
+    return out ? Object.assign({ angle: a.key }, out) : null
+  }),
+)).filter(Boolean)
+log(`접근안 ${approaches.length}개 생성`)
+if (!approaches.length) return { note: '접근안을 생성하지 못했습니다.' }
+
+// 2) 심사 패널 (접근안마다 여러 렌즈로 채점) ------------------------------
+const LENSES = [
+  { key: 'fit', ask: '요구 적합성·완전성' },
+  { key: 'simplicity', ask: '단순성·구현 난이도' },
+  { key: 'scale_maint', ask: '확장성·유지보수성' },
+  { key: 'risk', ask: '위험·되돌리기 용이성' },
+]
+
+phase('심사')
+const judged = await parallel(
+  approaches.map((ap) => async () => {
+    const scores = await parallel(
+      LENSES.map((l) => async () => {
+        const s = await agent(
+          `설계 브리프:\n${brief}\n\n접근안 "${ap.name}":\n${ap.design || ap.summary}\n\n` +
+            `이 접근안을 "${l.ask}" 기준으로 1~5점 채점하고 근거를 밝혀라.`,
+          { schema: SCORE_SCHEMA, phase: '심사', label: `심사:${ap.angle}:${l.key}` },
+        )
+        return (s && typeof s.score === 'number') ? s.score : null
+      }),
+    )
+    // 결측(심사 실패)은 0이 아니라 합산에서 제외하고, 결측 수가 다른 접근안끼리
+    // 공정하게 비교하도록 유효 점수의 평균으로 정규화한다(점수 범위 1~5).
+    const valid = scores.filter((n) => typeof n === 'number')
+    const total = valid.length ? valid.reduce((x, y) => x + y, 0) / valid.length : 0
+    return { approach: ap, total: total, scored: valid.length }
+  }),
+)
+judged.sort((a, b) => b.total - a.total)
+const ranked = judged.map((j) => ({ name: j.approach.name, angle: j.approach.angle, total: j.total, scored: j.scored }))
+log(`심사 완료 — 최고안: ${ranked.length ? ranked[0].name : '-'}`)
+
+// 3) 합성 -----------------------------------------------------------------
+phase('합성')
+const doc = await agent(
+  '다음은 설계 브리프, 생성된 접근안들, 심사 점수(JSON)다. architecture-decision-records 관점으로 한국어 마크다운 "설계안"을 작성하라. ' +
+    '구성: ① 추천 설계(최고 점수안 중심)와 근거, ② 다른 접근안에서 접목할 좋은 아이디어, ③ 트레이드오프·위험·완화, ④ 결정 기록(맥락·대안·결정·영향).\n\n' +
+    '브리프: ' + brief + '\n접근안: ' + JSON.stringify(approaches) + '\n순위: ' + JSON.stringify(ranked),
+  { agentType: 'dev-toolkit:architect', label: '설계안 합성' },
+)
+return doc
