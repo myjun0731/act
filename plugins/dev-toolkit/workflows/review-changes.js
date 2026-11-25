@@ -82,7 +82,7 @@ const classified = await agent(
     'frontend_vue(.vue), frontend_ts(.ts/.js), migration(마이그레이션·DDL 변경 스크립트), ' +
     'schema(스키마/엔티티 정의), config(설정), other. ' +
     '삭제된 파일·바이너리·생성물·락파일은 other로 두거나 제외하라.',
-  { schema: CLASSIFY_SCHEMA, effort: 'low', label: '변경 분류' },
+  { schema: CLASSIFY_SCHEMA, model: 'haiku', effort: 'low', label: '변경 분류' },
 )
 const files = (classified && Array.isArray(classified.files)) ? classified.files : []
 log(`변경 파일 ${files.length}건 분류 완료`)
@@ -143,7 +143,7 @@ const perFile = await pipeline(
         const v = await agent(
           '다음 리뷰 지적을 반박하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다.\n' +
             `파일: ${f.file}${f.line ? ':' + f.line : ''}\n심각도: ${f.severity}\n지적: ${f.summary}\n상세: ${f.detail || ''}`,
-          { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${f.file}` },
+          { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${f.file}` },
         )
         return (v && v.real) ? f : null
       }),
@@ -161,6 +161,6 @@ const report = await agent(
   '다음은 검증을 통과한 리뷰 지적 목록(JSON)이다. 심각도(high→medium→low)·파일별로 묶어 한국어 마크다운 리뷰 리포트를 작성하라. ' +
     '각 항목은 `파일:라인` · 심각도 · 요약 · 권고를 포함하고, 지적이 없으면 통과(PASS)임을 명시하라.\n\n' +
     JSON.stringify(confirmed),
-  { label: '리포트 작성' },
+  { model: 'sonnet', label: '리포트 작성' },
 )
 return report

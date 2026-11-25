@@ -2,6 +2,29 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.12.0] - 2026-11-25
+
+`dev-toolkit` 0.10.2 → 0.10.3: 새 동적 워크플로 `db-diff` 추가(동적 워크플로 10 → 11).
+- `/dev-toolkit:db-diff` — 2개 이상 DB의 정규 스키마 스냅샷(계약)의 구조 차이를 **결정적으로 계산**하고, 에이전트가 이관 심각도·방언 함정을 분류해 심각도순 이관 리포트+ADR로 합친다. **DB에 직접 접속하지 않는다**(스냅샷 없으면 읽기 전용 조회 지시서 출력 → 외부 DB 조회 도구로 떠서 재투입). 실제 접속 어댑터는 도메인 플러그인 몫(경계).
+  - 설계는 `dev-toolkit:design-approaches` 워크플로로 생성(`docs/design/db-diff.md`). 1차(스키마·방언 diff) → 2차(data_profile opt-in: 값 없는 집계 계약으로 행수·NULL비율·distinct 차이).
+  - 보안(security-guidance 리뷰 4건 반영): 허용목록 투영(계약 외 필드 폐기), 간접 프롬프트 주입 방어(신뢰불가 데이터 delimit 블록·구분자 위조 방지·라벨 strict charset), 집계 계약은 실제 값·min/max·샘플 미반입.
+  - 완전성: 적대적 verify 대신 **결정적 계산 + 백필**(스모크에서 verify가 진짜 차이를 삭제하는 역효과 확인 후 재설계). 방언 등가 노이즈는 삭제 않고 low "방언 등가"로 표시.
+  - `migration-readiness` 리프에 합류(복합 args로 스냅샷 제공 시 실제 비교).
+- 오케스트레이터 3종(`pre-merge-gate`·`migration-readiness`·`onboard-pack`) 리프 결과를 신뢰불가 데이터 가드로 일괄 하드닝(간접 프롬프트 주입 방지).
+
+`dev-toolkit` 0.10.3 → 0.10.4: 워크플로 토큰 최적화 2차(모델 라우팅). fork-3의 `effort:low`(1차)에 이어 **per-agent `model` 라우팅**을 전 워크플로에 도입.
+- **원칙**: `agentType` 디스패치 에이전트(리뷰어·architect·DB·test-automator·java-build-resolver 등 — 실제 지적/설계를 하는 단계)는 **세션 모델(opus) 유지**. 제네릭 저부가 단계만 하향.
+  - 수집·분류·구획·스코프(기계) → `haiku`+`effort:low`
+  - 채점(design-approaches 렌즈) → `haiku`+`effort:low`, **4렌즈를 접근안당 1호출로 배칭(렌즈 호출 12 → 3)**
+  - 검증(반박) → `sonnet`+`effort:low`
+  - 제네릭 리포트/합성(agentType 없음) → `sonnet`
+- **보존**: 발견/탐색 제네릭 단계(impact 스위프, migration 차원·완전성, sql 방언·함정, db-diff 결정적 계산·분류)는 opus 유지 — 품질 핵심. `pre-merge-gate`의 GO/NO-GO 판정도 opus 유지(병합 차단 결정이라 오판 회피).
+- 효과: 최대 소비처 design-approaches의 채점 12호출→3, review/sql/migration의 무한 팬아웃 검증을 sonnet로. 리뷰 품질 저하 없이 토큰 절감.
+
+`dev-toolkit` 0.10.4 → 0.10.5: 스모크 실측 기반 채점 모델 교정. design-approaches를 실행해보니(7에이전트·410k 토큰, 1.24M 대비 ~67%↓) **haiku 배칭 채점이 3회 중 2회 실패**(렌즈 환각 'smoke_probe', 빈 결과)해 순위가 채점 실패의 산물이 됨.
+- 채점 모델 `haiku` → `sonnet`(배칭은 유지 — 여전히 opus×12 대비 큰 절감). 다렌즈 1~5점 매핑은 추출이 아니라 판정 작업이라 haiku엔 부적합.
+- 환각 방어: 프롬프트에 "주어진 렌즈 키만 사용·새 기준 금지" 명시 + 집계 시 알려진 LENSES 키의 점수만 반영(환각 렌즈·결측 배제). 수집·분류 등 순수 추출 단계는 haiku 유지(판정 아님).
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

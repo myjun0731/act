@@ -21,10 +21,24 @@ const APPROACH_SCHEMA = {
   },
 }
 
-const SCORE_SCHEMA = {
+// 접근안 1개를 모든 렌즈로 한 번에 채점(렌즈당 1호출 → 접근안당 1호출로 배칭)
+const SCORES_SCHEMA = {
   type: 'object',
-  required: ['score'],
-  properties: { score: { type: 'integer' }, rationale: { type: 'string' } },
+  required: ['scores'],
+  properties: {
+    scores: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['lens', 'score'],
+        properties: {
+          lens: { type: 'string' },
+          score: { type: 'integer' },
+          rationale: { type: 'string' },
+        },
+      },
+    },
+  },
 }
 
 const brief = (typeof args === 'string' && args.trim())
@@ -64,21 +78,26 @@ const LENSES = [
 ]
 
 phase('심사')
+// 채점은 주어진 4개 렌즈를 1~5점으로 매핑하는 판정 작업이라 sonnet 로 라우팅한다.
+// (haiku 는 스모크에서 3회 중 2회 렌즈 환각('smoke_probe' 등)·빈 결과를 내 순위를 왜곡 → 부적합)
+// 4개 렌즈를 접근안당 1호출로 배칭(렌즈당 1호출 → 12→3), 환각 렌즈는 집계에서 배제한다.
+const lensKeys = {}
+LENSES.forEach((l) => { lensKeys[l.key] = true })
+const lensList = LENSES.map((l) => `- ${l.key}: ${l.ask}`).join('\n')
 const judged = await parallel(
   approaches.map((ap) => async () => {
-    const scores = await parallel(
-      LENSES.map((l) => async () => {
-        const s = await agent(
-          `설계 브리프:\n${brief}\n\n접근안 "${ap.name}":\n${ap.design || ap.summary}\n\n` +
-            `이 접근안을 "${l.ask}" 기준으로 1~5점 채점하고 근거를 밝혀라.`,
-          { schema: SCORE_SCHEMA, phase: '심사', label: `심사:${ap.angle}:${l.key}` },
-        )
-        return (s && typeof s.score === 'number') ? s.score : null
-      }),
+    const out = await agent(
+      `설계 브리프:\n${brief}\n\n접근안 "${ap.name}":\n${ap.design || ap.summary}\n\n` +
+        `이 접근안을 아래 ${LENSES.length}개 기준 각각에 대해 1~5점 채점하고 근거를 밝혀라. 기준은 아래가 전부이며, ` +
+        `lens 값은 반드시 아래 키를 그대로 쓰고 새 기준을 지어내지 마라:\n${lensList}\n\n` +
+        `각 기준마다 { lens(위 키 중 하나), score(1~5 정수), rationale } 를 담아 scores 배열(${LENSES.length}개)로 반환하라.`,
+      { schema: SCORES_SCHEMA, model: 'sonnet', effort: 'low', phase: '심사', label: `심사:${ap.angle}` },
     )
-    // 결측(심사 실패)은 0이 아니라 합산에서 제외하고, 결측 수가 다른 접근안끼리
-    // 공정하게 비교하도록 유효 점수의 평균으로 정규화한다(점수 범위 1~5).
-    const valid = scores.filter((n) => typeof n === 'number')
+    // 알려진 렌즈 키의 유효 점수만 집계(환각 렌즈·결측 배제), 접근안 간 공정 비교 위해 평균으로 정규화(1~5).
+    const arr = (out && Array.isArray(out.scores)) ? out.scores : []
+    const valid = arr
+      .filter((s) => s && lensKeys[s.lens] && typeof s.score === 'number')
+      .map((s) => s.score)
     const total = valid.length ? valid.reduce((x, y) => x + y, 0) / valid.length : 0
     return { approach: ap, total: total, scored: valid.length }
   }),

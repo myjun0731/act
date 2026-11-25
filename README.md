@@ -38,7 +38,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 | 플러그인 | 상태 | 내용 |
 |---|---|---|
 | allinone | 0.4.1 | 메타 플러그인: core·dev-toolkit·design-eng·agentic·overkill·recursive-research + 공식 플러그인 8종 |
-| dev-toolkit | 0.10.2 | Java·Spring·DB·레거시·설계·협업·디버깅·TDD·PICT·MCP 스킬 48, 동적 워크플로 10, 리뷰·구현 에이전트 16, 커버리지 커맨드, 규칙 원본 |
+| dev-toolkit | 0.10.3 | Java·Spring·DB·레거시·설계·협업·디버깅·TDD·PICT·MCP 스킬 48, 동적 워크플로 11, 리뷰·구현 에이전트 16, 커버리지 커맨드, 규칙 원본 |
 | core | 0.4.0 | 비밀파일 가드·prettier 훅, 상태줄, /remember·/recall, /core:setup, 설정 정리·스킬 점검 스킬 4 |
 | agentic | 0.3.0 | 에이전트 아키텍처·루프·파이프라인·보안 설계 스킬 12 (외부 원본 내재화, MIT) |
 | design-eng | 0.1.1 | 디자인·애니메이션 스킬 7종, design-for-ai(외부 원본) 의존성 |

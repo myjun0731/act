@@ -13,23 +13,25 @@
 | `/dev-toolkit:codebase-map` | 대상을 영역으로 구획 → 영역별 병렬 리더 요약 → 아키텍트가 아키텍처 맵으로 통합 | 경로·모듈. 없으면 레포 전체 |
 | `/dev-toolkit:test-coverage-boost` | 테스트 공백 탐색 → 유닛별 **새 테스트 파일 생성**(기존 미수정) → 빌드 1회 검증 → 보강 보고 | 경로·모듈. 없으면 작업 트리의 변경 유닛. ⚠️ 레포에 파일 생성 |
 | `/dev-toolkit:design-approaches` | 설계 브리프 → 서로 다른 각도로 N개 접근안 생성 → 심사 패널 채점 → 최고안+장점 접목 설계안(결정 기록) | 설계 브리프(무엇을·목표·제약). 코드 대상 아님 |
+| `/dev-toolkit:db-diff` | 2개 이상 DB의 정규 스키마 스냅샷(계약)의 구조 차이를 **결정적으로 계산** → 에이전트가 이관 심각도·방언 함정 분류(전수, 삭제 불가) → 심각도순 이관 리포트+ADR. opt-in으로 데이터 프로파일(행수·NULL비율·distinct) 차이도. **DB 직접 접속 안 함**(스냅샷 없으면 읽기 전용 조회 지시서 출력 → 외부 DB 조회 도구로 떠서 재투입) | 스냅샷 2개+(파일 경로/인라인 JSON) + scope. `options.dataProfile`·`profiles` |
 
-> SDLC 매핑: **분석**(codebase-map·impact-analysis) · **설계**(design-approaches) · **테스트**(test-coverage-boost) · **유지보수**(review-changes·sql-db-audit·migration-verify). 구현은 전용 워크플로를 두지 않는다(병렬 코드 생성은 충돌·중복 위험 — `feature-dev`/대화가 적합).
+> SDLC 매핑: **분석**(codebase-map·impact-analysis) · **설계**(design-approaches) · **테스트**(test-coverage-boost) · **유지보수·이관**(review-changes·sql-db-audit·migration-verify·db-diff). 구현은 전용 워크플로를 두지 않는다(병렬 코드 생성은 충돌·중복 위험 — `feature-dev`/대화가 적합).
 
 ### 연계(오케스트레이터)
 
-위 6종을 **리프**로 두고, `workflow('dev-toolkit:<리프>', args)` 로 엮어 하나의 판정/문서로 합성한다.
+위 리프들을 **리프**로 두고, `workflow('dev-toolkit:<리프>', args)` 로 엮어 하나의 판정/문서로 합성한다.
 **중첩은 1단만** — 오케스트레이터는 리프를 호출하지만, 오케스트레이터끼리는 호출할 수 없다.
 리프 팬아웃이 **합산**되므로 에이전트 수가 크다(설치 규모 `large` 권장, 범위는 좁게).
 
 | 커맨드 | 엮는 리프 | 산출 |
 |---|---|---|
 | `/dev-toolkit:pre-merge-gate` | review-changes + sql-db-audit + impact-analysis | 병합/배포 전 **GO/NO-GO 게이트** |
-| `/dev-toolkit:migration-readiness` | migration-verify + impact-analysis | **이관 준비도** 리포트(읽기 전용; 테스트 생성은 test-coverage-boost 별도) |
+| `/dev-toolkit:migration-readiness` | migration-verify + impact-analysis + db-diff | **이관 준비도** 리포트(읽기 전용; 테스트 생성은 test-coverage-boost 별도) |
 | `/dev-toolkit:onboard-pack` | codebase-map + sql-db-audit | 모듈 **온보딩 팩**(구조+DB 품질) |
 
 - 리프는 순차 실행하고(동시성·토큰 예산 공유라 예측 가능), 실패한 리프는 "미실행"으로 표시하고 계속한다.
 - 이름 해석(`dev-toolkit:<리프>`)은 설치 후 런타임에서만 검증된다.
+- `db-diff`는 migration-readiness에 리프로 합류돼 있다. 단 DB 구조 차이를 실제로 보려면 **복합 args**(`{target, targets, scope, options}`)로 DB 스냅샷(targets)을 함께 넘겨야 한다 — 없으면 db-diff는 "스냅샷 필요" 안내만 하고 준비도 리포트엔 그렇게 표시된다(설계: `docs/design/db-diff.md`).
 
 ## 구조
 
@@ -50,6 +52,16 @@
   `java-build-resolver`가 빌드 1회 → 보고. **유일하게 레포를 변경(파일 생성)하는 워크플로** — 커밋 전 리뷰할 것.
 - `design-approaches`: 3각도(mvp·scale·risk) 접근안 생성(`architect`) → 접근안마다 4렌즈 심사 패널 채점 →
   최고안 중심 + 장점 접목 설계안 합성(`architect`, ADR 형식). 입력은 코드가 아니라 **설계 브리프**(args).
+- `db-diff`: 수집 1개(허용목록 투영 — 계약 외 필드 전부 폐기) → **결정적 구조 차이 계산**(테이블·컬럼·인덱스·PK·
+  타입·NULL·기본값을 JS로, `computeDiffs`) → 쌍별 `database-architect`가 심각도·방언 함정 분류(전수, **삭제 불가**;
+  에이전트 누락 시 결정적 diff로 백필 → 완전성 구조적 보장) → `database-architect` 리포트(+ADR).
+  **적대적 verify 미사용**: 구조 diff는 환각이 아니라 계산된 사실이라, 다른 워크플로의 반박 검증을 그대로 쓰면
+  진짜 차이(예: 삭제된 테이블, tinyint→boolean)를 지우는 역효과가 스모크 테스트에서 확인됨 — 대신 결정적 계산 +
+  분류(등가 노이즈는 삭제 않고 low "방언 등가"로 표시)로 대체. **DB 비접속**: 스냅샷 계약만 소비(접속정보·행값
+  필드 구조적 부재 = 보안). 스냅샷은 신뢰불가 데이터로 delimit 블록(위조 방지)에 싣고 라벨은 strict charset
+  제한(간접 프롬프트 주입 방지). 스냅샷 2개 미만이면 읽기 전용 조회 지시서 출력 후 종료. **data_profile**(opt-in,
+  `options.dataProfile=true`)은 값 없는 별도 집계 계약(`args.profiles`: 행수·NULL비율·distinct만)을 받아 결정적
+  프로파일 diff를 `database-optimizer`로 분류한다(실제 값·min/max·샘플은 투영에서 폐기 → 유출 불가). migration-readiness에 합류.
 
 ## 전제·주의
 
