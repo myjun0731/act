@@ -2,6 +2,16 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.12.0] - 2026-11-25
+
+`dev-toolkit` 0.10.2 → 0.10.3: 새 동적 워크플로 `db-diff` 추가(동적 워크플로 10 → 11).
+- `/dev-toolkit:db-diff` — 2개 이상 DB의 정규 스키마 스냅샷(계약)의 구조 차이를 **결정적으로 계산**하고, 에이전트가 이관 심각도·방언 함정을 분류해 심각도순 이관 리포트+ADR로 합친다. **DB에 직접 접속하지 않는다**(스냅샷 없으면 읽기 전용 조회 지시서 출력 → 외부 DB 조회 도구로 떠서 재투입). 실제 접속 어댑터는 도메인 플러그인 몫(경계).
+  - 설계는 `dev-toolkit:design-approaches` 워크플로로 생성(`docs/design/db-diff.md`). 1차(스키마·방언 diff) → 2차(data_profile opt-in: 값 없는 집계 계약으로 행수·NULL비율·distinct 차이).
+  - 보안(security-guidance 리뷰 4건 반영): 허용목록 투영(계약 외 필드 폐기), 간접 프롬프트 주입 방어(신뢰불가 데이터 delimit 블록·구분자 위조 방지·라벨 strict charset), 집계 계약은 실제 값·min/max·샘플 미반입.
+  - 완전성: 적대적 verify 대신 **결정적 계산 + 백필**(스모크에서 verify가 진짜 차이를 삭제하는 역효과 확인 후 재설계). 방언 등가 노이즈는 삭제 않고 low "방언 등가"로 표시.
+  - `migration-readiness` 리프에 합류(복합 args로 스냅샷 제공 시 실제 비교).
+- 오케스트레이터 3종(`pre-merge-gate`·`migration-readiness`·`onboard-pack`) 리프 결과를 신뢰불가 데이터 가드로 일괄 하드닝(간접 프롬프트 주입 방지).
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
