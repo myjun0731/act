@@ -64,8 +64,8 @@ if (mode === 'full') {
       agent(
         `테스트 파일 ${u.testFile} 에 다음 케이스를 작성하라(대상: ${u.target || '설계서 참고'}).\n${u.cases.map((c) => `- ${c}`).join('\n')}\n` +
           `설계서 ${design} 를 참고하라. 레포의 테스트 관례를 따르고, 이 파일만 작성·수정하라. ` +
-          '구현 코드는 수정하지 마라(실패는 다음 단계에서 고친다). 작성 후 이 파일만 대상으로 테스트를 한 번 돌려 봐도 된다. 결과를 한 줄로 요약해 반환하라.',
-        { phase: '작성', label: `작성:${u.testFile.split('/').pop()}` },
+          '구현 코드는 수정하지 마라(실패는 다음 단계에서 고친다). 작성 후 이 파일만 대상으로 테스트를 한 번 돌려 봐도 된다. test-driven-development·springboot-tdd 스킬 지침이 있으면 적용하라. 결과를 한 줄로 요약해 반환하라.',
+        { agentType: 'dev-toolkit:test-automator', phase: '작성', label: `작성:${u.testFile.split('/').pop()}` },
       ).then((r) => ({ testFile: u.testFile, cases: u.cases.length, summary: r || '실패' })),
     ))).filter(Boolean)
   }

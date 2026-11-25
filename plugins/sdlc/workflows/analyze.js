@@ -87,6 +87,7 @@ async function draft(round, prev, gaps) {
     `요청:\n${request}\n${feedback ? `\n사용자 피드백(반드시 반영):\n${feedback}\n` : ''}\n${base}\n${TEMPLATE}\n\n` +
       `평가 기준(가중치):\n${Q.criteria.map((c) => `- ${c.key}(${c.weight}): ${c.desc}`).join('\n')}\n` +
       (Q.mustHave.length ? `필수 포함 항목:\n${Q.mustHave.map((m) => `- ${m}`).join('\n')}\n` : '') +
+      `\n코드 구조 파악에 codebase-onboarding 스킬 지침이 있으면 적용하라.` +
       `\n완성본을 ${path} 에 쓰고(디렉터리가 없으면 만든다), 쓴 경로 한 줄만 반환하라. 코드 파일은 수정하지 마라.`,
     { phase: '작성', label: `작성 r${round}` },
   )

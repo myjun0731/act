@@ -32,6 +32,14 @@
 - `deliver.js` 는 `LEAVES` 배열로 리프를 선언해 `scripts/check_refs.py` 가 `sdlc:<리프>` 참조를 검증한다.
 - `allinone` 0.4.1 → 0.5.0: 의존성에 `sdlc` 추가. 기존 설치는 `claude plugin install sdlc@claude-pro` 로 따로 설치.
 
+`sdlc` 0.1.0 → 0.2.0: dev-toolkit 전문 에이전트/스킬 연계(구현 전 `design-approaches` 워크플로로 접근안 비교·검증 → risk-minimal 안 채택).
+- **전문성 주입 이원화**: 페르소나=`agentType`(설치 안전·ERROR급 검증), 방법론·지식=소프트 스킬참조("있으면 적용"). 반박검증·심사 패널·종료 가드는 제네릭 유지(독립 평가자 보존).
+- `review` 2계층화: 1계층=제네릭 5차원(설계준수·요구추적은 제네릭 전담 — dev-toolkit 리뷰어는 설계서/AC 모름), 2계층=변경 파일 유형별 전문 리뷰어(java-reviewer·sql-pro·typescript/react/vue-reviewer·database-architect) + `security-reviewer` **보안 상시 레인**(유형 무관 전 변경 1회). 전 디스패치 try/catch → 미설치·오류 시 제네릭으로 완주. findings에 `dim` 부여(5차원 투영).
+- `test`→`test-automator`, `implement` 빌드수정→`build-error-resolver`, `design`→`architect`; 각 단계에 test-driven-development·systematic-debugging·설계 스킬 소프트 참조.
+- `plugin.json`에 `dependencies: ["dev-toolkit"]` 선언(allinone 번들 전제, 단독 설치 시 자동 동반). 심사 패널·qualityLoop·종료 가드는 불변.
+
+`scripts/check_refs.py`: **선언된 의존성 인식** 추가 — 플러그인이 `dependencies`로 선언한 다른 로컬 플러그인의 스킬을 프롬프트에서 참조하면 더는 WARN이 아니다(동반 설치 보장). sdlc의 dev-toolkit 소프트 스킬 참조 9건이 WARN 0으로 정리(rc/ga strict 통과). 의존성 미선언 cross-plugin 스킬 참조만 WARN 유지.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

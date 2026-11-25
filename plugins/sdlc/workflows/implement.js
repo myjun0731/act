@@ -96,7 +96,7 @@ for (let w = 0; w < waves.length; w++) {
       `설계서 ${design} 와 분석서 ${analysis} 를 참고해 다음 작업을 구현하라.\n작업(JSON): ${JSON.stringify(t)}\n\n` +
         '규칙:\n- 이 작업의 대상 파일 범위 안에서만 수정하라(다른 작업이 동시에 다른 파일을 수정 중이다). 범위 밖 수정이 꼭 필요하면 하지 말고 notes 에 적어라.\n' +
         '- 기존 코드 관례(구조·네이밍·에러 처리)를 따른다.\n- 전체 빌드·전체 테스트는 실행하지 마라(병렬 작업 중). 단일 파일 문법 확인 정도는 해도 된다.\n' +
-        '- 테스트 코드 작성은 다음 단계 몫이다. git commit 하지 마라.\n- 설계와 다르게 구현했다면 deviations 에 이유를 적어라.',
+        '- 테스트 코드 작성은 다음 단계 몫이다. git commit 하지 마라.\n- 설계와 다르게 구현했다면 deviations 에 이유를 적어라.\n- test-driven-development·systematic-debugging 스킬 지침이 있으면 적용하라.',
       { schema: RESULT_SCHEMA, phase: '구현', label: `구현:${t.id}` },
     ).then((r) => Object.assign({ id: t.id, title: t.title }, r || { status: 'failed', notes: '에이전트 실패' }))
   }))
@@ -118,8 +118,8 @@ const BUILD_SCHEMA = {
 const build = await agent(
   `구현이 끝났다. 빌드(컴파일·타입체크·린트 등 레포에 있는 것)를 실행하라. 명령 후보: ${plan.buildCmd || '(분석서 참고)'}.\n` +
     `실패하면 오류 원인을 고치고 다시 빌드하라(최대 ${maxBuildFixes}회). 고칠 때 설계서 ${design} 의 의도를 지켜라. ` +
-    '빌드 명령이 없는 레포라면 가능한 정적 확인을 하고 buildOk 를 그 결과로 판단하라. 테스트 실행은 하지 마라. git commit 하지 마라.',
-  { schema: BUILD_SCHEMA, phase: '빌드', label: '빌드 검증' },
+    '빌드 명령이 없는 레포라면 가능한 정적 확인을 하고 buildOk 를 그 결과로 판단하라. 테스트 실행은 하지 마라. systematic-debugging 스킬 지침이 있으면 적용하라. git commit 하지 마라.',
+  { agentType: 'dev-toolkit:build-error-resolver', schema: BUILD_SCHEMA, phase: '빌드', label: '빌드 검증' },
 )
 
 // 4) 기록 -------------------------------------------------------------------

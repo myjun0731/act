@@ -77,7 +77,63 @@ const verified = await pipeline(
     ).then((v) => (v && !v.refuted ? Object.assign({ dim: d.key }, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }) : null)),
   )).then((xs) => xs.filter(Boolean)),
 )
-const all = verified.filter(Boolean).flat()
+// Layer 2 (가산·선택): 변경 파일 유형별 dev-toolkit 전문 리뷰어 + 보안 상시 레인.
+// 실패(미설치·에이전트 오류)해도 try/catch·parallel 로 흡수 → 1계층 제네릭 5차원으로 완주한다.
+function reviewerFor(type) {
+  switch (type) {
+    case 'java': return { agentType: 'dev-toolkit:java-reviewer', ask: 'Spring/JPA 계층·트랜잭션·동시성 정확성·보안·유지보수를 코드 관용구 수준으로 심화 리뷰하라' }
+    case 'sql_mapper': return { agentType: 'dev-toolkit:sql-pro', ask: 'SQL 정확성·인덱스·실행계획, 5방언(postgresql·tibero·oracle·mysql·mariadb) 일관성, MariaDB→PostgreSQL 이관함정(정수 setString·varchar 일시 컬럼 캐스트·함수/문법 차이)을 심화 점검하라' }
+    case 'frontend_react': return { agentType: 'dev-toolkit:react-reviewer', ask: '훅 정확성·렌더 성능·서버/클라이언트 경계·접근성·보안을 심화 리뷰하라' }
+    case 'frontend_vue': return { agentType: 'dev-toolkit:vue-reviewer', ask: 'Composition API 정확성·반응성·컴포넌트 구조·템플릿 보안을 심화 리뷰하라' }
+    case 'frontend_ts': return { agentType: 'dev-toolkit:typescript-reviewer', ask: '타입 안전성·async 정확성·Node/웹 보안을 심화 리뷰하라' }
+    case 'migration': case 'schema': return { agentType: 'dev-toolkit:database-architect', ask: '스키마 설계·제약·인덱스·이관 안전성(무중단·롤백·데이터 정합성)을 심화 리뷰하라' }
+    default: return null
+  }
+}
+const CLS_SCHEMA = { type: 'object', required: ['files'], properties: { files: { type: 'array', items: { type: 'object', required: ['path', 'type'], properties: { path: { type: 'string' }, type: { type: 'string', enum: ['java', 'sql_mapper', 'frontend_react', 'frontend_vue', 'frontend_ts', 'migration', 'schema', 'config', 'other'] } } } } } }
+let typed = []
+try {
+  const cls = await agent(
+    `다음 변경 파일을 유형으로 분류해 반환하라(경로 그대로): ${files.join(', ')}\n` +
+      '유형: java(.java)·sql_mapper(MyBatis 매퍼 XML·.sql)·frontend_react(.tsx/.jsx)·frontend_vue(.vue)·frontend_ts(.ts/.js)·migration(마이그레이션·DDL)·schema(스키마/엔티티)·config·other.',
+    { schema: CLS_SCHEMA, model: 'haiku', effort: 'low', phase: '리뷰', label: '유형 분류' },
+  )
+  typed = (cls && Array.isArray(cls.files)) ? cls.files : []
+} catch (e) { log('유형 분류 실패 — 전문 리뷰 생략, 제네릭 5차원으로 계속') }
+// 유형별로 묶어 전문 리뷰어 1회씩 디스패치(비용 억제)
+const byType = {}
+for (const f of typed) { const r = reviewerFor(f.type); if (r && f.path) { (byType[f.type] = byType[f.type] || { r: r, files: [] }).files.push(f.path) } }
+const expertRaw = (await parallel(Object.keys(byType).map((t) => async () => {
+  const g = byType[t]
+  try {
+    const out = await agent(
+      `변경 파일: ${g.files.join(', ')}\n변경분은 git diff ${base} 로 보라(신규 파일은 전체). 설계서 ${design}·분석서 ${analysis} 의 의도를 기준으로 삼아라.\n` +
+        `${g.r.ask}\n실제 결함만 findings 로 보고하라(file·severity·title·detail·fix, 스타일 취향 제외). 아무것도 수정하지 마라.`,
+      { agentType: g.r.agentType, schema: FIND_SCHEMA, phase: '리뷰', label: `전문:${t}` },
+    )
+    return ((out && out.findings) || []).map((f) => Object.assign({ dim: 'specialist' }, f))
+  } catch (e) { log(`전문 리뷰 ${t} 생략(제네릭층이 커버)`); return [] }
+}))).filter(Boolean).flat()
+// 보안 상시 레인: 유형 무관 전 변경 파일 1회(2계층 토글과 무관하게 항상)
+let securityRaw = []
+try {
+  const sec = await agent(
+    `변경 파일 전체(${files.join(', ')})를 보안 관점으로 리뷰하라. 변경분은 git diff ${base}.\n` +
+      '입력 검증·인젝션·인증/권한 확인·비밀정보 노출·안전하지 않은 기본값·OWASP Top 10 관점의 실제 취약점만 findings 로 보고하라. 아무것도 수정하지 마라.',
+    { agentType: 'dev-toolkit:security-reviewer', schema: FIND_SCHEMA, phase: '리뷰', label: '보안 상시' },
+  )
+  securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
+} catch (e) { log('보안 전문 리뷰 생략(제네릭 security 차원이 커버)') }
+// 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
+const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () =>
+  agent(
+    `다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n` +
+      `실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ${JSON.stringify(f)}`,
+    { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${(f.file || '').split('/').pop()}` },
+  ).then((v) => (v && !v.refuted ? Object.assign({}, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }) : null)),
+))).filter(Boolean)
+
+const all = verified.filter(Boolean).flat().concat(extra)
 // 같은 위치·제목 중복 제거
 const seen = new Set()
 const confirmed = all.filter((f) => {
