@@ -188,6 +188,19 @@ def main():
     else:
         warns.append("claude CLI 가 없어 검증을 건너뜀")
 
+    # 4.5) 이름 참조 무결성(refcheck). ERROR 는 항상 차단, WARN 은 rc/ga 에서만 차단.
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import check_refs
+        strict = cfg["kind"] in ("rc", "ga")
+        for rf in check_refs.check(ROOT):
+            if rf["severity"] == "ERROR":
+                errors.append(f"refcheck {rf['file']}: {rf['detail']}")
+            elif rf["severity"] == "WARN":
+                (errors if strict else warns).append(f"refcheck {rf['file']}: {rf['detail']}")
+    except Exception as e:
+        warns.append(f"refcheck 를 건너뜀: {e}")
+
     # 5) 출력
     print(f"[release] stage={a.stage}  branch={branch}  HEAD {head[:7]}")
     print(f"          {cur}  ->  {newv}   (tag {mtag}, prerelease={cfg['prerelease']}, latest={cfg['latest']})")
