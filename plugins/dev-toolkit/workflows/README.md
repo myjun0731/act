@@ -13,12 +13,13 @@
 | `/dev-toolkit:codebase-map` | 대상을 영역으로 구획 → 영역별 병렬 리더 요약 → 아키텍트가 아키텍처 맵으로 통합 | 경로·모듈. 없으면 레포 전체 |
 | `/dev-toolkit:test-coverage-boost` | 테스트 공백 탐색 → 유닛별 **새 테스트 파일 생성**(기존 미수정) → 빌드 1회 검증 → 보강 보고 | 경로·모듈. 없으면 작업 트리의 변경 유닛. ⚠️ 레포에 파일 생성 |
 | `/dev-toolkit:design-approaches` | 설계 브리프 → 서로 다른 각도로 N개 접근안 생성 → 심사 패널 채점 → 최고안+장점 접목 설계안(결정 기록) | 설계 브리프(무엇을·목표·제약). 코드 대상 아님 |
+| `/dev-toolkit:db-diff` | 2개 이상 DB의 정규 스키마 스냅샷(계약)을 받아 스키마·방언 차이를 다차원 분석 → 반박 검증 → 심각도순 이관 리포트+ADR. **DB 직접 접속 안 함**(스냅샷 없으면 읽기 전용 조회 지시서 출력 → 외부 DB 조회 도구로 떠서 재투입) | 스냅샷 2개+(파일 경로/인라인 JSON) + scope |
 
-> SDLC 매핑: **분석**(codebase-map·impact-analysis) · **설계**(design-approaches) · **테스트**(test-coverage-boost) · **유지보수**(review-changes·sql-db-audit·migration-verify). 구현은 전용 워크플로를 두지 않는다(병렬 코드 생성은 충돌·중복 위험 — `feature-dev`/대화가 적합).
+> SDLC 매핑: **분석**(codebase-map·impact-analysis) · **설계**(design-approaches) · **테스트**(test-coverage-boost) · **유지보수·이관**(review-changes·sql-db-audit·migration-verify·db-diff). 구현은 전용 워크플로를 두지 않는다(병렬 코드 생성은 충돌·중복 위험 — `feature-dev`/대화가 적합).
 
 ### 연계(오케스트레이터)
 
-위 6종을 **리프**로 두고, `workflow('dev-toolkit:<리프>', args)` 로 엮어 하나의 판정/문서로 합성한다.
+위 리프들을 **리프**로 두고, `workflow('dev-toolkit:<리프>', args)` 로 엮어 하나의 판정/문서로 합성한다.
 **중첩은 1단만** — 오케스트레이터는 리프를 호출하지만, 오케스트레이터끼리는 호출할 수 없다.
 리프 팬아웃이 **합산**되므로 에이전트 수가 크다(설치 규모 `large` 권장, 범위는 좁게).
 
@@ -30,6 +31,7 @@
 
 - 리프는 순차 실행하고(동시성·토큰 예산 공유라 예측 가능), 실패한 리프는 "미실행"으로 표시하고 계속한다.
 - 이름 해석(`dev-toolkit:<리프>`)은 설치 후 런타임에서만 검증된다.
+- `db-diff`는 리프로 사용 가능하지만 아직 오케스트레이터에 엮지 않았다. migration-readiness 합류는 복합 args(`{target, targets, scope}`)가 필요해 후속으로 둔다(설계: `docs/design/db-diff.md`).
 
 ## 구조
 
@@ -50,6 +52,10 @@
   `java-build-resolver`가 빌드 1회 → 보고. **유일하게 레포를 변경(파일 생성)하는 워크플로** — 커밋 전 리뷰할 것.
 - `design-approaches`: 3각도(mvp·scale·risk) 접근안 생성(`architect`) → 접근안마다 4렌즈 심사 패널 채점 →
   최고안 중심 + 장점 접목 설계안 합성(`architect`, ADR 형식). 입력은 코드가 아니라 **설계 브리프**(args).
+- `db-diff`: 수집 1개(스냅샷 정규화 + JS측 금지키 거부 가드) → 기준선 대비 쌍별 2차원 병렬
+  (schema=`database-architect`, dialect=`sql-pro`) → 차이별 반박 검증 → `database-architect` 리포트(+ADR).
+  **DB 비접속**: 정규 스키마 스냅샷 계약만 소비(접속정보·행값 필드 구조적 부재 = 보안). 스냅샷 2개 미만이면
+  읽기 전용 조회 지시서를 출력하고 종료(외부 DB 조회 도구로 떠서 재투입). data_profile diff는 2차 범위(별도 집계 계약).
 
 ## 전제·주의
 

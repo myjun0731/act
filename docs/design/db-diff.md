@@ -122,3 +122,24 @@ db-diff는 "label에 대한 정규 스냅샷을 공급받는다"는 포트에만
 - [ ] `migration-readiness.js` `LEAVES`에 `'db-diff'` 합류(선택).
 - [ ] 도메인 고유 어댑터(instructed 조회 실행)는 도메인 플러그인/외부 DB 조회 도구 쪽에서.
 - [ ] `check_refs`/`node --check` 통과 확인 후 dev 시드.
+
+---
+
+## 검증 메모 (구현 전, 코드베이스 대조)
+
+판정: **구현 가능** — 결함 1건은 1차 범위에서 제외해 해소.
+
+**실측 확인**
+- agentType(database-architect·database-optimizer·sql-pro), 스킬 7종, 골격 워크플로(sql-db-audit·migration-verify·migration-readiness) 모두 실재.
+- DSL 제약 준수(meta 선두·`Date.now()` 미사용·리프 전용). 구현 시 agentType·스킬 참조가 전부 해석 → check_refs 녹색 유지.
+- migration-readiness는 args를 가공 없이 각 리프에 그대로 전달(`runLeaf(n, args)`, migration-readiness.js:25) → 복합 args 객체면 db-diff 합류 가능.
+
+**해소 필요**
+1. **[결함] ADR-001 ↔ ADR-002 모순**: 스키마 계약은 데이터 필드를 구조적으로 배제하는데 data_profile은 집계 데이터를 요구 → 스키마 계약만으로 불가. **→ 1차 범위에서 data_profile 제외**, 2차에 별도 "집계 프로파일 계약"(비밀·원시행 없는) 정의 후 추가.
+
+**보완(블로커 아님)**
+2. migration-readiness 합류는 코드상 "한 줄"이나, 호출자가 복합 args(`{target, targets, scope}`)를 줘야 하고 db-diff는 DB 타깃 없을 때 조용히 미수집 조기종료해야 함(구현 반영).
+3. normType 정규화는 산문 스킬 기반 LLM 판단(결정적 매핑 아님) → 방언 diff는 자문, 반박 검증이 거름. 기대치 명시.
+4. instructed 2회차는 수동 왕복(워크플로가 외부 DB 조회 도구를 직접 못 부름) → 재투입 `note` 필수.
+
+**1차 구현 범위(확정)**: 스키마 diff + 방언 diff(provided/instructed 어댑터, JS측 금지키 거부 가드). data_profile·도메인 어댑터·migration-readiness 합류는 후속.
