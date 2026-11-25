@@ -73,15 +73,18 @@ const judged = await parallel(
             `이 접근안을 "${l.ask}" 기준으로 1~5점 채점하고 근거를 밝혀라.`,
           { schema: SCORE_SCHEMA, phase: '심사', label: `심사:${ap.angle}:${l.key}` },
         )
-        return (s && typeof s.score === 'number') ? s.score : 0
+        return (s && typeof s.score === 'number') ? s.score : null
       }),
     )
-    const total = scores.filter((n) => typeof n === 'number').reduce((x, y) => x + y, 0)
-    return { approach: ap, total: total }
+    // 결측(심사 실패)은 0이 아니라 합산에서 제외하고, 결측 수가 다른 접근안끼리
+    // 공정하게 비교하도록 유효 점수의 평균으로 정규화한다(점수 범위 1~5).
+    const valid = scores.filter((n) => typeof n === 'number')
+    const total = valid.length ? valid.reduce((x, y) => x + y, 0) / valid.length : 0
+    return { approach: ap, total: total, scored: valid.length }
   }),
 )
 judged.sort((a, b) => b.total - a.total)
-const ranked = judged.map((j) => ({ name: j.approach.name, angle: j.approach.angle, total: j.total }))
+const ranked = judged.map((j) => ({ name: j.approach.name, angle: j.approach.angle, total: j.total, scored: j.scored }))
 log(`심사 완료 — 최고안: ${ranked.length ? ranked[0].name : '-'}`)
 
 // 3) 합성 -----------------------------------------------------------------

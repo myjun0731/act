@@ -76,14 +76,17 @@ const generated = (await parallel(
 const wrote = generated.filter((x) => x && x.wrote)
 log(`테스트 파일 ${wrote.length}/${gaps.length} 생성`)
 
-// 3) 검증 (빌드·테스트 1회) ----------------------------------------------
+// 3) 검증 (빌드·테스트 1회; 생성 0건이면 건너뜀) --------------------------
 phase('검증')
-const build = await agent(
-  '방금 새 테스트 파일들이 생성되었다. 프로젝트 빌드 도구(Maven/Gradle 등)를 감지해 테스트를 한 번 실행하고 결과를 요약하라: ' +
-    '통과/실패 수, 실패한 새 테스트와 원인(컴파일 오류 포함), 조치 제안. java-build-resolver 관점으로.\n' +
-    '생성 목록: ' + JSON.stringify(wrote.map((x) => ({ unit: x.unit, testFile: x.testFile }))),
-  { agentType: 'dev-toolkit:java-build-resolver', label: '빌드·테스트' },
-)
+let build = '생성된 새 테스트 파일이 없어 빌드·테스트를 건너뜀.'
+if (wrote.length) {
+  build = await agent(
+    '방금 새 테스트 파일들이 생성되었다. 프로젝트 빌드 도구(Maven/Gradle 등)를 감지해 테스트를 한 번 실행하고 결과를 요약하라: ' +
+      '통과/실패 수, 실패한 새 테스트와 원인(컴파일 오류 포함), 조치 제안. java-build-resolver 관점으로.\n' +
+      '생성 목록: ' + JSON.stringify(wrote.map((x) => ({ unit: x.unit, testFile: x.testFile }))),
+    { agentType: 'dev-toolkit:java-build-resolver', label: '빌드·테스트' },
+  )
+}
 
 // 4) 보고 -----------------------------------------------------------------
 phase('보고')
