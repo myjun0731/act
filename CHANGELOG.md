@@ -39,6 +39,7 @@
 
 정식 승격 전 남은 워크플로(pre-merge-gate·migration-readiness·test-coverage-boost)를 모두 실행해 검증(오케스트레이터 2종 리프 중첩 체이닝 확인, 총 79 에이전트·오류 0). 이 과정에서 test-coverage-boost가 `scripts/check_refs.py`의 잠복 버그를 포착·수정:
 - check_refs: 유사중복(INFO) 검사가 `if not wf_dir.is_dir(): continue` 안쪽에 있어 **workflows 디렉터리가 없는 플러그인(agentic·core·design-eng)에 미도달**했다. 별도 루프로 분리해 모든 로컬 플러그인에 적용(ERROR/WARN 게이트엔 영향 없음, INFO 완전성 수정).
+- `allinone` 0.4.0 → 0.4.1: 이번 트레인에서 README(구성 표)가 바뀌었으므로 버전 증가(ga 단계의 "내용 변경 시 플러그인 버전 미증가 차단" 통과용).
 
 `dev-toolkit` 0.8.0 → 0.9.0: ECC(MIT)에서 문서 관련 항목 3개 선별 내재화.
 - living-docs-governance — 장수명 프로젝트 문서 노후 방지(헌장·맵·상태)
