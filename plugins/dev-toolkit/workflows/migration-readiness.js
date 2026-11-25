@@ -41,6 +41,6 @@ const report = await agent(
     '⑤ 착수 전 선결 과제, ⑥ 테스트 공백 요약과 `test-coverage-boost` 실행 권고(이 평가는 파일을 만들지 않는다). ' +
     'ok=false 인 검사는 "미실행"으로 표시하라.\n\n' +
     guarded(JSON.stringify(results)),
-  { label: '준비도 리포트' },
+  { model: 'sonnet', label: '준비도 리포트' },
 )
 return report

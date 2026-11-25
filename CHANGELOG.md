@@ -12,6 +12,15 @@
   - `migration-readiness` 리프에 합류(복합 args로 스냅샷 제공 시 실제 비교).
 - 오케스트레이터 3종(`pre-merge-gate`·`migration-readiness`·`onboard-pack`) 리프 결과를 신뢰불가 데이터 가드로 일괄 하드닝(간접 프롬프트 주입 방지).
 
+`dev-toolkit` 0.10.3 → 0.10.4: 워크플로 토큰 최적화 2차(모델 라우팅). fork-3의 `effort:low`(1차)에 이어 **per-agent `model` 라우팅**을 전 워크플로에 도입.
+- **원칙**: `agentType` 디스패치 에이전트(리뷰어·architect·DB·test-automator·java-build-resolver 등 — 실제 지적/설계를 하는 단계)는 **세션 모델(opus) 유지**. 제네릭 저부가 단계만 하향.
+  - 수집·분류·구획·스코프(기계) → `haiku`+`effort:low`
+  - 채점(design-approaches 렌즈) → `haiku`+`effort:low`, **4렌즈를 접근안당 1호출로 배칭(렌즈 호출 12 → 3)**
+  - 검증(반박) → `sonnet`+`effort:low`
+  - 제네릭 리포트/합성(agentType 없음) → `sonnet`
+- **보존**: 발견/탐색 제네릭 단계(impact 스위프, migration 차원·완전성, sql 방언·함정, db-diff 결정적 계산·분류)는 opus 유지 — 품질 핵심. `pre-merge-gate`의 GO/NO-GO 판정도 opus 유지(병합 차단 결정이라 오판 회피).
+- 효과: 최대 소비처 design-approaches의 채점 12호출→3(+haiku), review/sql/migration의 무한 팬아웃 검증을 sonnet로. 리뷰 품질 저하 없이 토큰 절감.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

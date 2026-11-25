@@ -52,7 +52,7 @@ const scope = target
 const found = await agent(
   `${scope}\n테스트가 없거나 부족한 유닛(클래스·메서드·매퍼)을 식별해 gaps로 반환하라(path·unit·why). ` +
     '이미 충분히 테스트된 것은 제외. test-coverage 접근을 참고하라.',
-  { schema: GAPS_SCHEMA, effort: 'low', label: '공백 탐색' },
+  { schema: GAPS_SCHEMA, model: 'haiku', effort: 'low', label: '공백 탐색' },
 )
 const gaps = (found && Array.isArray(found.gaps)) ? found.gaps : []
 log(`테스트 공백 ${gaps.length}건`)
@@ -94,6 +94,6 @@ const report = await agent(
   '다음 자료로 한국어 마크다운 "테스트 보강 보고서"를 작성하라. ' +
     '구성: ① 생성 요약(유닛·파일), ② 빌드·테스트 결과, ③ 실패·후속 조치, ④ 잔여 공백(탐색됐지만 생성 안 된 것)과 재실행 권고.\n\n' +
     '탐색 공백: ' + JSON.stringify(gaps) + '\n생성 결과: ' + JSON.stringify(generated) + '\n빌드 결과:\n' + String(build),
-  { label: '보고서' },
+  { model: 'sonnet', label: '보고서' },
 )
 return report

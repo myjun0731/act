@@ -76,7 +76,7 @@ const collected = await agent(
   `${scope}\n` +
     'MyBatis 매퍼 XML, .sql, 마이그레이션/DDL 스크립트를 찾아 나열하고 종류(mapper/sql/ddl)로 분류하라. ' +
     '생성물·백업·벤더 폴더는 제외하라.',
-  { schema: COLLECT_SCHEMA, effort: 'low', label: '파일 수집' },
+  { schema: COLLECT_SCHEMA, model: 'haiku', effort: 'low', label: '파일 수집' },
 )
 const files = (collected && Array.isArray(collected.files)) ? collected.files : []
 log(`SQL/매퍼/DDL ${files.length}건 수집`)
@@ -148,7 +148,7 @@ const perFile = await pipeline(
         const v = await agent(
           '다음 DB 감사 지적을 반박하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다.\n' +
             `파일: ${f.file}${f.line ? ':' + f.line : ''}\n분류: ${f.category || ''}\n심각도: ${f.severity}\n지적: ${f.summary}\n상세: ${f.detail || ''}`,
-          { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${f.file}` },
+          { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${f.file}` },
         )
         return (v && v.real) ? f : null
       }),
@@ -166,6 +166,6 @@ const report = await agent(
   '다음은 검증을 통과한 DB 감사 지적 목록(JSON)이다. 심각도(high→medium→low)·차원(category)·파일별로 묶어 한국어 마크다운 리포트를 작성하라. ' +
     '각 항목은 `파일:라인` · 분류 · 심각도 · 요약 · 권고를 포함하고, 지적이 없으면 통과(PASS)임을 명시하라.\n\n' +
     JSON.stringify(confirmed),
-  { label: '리포트 작성' },
+  { model: 'sonnet', label: '리포트 작성' },
 )
 return report

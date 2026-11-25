@@ -21,10 +21,24 @@ const APPROACH_SCHEMA = {
   },
 }
 
-const SCORE_SCHEMA = {
+// 접근안 1개를 모든 렌즈로 한 번에 채점(렌즈당 1호출 → 접근안당 1호출로 배칭)
+const SCORES_SCHEMA = {
   type: 'object',
-  required: ['score'],
-  properties: { score: { type: 'integer' }, rationale: { type: 'string' } },
+  required: ['scores'],
+  properties: {
+    scores: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['lens', 'score'],
+        properties: {
+          lens: { type: 'string' },
+          score: { type: 'integer' },
+          rationale: { type: 'string' },
+        },
+      },
+    },
+  },
 }
 
 const brief = (typeof args === 'string' && args.trim())
@@ -64,21 +78,20 @@ const LENSES = [
 ]
 
 phase('심사')
+// 채점은 기계적 판정(1~5점)이라 haiku+low 로 라우팅하고, 4개 렌즈를 접근안당 1호출로 배칭한다(렌즈당 1호출 → 12→3).
+const lensList = LENSES.map((l) => `- ${l.key}: ${l.ask}`).join('\n')
 const judged = await parallel(
   approaches.map((ap) => async () => {
-    const scores = await parallel(
-      LENSES.map((l) => async () => {
-        const s = await agent(
-          `설계 브리프:\n${brief}\n\n접근안 "${ap.name}":\n${ap.design || ap.summary}\n\n` +
-            `이 접근안을 "${l.ask}" 기준으로 1~5점 채점하고 근거를 밝혀라.`,
-          { schema: SCORE_SCHEMA, phase: '심사', label: `심사:${ap.angle}:${l.key}` },
-        )
-        return (s && typeof s.score === 'number') ? s.score : null
-      }),
+    const out = await agent(
+      `설계 브리프:\n${brief}\n\n접근안 "${ap.name}":\n${ap.design || ap.summary}\n\n` +
+        `이 접근안을 다음 기준들로 각각 1~5점 채점하고 근거를 밝혀라:\n${lensList}\n\n` +
+        '각 기준마다 { lens(위 키), score(1~5), rationale } 를 담아 scores 배열로 반환하라.',
+      { schema: SCORES_SCHEMA, model: 'haiku', effort: 'low', phase: '심사', label: `심사:${ap.angle}` },
     )
     // 결측(심사 실패)은 0이 아니라 합산에서 제외하고, 결측 수가 다른 접근안끼리
     // 공정하게 비교하도록 유효 점수의 평균으로 정규화한다(점수 범위 1~5).
-    const valid = scores.filter((n) => typeof n === 'number')
+    const arr = (out && Array.isArray(out.scores)) ? out.scores : []
+    const valid = arr.map((s) => (s && typeof s.score === 'number') ? s.score : null).filter((n) => typeof n === 'number')
     const total = valid.length ? valid.reduce((x, y) => x + y, 0) / valid.length : 0
     return { approach: ap, total: total, scored: valid.length }
   }),

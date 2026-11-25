@@ -39,6 +39,6 @@ const pack = await agent(
     '구성: ① 아키텍처 개요(계층·데이터 흐름), ② 영역별 책임·진입점, ③ DB/매퍼 주의점(감사 핵심), ' +
     '④ 처음 시작하기(어디부터 읽을지·무엇을 조심할지). ok=false 인 리프는 "미실행"으로 표시하라.\n\n' +
     guarded(JSON.stringify(results)),
-  { label: '온보딩 팩' },
+  { model: 'sonnet', label: '온보딩 팩' },
 )
 return pack
