@@ -19,7 +19,11 @@
   - 검증(반박) → `sonnet`+`effort:low`
   - 제네릭 리포트/합성(agentType 없음) → `sonnet`
 - **보존**: 발견/탐색 제네릭 단계(impact 스위프, migration 차원·완전성, sql 방언·함정, db-diff 결정적 계산·분류)는 opus 유지 — 품질 핵심. `pre-merge-gate`의 GO/NO-GO 판정도 opus 유지(병합 차단 결정이라 오판 회피).
-- 효과: 최대 소비처 design-approaches의 채점 12호출→3(+haiku), review/sql/migration의 무한 팬아웃 검증을 sonnet로. 리뷰 품질 저하 없이 토큰 절감.
+- 효과: 최대 소비처 design-approaches의 채점 12호출→3, review/sql/migration의 무한 팬아웃 검증을 sonnet로. 리뷰 품질 저하 없이 토큰 절감.
+
+`dev-toolkit` 0.10.4 → 0.10.5: 스모크 실측 기반 채점 모델 교정. design-approaches를 실행해보니(7에이전트·410k 토큰, 1.24M 대비 ~67%↓) **haiku 배칭 채점이 3회 중 2회 실패**(렌즈 환각 'smoke_probe', 빈 결과)해 순위가 채점 실패의 산물이 됨.
+- 채점 모델 `haiku` → `sonnet`(배칭은 유지 — 여전히 opus×12 대비 큰 절감). 다렌즈 1~5점 매핑은 추출이 아니라 판정 작업이라 haiku엔 부적합.
+- 환각 방어: 프롬프트에 "주어진 렌즈 키만 사용·새 기준 금지" 명시 + 집계 시 알려진 LENSES 키의 점수만 반영(환각 렌즈·결측 배제). 수집·분류 등 순수 추출 단계는 haiku 유지(판정 아님).
 
 ## [1.11.0] - 2026-11-24
 
