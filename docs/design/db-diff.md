@@ -144,4 +144,10 @@ db-diff는 "label에 대한 정규 스냅샷을 공급받는다"는 포트에만
 
 **1차 구현 범위(확정)**: 스키마 diff + 방언 diff(provided/instructed 어댑터). 보안은 **허용목록 투영**(계약 외 필드 전부 폐기 — 데니리스트 우회 불가) + **간접 프롬프트 주입 방어**(스냅샷을 신뢰불가 데이터 delimit 블록으로, 라벨 strict charset 제한)로 구현. data_profile·도메인 어댑터·migration-readiness 합류는 후속.
 
-> 보안 리뷰 반영(security-guidance): ① 데니리스트→허용목록 투영 교체, ② 외부 DB 식별자의 프롬프트 주입 방어. 둘 다 "보안 최우선" 설계 의도와 일치.
+> 보안 리뷰 반영(security-guidance): ① 데니리스트→허용목록 투영 교체, ② 외부 DB 식별자의 프롬프트 주입 방어, ③ 데이터 블록 구분자 위조 방지. 셋 다 "보안 최우선" 설계 의도와 일치.
+
+## 구현 노트 (1차·2차 완료 상태)
+
+- **1차 재설계**: 스모크 테스트에서 "fan-out→적대적 verify" 패턴이 **구조 diff엔 부적합**(진짜 차이를 삭제; tinyint→boolean을 "표준 등가"로 오판 삭제)임이 드러나, **결정적 계산(computeDiffs) + 에이전트 분류(삭제 불가) + 백필**로 재설계. verify 제거. 방언 등가 노이즈는 삭제 않고 low "방언 등가"로 표시. 최종 스모크 11건 전수 포착, 3에이전트로 더 정확·저렴.
+- **2차 구현**: ADR-002의 모순(스키마 계약↔데이터)을 **별도 "집계 계약"**(`args.profiles`: label·tables[rowCount, columns[nullRatio, distinctCount]] — 값 없는 집계만, 허용목록 투영으로 min/max/샘플 폐기)으로 해소. `options.dataProfile=true` opt-in, `computeProfileDiffs` 결정적 계산 + `database-optimizer` 분류. **migration-readiness LEAVES에 db-diff 합류**(복합 args로 스냅샷 제공 시 실제 비교, 아니면 "스냅샷 필요" 안내).
+- **후속(claude-pro 범위 밖)**: 실제 DB 접속·조회 실행 어댑터는 **도메인 플러그인** 몫(보안·배포 경계상 claude-pro엔 instructed 지시서 생성까지만). N자 교차 매트릭스, 방언 규칙팩 외부화는 선택.
