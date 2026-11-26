@@ -11,7 +11,7 @@ export const meta = {
 
 // 오케스트레이터: 리프만 호출한다(중첩 1단 — 리프는 workflow() 를 쓰지 않음).
 const A = (args && typeof args === 'object') ? args : {}
-const maxCycles = (typeof A.maxCycles === 'number') ? A.maxCycles : 2
+const maxCycles = Math.max(1, (typeof A.maxCycles === 'number') ? A.maxCycles : 2)  // 0/음수면 검증 사이클이 통째로 생략돼 거짓 'completed' 가 되므로 최소 1 보장
 const steps = []
 // 호출하는 리프 목록(scripts/check_refs.py 가 `sdlc:<리프>` 참조를 이 배열로 검증한다)
 const LEAVES = ['implement', 'test', 'review', 'report']
@@ -41,6 +41,7 @@ if (impl && impl.failed && impl.failed.length) {
   if (retry) impl = Object.assign({}, impl, { buildOk: retry.buildOk, failed: retry.failed, buildErrors: retry.buildErrors })
 }
 if (!impl || !impl.buildOk) { status = 'blocked'; blocker = `구현/빌드 실패: ${impl ? impl.buildErrors || impl.failed : '구현 워크플로 실패'}` }
+else if (impl.failed && impl.failed.length) { status = 'partial'; blocker = `구현 실패 작업 잔존(빌드는 통과): ${impl.failed.join(', ')}` }
 
 phase('검증')
 let test = null

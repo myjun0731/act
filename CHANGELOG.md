@@ -40,6 +40,13 @@
 
 `scripts/check_refs.py`: **선언된 의존성 인식** 추가 — 플러그인이 `dependencies`로 선언한 다른 로컬 플러그인의 스킬을 프롬프트에서 참조하면 더는 WARN이 아니다(동반 설치 보장). sdlc의 dev-toolkit 소프트 스킬 참조 9건이 WARN 0으로 정리(rc/ga strict 통과). 의존성 미선언 cross-plugin 스킬 참조만 WARN 유지.
 
+`sdlc` 0.2.1: 연계 review 스모크(32에이전트)가 포착한 pre-existing 버그 수정.
+- `review`: ① 범위 수집 에이전트 실패(null)를 "변경 없음(PASS)"과 구분 — 실패 시 `blocked`+`unresolvedHigh:1`로 게이트가 미해결 취급(거짓 PASS 방지). ② 반박검증 에이전트 실패 시 critical/high 지적을 조용히 폐기하지 않고 "미검증 보존"으로 남김(제네릭·전문 레인 양쪽).
+- `deliver`: `maxCycles`를 최소 1로 클램프(0/음수면 검증 사이클 생략→거짓 completed). 빌드는 통과하나 작업 실패가 남으면 `partial` 반영.
+- `test`: 실패 그룹화가 겹치는 그룹을 전부 병합(첫 그룹만 합쳐 병렬 수정이 같은 파일을 동시에 건드리던 문제 수정).
+- `analyze`: 확정본 복사 에이전트 실패 시 없는 FINAL 경로를 성공으로 반환하지 않고 라운드 본 경로로 폴백.
+- 남은 지적(review 수정완료 title 일치, analyze mustHave 정확일치, test 계획 실패 시 기존 테스트만으로 통과)은 후속 과제.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

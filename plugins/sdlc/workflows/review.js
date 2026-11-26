@@ -26,7 +26,9 @@ const scope = await agent(
   `git diff --name-only ${base} 와 git ls-files --others --exclude-standard 로 변경·신규 파일을 모아 반환하라. ${dir}/ 아래 산출물은 제외하라. 아무것도 수정하지 마라.`,
   { schema: SCOPE_SCHEMA, phase: '범위', label: '변경 파일', effort: 'low' },
 )
-const files = scope && scope.files ? scope.files : []
+// 범위 수집 에이전트 실패(null)와 "진짜 변경 0건"을 구분한다 — 실패를 '깨끗함(PASS)'으로 둔갑시키지 않는다.
+if (!scope) return { phase: 'review', path: null, confirmed: 0, unresolvedHigh: 1, blocked: true, note: '범위 수집 에이전트 실패 — 리뷰 미실행(변경 없음과 구분; 게이트는 미해결로 취급)' }
+const files = Array.isArray(scope.files) ? scope.files : []
 log(`변경 파일 ${files.length}개`)
 if (!files.length) return { phase: 'review', path: null, confirmed: 0, unresolvedHigh: 0, note: '리뷰할 변경이 없음' }
 
@@ -74,7 +76,9 @@ const verified = await pipeline(
       `다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n` +
         `실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적(${d.key}): ${JSON.stringify(f)}`,
       { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${d.key}:${(f.file || '').split('/').pop()}` },
-    ).then((v) => (v && !v.refuted ? Object.assign({ dim: d.key }, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }) : null)),
+    ).then((v) => (v
+      ? (v.refuted ? null : Object.assign({ dim: d.key }, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
+      : Object.assign({ dim: d.key }, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' }))),
   )).then((xs) => xs.filter(Boolean)),
 )
 // Layer 2 (가산·선택): 변경 파일 유형별 dev-toolkit 전문 리뷰어 + 보안 상시 레인.
@@ -130,7 +134,9 @@ const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () =>
     `다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n` +
       `실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ${JSON.stringify(f)}`,
     { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${(f.file || '').split('/').pop()}` },
-  ).then((v) => (v && !v.refuted ? Object.assign({}, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }) : null)),
+  ).then((v) => (v
+    ? (v.refuted ? null : Object.assign({}, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
+    : Object.assign({}, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' }))),
 ))).filter(Boolean)
 
 const all = verified.filter(Boolean).flat().concat(extra)

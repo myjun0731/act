@@ -115,8 +115,19 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   const groups = []
   for (const f of fails.filter((x) => x.kind !== 'env')) {
     const files = (f.suspect && f.suspect.length) ? f.suspect : ['?']
-    let g = groups.find((x) => files.some((p) => x.files.has(p)))
-    if (!g) { g = { files: new Set(), fails: [] }; groups.push(g) }
+    // 이 실패와 파일이 겹치는 기존 그룹을 전부 찾아 하나로 병합한다. 첫 그룹만 합치면 서로 다른
+    // 그룹이 같은 파일을 공유하게 돼, 병렬 수정이 같은 파일을 동시에 건드릴 수 있다.
+    const hit = groups.filter((x) => files.some((p) => x.files.has(p)))
+    let g
+    if (!hit.length) { g = { files: new Set(), fails: [] }; groups.push(g) }
+    else {
+      g = hit[0]
+      for (let i = 1; i < hit.length; i++) {
+        hit[i].files.forEach((p) => g.files.add(p))
+        hit[i].fails.forEach((x) => g.fails.push(x))
+        groups.splice(groups.indexOf(hit[i]), 1)
+      }
+    }
     files.forEach((p) => g.files.add(p))
     g.fails.push(f)
   }

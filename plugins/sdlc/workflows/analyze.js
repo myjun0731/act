@@ -108,11 +108,14 @@ const result = await qualityLoop({
 // 4) 확정
 // ---------------------------------------------------------------------------
 phase('확정')
+let finalPath = null
 if (result.bestPath) {
-  await agent(`${result.bestPath} 의 내용을 그대로 ${FINAL} 로 복사하라(덮어쓰기). 완료 후 "ok" 만 반환.`,
+  const copied = await agent(`${result.bestPath} 의 내용을 그대로 ${FINAL} 로 복사하라(덮어쓰기). 완료 후 "ok" 만 반환.`,
     { phase: '확정', label: '확정본 복사', effort: 'low' })
+  // 복사 에이전트가 실패하면 FINAL 이 없을 수 있으니, 그 경우 라운드 본(bestPath)을 경로로 돌려준다(없는 파일을 성공으로 반환하지 않는다).
+  finalPath = copied ? FINAL : result.bestPath
 }
-return Object.assign({ phase: 'analysis', path: result.bestPath ? FINAL : null }, result)
+return Object.assign({ phase: 'analysis', path: finalPath }, result)
 
 // ===========================================================================
 // 공통: 품질 루프 (analyze.js / design.js 동일 구현 — 워크플로는 import 불가)
