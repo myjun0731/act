@@ -75,6 +75,14 @@
 - `analyze`·`design` qualityLoop: 심사자가 판정 못 한(투표 0) 필수 항목을 gapText에 "판정 불가(통과엔 미반영)"로 **노출**(무음 통과 가시화).
 - 문서: README 플러그인 표 버전 동기화, CHANGELOG 절감 실측·haiku/sonnet 서술 정합.
 
+`sdlc` 0.4.0: dev-toolkit **풀 워크플로** 깊은 연계(에이전트에 더해 완성 워크플로 재사용). `design-approaches`로 검증한 "가장 깊은 안전 층 3층 배치".
+- **deliver 보강 phase(opt-in `augment:true`)**: test↔review 수렴 뒤 1회, dev-toolkit **리프 워크플로**(impact-analysis; SQL/매퍼면 sql-db-audit; 이관이면 migration-verify; `coverage:true`면 test-coverage-boost)를 1단 형제로 호출해 **report "보강 분석" 절**로 싣는다. 변경셋 유형으로 조건 디스패치. 결과는 **게이트에 미반영**(결정성 보존 — 자율 사이클 판정은 sdlc 리프 구조화 반환만). 오케스트레이터 호출 금지(2단 중첩).
+- **세션/스킬 층**(`/sdlc:pipeline`): 분석 전 `codebase-map`·이관 `migration-readiness`·병합 전 `pre-merge-gate` 등 **오케스트레이터까지** 호출 가능(중첩 제한 없음). SKILL.md에 선·후행 단계 명시.
+- `review-changes`는 deliver에 미투입(sdlc:review와 같은 리뷰어·diff 중복 = 순손실).
+- 보강 마크다운은 외부 코드/DB 파생 신뢰불가라 가드(delimit·`<>` 이스케이프)로 report에 투입.
+
+`scripts/check_refs.py`: 워크플로 참조 검증 강화 — **대상이 오케스트레이터(workflow() 호출)면 ERROR**(workflow()로 부르면 그 자식이 또 workflow()를 불러 2단 중첩 런타임 throw). 템플릿 `workflow(\`ns:${}\`)` 크로스곱 추정은 다중 네임스페이스 오탐을 막기 위해 미해석을 ERROR로 보지 않고(리터럴만 엄격) 해석되는 오케스트레이터만 잡는다.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

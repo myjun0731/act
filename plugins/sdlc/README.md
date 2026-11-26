@@ -47,6 +47,12 @@ sdlc는 제네릭 뼈대를 "항상 도는 기본층"으로 두고, dev-toolkit 
 
 **견고성** — 모든 전문 디스패치는 try/catch로 감싸 **미설치·오류 시 제네릭으로 완주**한다. `plugin.json`에 `dependencies: ["dev-toolkit"]`를 선언(allinone 번들 전제, 단독 설치 시 자동 동반). 에이전트 반환 키로 인덱싱하는 객체는 `Object.create(null)`로 프로토타입 오염을 막고, 반박 검증 실패는 지적을 폐기하지 않고 "미검증 보존"으로 남긴다.
 
+### 풀 워크플로 연계 (에이전트에 더해)
+
+dev-toolkit **완성 워크플로**도 재사용한다. 단 **중첩 1단 제한**(workflow 안에서 또 workflow 금지) 때문에 층이 갈린다:
+- **deliver 보강**(opt-in `augment:true`): 수렴 뒤 1회, dev-toolkit **리프**(impact-analysis·sql-db-audit·migration-verify·test-coverage-boost)를 1단 형제로 호출 → report "보강 분석" 절. 게이트엔 미반영(결정성 보존). 오케스트레이터는 금지.
+- **세션/스킬 층**(`/sdlc:pipeline`): 중첩 제한 없이 `codebase-map`·`migration-readiness`·`pre-merge-gate` 등 **오케스트레이터까지** 호출. (`skills/pipeline/SKILL.md` 참조)
+
 ## 품질 루프 (analyze·design 공통)
 
 ```
