@@ -22,6 +22,7 @@ const maxFixRounds = (typeof A.maxFixRounds === 'number') ? A.maxFixRounds : 3
 // 1) 계획 + 2) 작성 (full 모드) ----------------------------------------------
 let testCmd = A.testCmd ? String(A.testCmd) : ''
 let written = []
+let planFailed = false
 if (mode === 'full') {
   phase('계획')
   const PLAN_SCHEMA = {
@@ -49,6 +50,7 @@ if (mode === 'full') {
       '이미 있는 테스트 파일에 추가하는 게 관례라면 그 경로를 써도 되지만 단위끼리 파일이 겹치면 안 된다. 아무것도 수정하지 마라.',
     { schema: PLAN_SCHEMA, phase: '계획', label: '테스트 계획' },
   )
+  if (!plan) { planFailed = true; log('⚠ 테스트 계획 실패 — 새 테스트 없이 기존 테스트만 실행(AC 커버리지 미보장)') }
   if (plan) {
     testCmd = testCmd || plan.testCmd || ''
     // 같은 파일을 가리키는 단위는 합친다(병렬 쓰기 충돌 방지)
@@ -160,6 +162,7 @@ return {
   phase: 'test',
   path: OUT,
   mode: mode,
+  planFailed: planFailed,
   passed: !!(run && run.passed),
   stopReason: stopReason,
   total: run ? run.total || 0 : 0,

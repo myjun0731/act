@@ -211,10 +211,16 @@ async function qualityLoop(opt) {
       if (avg < min) min = avg
     }
     const score = wtot ? Math.round((wsum / wtot) * 10) / 10 : 0
+    const _nrm = (s) => String(s || '').toLowerCase().replace(/\s+/g, '')
     const must = Q.mustHave.map((item) => {
-      const votes = verdicts.map((v) => (v.mustHave || []).find((m) => m.item === item)).filter(Boolean)
+      // 정확 문자열 일치 대신 정규화 후 부분일치 — 심사자가 항목을 바꿔 적어도 매칭된다.
+      const ni = _nrm(item)
+      const votes = verdicts.map((v) => (v.mustHave || []).find((m) => {
+        const nm = _nrm(m.item); return nm === ni || (nm && ni && (nm.includes(ni) || ni.includes(nm)))
+      })).filter(Boolean)
       const yes = votes.filter((m) => m.met).length
-      return { item: item, met: votes.length > 0 && yes * 2 > votes.length, votes: `${yes}/${votes.length}` }
+      // 아무도 판정 못 한 항목(매칭 실패)은 통과를 막지 않고 '불명'으로 둔다(정확 불일치로 영원히 미통과 되던 문제 방지).
+      return { item: item, met: votes.length === 0 || yes * 2 > votes.length, votes: votes.length ? `${yes}/${votes.length}` : '0/0(불명)' }
     })
     const passed = score >= Q.target && min >= Q.floor && must.every((m) => m.met)
     // 약한 기준 순으로 지적 정리

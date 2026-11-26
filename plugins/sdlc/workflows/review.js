@@ -159,16 +159,22 @@ if (toFix.length) {
   phase('수정')
   const byFile = {}
   toFix.forEach((f) => { (byFile[f.file] = byFile[f.file] || []).push(f) })
-  fixes = (await parallel(Object.keys(byFile).map((file) => () =>
-    agent(
-      `파일 ${file} 의 다음 확정 지적을 고쳐라(설계서 ${design} 의 의도 유지, 이 파일 위주로 수정 — 다른 파일도 병렬 수정 중):\n${JSON.stringify(byFile[file])}\n` +
-        'git commit 하지 마라. 지적별로 fixed(true/false)와 무엇을 했는지 반환하라.',
+  fixes = (await parallel(Object.keys(byFile).map((file) => () => {
+    // 지적마다 번호 n 을 부여해 넘기고 그 번호로 되받는다 — 에이전트가 title 을 바꿔 적어도 수정 완료 매칭이 어긋나지 않도록.
+    const items = byFile[file].map((f, i) => Object.assign({ n: i + 1 }, f))
+    return agent(
+      `파일 ${file} 의 다음 확정 지적을 고쳐라(설계서 ${design} 의 의도 유지, 이 파일 위주로 수정 — 다른 파일도 병렬 수정 중):\n${JSON.stringify(items)}\n` +
+        'git commit 하지 마라. 각 지적을 n(위 번호 그대로)·fixed(true/false)·note(무엇을 했는지)로 반환하라.',
       {
-        schema: { type: 'object', required: ['items'], properties: { items: { type: 'array', items: { type: 'object', required: ['title', 'fixed'], properties: { title: { type: 'string' }, fixed: { type: 'boolean' }, note: { type: 'string' } } } } } },
+        schema: { type: 'object', required: ['items'], properties: { items: { type: 'array', items: { type: 'object', required: ['n', 'fixed'], properties: { n: { type: 'integer' }, fixed: { type: 'boolean' }, note: { type: 'string' } } } } } },
         phase: '수정', label: `수정:${file.split('/').pop()}`,
       },
-    ).then((r) => (r ? r.items.map((it) => Object.assign({ file: file }, it)) : byFile[file].map((f) => ({ file: file, title: f.title, fixed: false, note: '에이전트 실패' })))),
-  ))).filter(Boolean).flat()
+    ).then((r) => {
+      const byN = {}
+      if (r && Array.isArray(r.items)) for (const it of r.items) if (it && typeof it.n === 'number') byN[it.n] = it
+      return items.map((f) => ({ file: file, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
+    })
+  }))).filter(Boolean).flat()
   retest = await agent(
     `리뷰 수정 후 빌드와 테스트를 실행하라. 명령 후보: ${A.testCmd || '(분석서의 빌드·테스트 방법)'}. 실패하면 원인만 진단해 반환하라(수정하지 마라).`,
     { schema: { type: 'object', required: ['passed'], properties: { passed: { type: 'boolean' }, summary: { type: 'string' } } }, phase: '수정', label: '재테스트' },
