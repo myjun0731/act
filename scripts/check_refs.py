@@ -82,7 +82,7 @@ def build_inventory(root):
                 n = _meta_name(txt)
                 if n:
                     inv["workflows"].add(n)
-                    if re.search(r"\bworkflow\(", txt):  # workflow() 를 호출하면 오케스트레이터(자식으로 호출되면 2단 중첩 throw)
+                    if re.search(r"\bworkflow\(", _strip_js_comments(txt)):  # workflow() 를 '호출'하면 오케스트레이터. 주석 속 workflow( 오탐 방지로 주석 제거 후 탐지(자식으로 호출되면 2단 중첩 throw)
                         inv["orchestrators"].add(n)
         ag_dir = pdir / "agents"
         if ag_dir.is_dir():
@@ -97,6 +97,14 @@ def build_inventory(root):
                     skills_global.setdefault(d.name, set()).add(name)
         plugins[name] = inv
     return plugins, skills_global
+
+
+def _strip_js_comments(text):
+    """JS 소스에서 주석을 제거한다(블록 /* */ · 라인 //). 오케스트레이터 판별 시
+    주석·문자열에 적힌 'workflow(' 를 실제 호출로 오인하지 않도록 쓴다(호출이 아니면 제거돼도 무방)."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)   # 블록 주석
+    text = re.sub(r"//[^\n]*", "", text)                  # 라인 주석
+    return text
 
 
 def _plain_string_arrays(text):

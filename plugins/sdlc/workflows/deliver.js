@@ -1,17 +1,18 @@
 export const meta = {
   name: 'deliver',
   description: 'SDLC 자동 구간 연계: implement → test → review (미해결 시 test(verify)·review 재사이클) → report 를 게이트 규칙에 따라 한 번에 실행한다',
-  whenToUse: '분석·설계를 사용자가 확정한 뒤, 나머지 단계를 한 번에 돌릴 때. args: { dir, baseRef, maxCycles, maxFixRounds, maxBuildFixes, history }. 리프 4개를 중첩 호출하므로 설치 규모 large 권장. ⚠️ 코드 변경(커밋 없음).',
+  whenToUse: '분석·설계를 사용자가 확정한 뒤, 나머지 단계를 한 번에 돌릴 때. args: { dir, baseRef, maxCycles, maxFixRounds, maxBuildFixes, history, augment?:bool, coverage?:bool }. augment=true 면 수렴 뒤 dev-toolkit 리프(impact-analysis 등)를 보강 호출해 report 에만 싣는다(게이트 미반영). coverage=true 면 test-coverage-boost(레포 변경)도. sdlc 리프와 dev-toolkit 리프를 1단 호출하므로 설치 규모 large 권장. ⚠️ 코드 변경(커밋 없음).',
   phases: [
     { title: '구현', detail: 'sdlc:implement (+실패 작업 1회 재시도)' },
     { title: '검증', detail: 'sdlc:test ↔ sdlc:review 사이클' },
+    { title: '보강', detail: '(opt-in) dev-toolkit 리프로 report 보강' },
     { title: '완료', detail: 'sdlc:report' },
   ],
 }
 
 // 오케스트레이터: 리프만 호출한다(중첩 1단 — 리프는 workflow() 를 쓰지 않음).
 const A = (args && typeof args === 'object') ? args : {}
-const maxCycles = Math.max(1, (typeof A.maxCycles === 'number') ? A.maxCycles : 2)  // 0/음수면 검증 사이클이 통째로 생략돼 거짓 'completed' 가 되므로 최소 1 보장
+const maxCycles = Math.max(1, Math.floor(Number.isFinite(A.maxCycles) ? A.maxCycles : 2))  // 0/음수/NaN 이면 검증 사이클이 통째로 생략돼 거짓 'completed' 가 되므로 최소 1 보장(NaN 도 typeof==='number' 라 isFinite 로 가드)
 const steps = []
 // 호출하는 리프 목록(scripts/check_refs.py 가 `sdlc:<리프>` 참조를 이 배열로 검증한다)
 const LEAVES = ['implement', 'test', 'review', 'report']
@@ -66,20 +67,33 @@ const augment = []
 if (A.augment && status !== 'blocked') {
   phase('보강')
   const AUGMENT_LEAVES = ['impact-analysis', 'sql-db-audit', 'migration-verify', 'test-coverage-boost']  // 리프만(오케스트레이터 미포함)
+  const low = (f) => String(f || '').toLowerCase()
   const changed = (impl && Array.isArray(impl.tasks)) ? impl.tasks.reduce((a, t) => a.concat(t.changedFiles || []), []) : []
   const targets = ['impact-analysis']  // 변경 영향·회귀 계획은 항상
-  if (changed.some((f) => /\.(sql|xml)$/i.test(String(f)))) targets.push('sql-db-audit')         // SQL/매퍼 변경이 있을 때만
-  if (changed.some((f) => /(migrat|ddl|schema|entit)/i.test(String(f)))) targets.push('migration-verify')  // 이관/DDL 변경이 있을 때만
-  if (A.coverage) targets.push('test-coverage-boost')  // 테스트 "생성"은 레포를 바꾸므로 별도 opt-in
-  for (const name of targets) {
-    if (AUGMENT_LEAVES.indexOf(name) < 0) continue  // 화이트리스트 밖(=오케스트레이터)은 호출 금지
+  // SQL/매퍼: .sql 또는 매퍼 XML 경로일 때만(pom.xml 등 무관 XML 제외)
+  if (changed.some((f) => /\.sql$/.test(low(f)) || /(mapper\.xml$|\/mappers?\/)/.test(low(f)))) targets.push('sql-db-audit')
+  // 이관/DDL/엔티티: 구체 경로·확장자일 때만(entit 광범위 매칭 회피)
+  if (changed.some((f) => /(migration|flyway|liquibase|changelog|\.ddl$)/.test(low(f)) || /(entity\.java$|\/entit(y|ies)\/)/.test(low(f)))) targets.push('migration-verify')
+  const picked = targets.filter((t) => AUGMENT_LEAVES.indexOf(t) >= 0)  // 화이트리스트(오케스트레이터 차단)
+  const runLeafAug = async (name) => {
     log(`▶ 보강 dev-toolkit:${name}`)
     try {
       const r = await workflow(`dev-toolkit:${name}`, A.baseRef ? { target: A.baseRef } : {})
-      augment.push({ step: name, ok: true, report: String(r || '').slice(0, 8000) })
+      const rep = (typeof r === 'string') ? r : (r == null ? '' : JSON.stringify(r))  // 객체 반환 시 '[object Object]' 방지
+      return { step: name, ok: true, report: rep.slice(0, 8000) }
     } catch (e) {
-      augment.push({ step: name, ok: false, error: String((e && e.message) ? e.message : e) })
+      return { step: name, ok: false, error: String((e && e.message) ? e.message : e) }
     }
+  }
+  // 읽기 전용 리프는 병렬(직렬 await 지연 합산 회피). 결과 순서는 비결정이라 report 용일 뿐.
+  const roResults = await Promise.all(picked.map((name) => runLeafAug(name)))
+  augment.push.apply(augment, roResults)
+  // 테스트 "생성"(레포 변경)은 게이트 뒤라 재검증되지 않는다 — 마지막에 직렬로, gateUnverified 로 명시.
+  if (A.coverage && AUGMENT_LEAVES.indexOf('test-coverage-boost') >= 0) {
+    const cov = await runLeafAug('test-coverage-boost')
+    cov.gateUnverified = true
+    augment.push(cov)
+    log('⚠ test-coverage-boost 는 게이트 뒤 레포 변경 — 재검증 안 됨(보고서에 gateUnverified 표기)')
   }
 }
 
