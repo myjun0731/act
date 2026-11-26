@@ -1,6 +1,6 @@
 {
   "name": "sdlc",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "SDLC 파이프라인: 분석→설계→구현→테스트→리뷰→완료 보고서를 동적 워크플로로 연계. 분석·설계는 사용자 지정 품질에 도달할 때까지 심사·보강 반복, 이후 단계는 Claude 자동 호출",
   "author": {
     "name": "Kim Myoung-jun"

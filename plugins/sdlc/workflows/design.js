@@ -134,7 +134,7 @@ if (result.bestPath) {
     `${result.bestPath} 의 내용을 그대로 ${FINAL} 로 복사하라(덮어쓰기). 그다음 ${FINAL} 의 "작업 분해"와 분석서 ${analysis} 의 "빌드·테스트 실행 방법"을 읽고 ` +
       `작업 목록을 구조화해 반환하라(id 는 TASK-xx 그대로, files 는 레포 루트 기준 경로, acceptance 는 대응 AC 의 판정 문장, details 는 구현 지침 요약). ` +
       `같은 JSON 을 ${TASKS} 에도 저장하라.`,
-    { schema: TASKS_SCHEMA, phase: '확정', label: '작업 목록 추출' },
+    { schema: TASKS_SCHEMA, model: 'sonnet', phase: '확정', label: '작업 목록 추출' },
   )
   log(`작업 ${tasks && tasks.tasks ? tasks.tasks.length : 0}개 추출`)
 }
@@ -212,7 +212,7 @@ async function qualityLoop(opt) {
           `당신의 관점: ${l.ask}\n\n아래 기준마다 0~100 점수와, 점수를 올리려면 보완할 구체적 지적(gaps)을 반환하라. ` +
           `90 이상은 "이대로 다음 단계에 넘겨도 문제없음", 70 은 "쓸 만하지만 보완 필요", 50 이하는 "재작성 수준"이다. ` +
           `관대하게 주지 마라.\n기준:\n${critList}${mustList}`,
-        { schema: JUDGE_SCHEMA, phase: '평가', label: `평가 r${round}:${l.key}` },
+        { schema: JUDGE_SCHEMA, model: 'sonnet', phase: '평가', label: `평가 r${round}:${l.key}` },
       ))))
       .filter(Boolean)
     if (!verdicts.length) return null

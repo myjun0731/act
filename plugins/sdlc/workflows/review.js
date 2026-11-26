@@ -24,7 +24,7 @@ phase('범위')
 const SCOPE_SCHEMA = { type: 'object', required: ['files'], properties: { files: { type: 'array', items: { type: 'string' } } } }
 const scope = await agent(
   `git diff --name-only ${base} 와 git ls-files --others --exclude-standard 로 변경·신규 파일을 모아 반환하라. ${dir}/ 아래 산출물은 제외하라. 아무것도 수정하지 마라.`,
-  { schema: SCOPE_SCHEMA, phase: '범위', label: '변경 파일', effort: 'low' },
+  { schema: SCOPE_SCHEMA, model: 'haiku', phase: '범위', label: '변경 파일', effort: 'low' },
 )
 // 범위 수집 에이전트 실패(null)와 "진짜 변경 0건"을 구분한다 — 실패를 '깨끗함(PASS)'으로 둔갑시키지 않는다.
 if (!scope) return { phase: 'review', path: null, confirmed: 0, unresolvedHigh: 1, blocked: true, note: '범위 수집 에이전트 실패 — 리뷰 미실행(변경 없음과 구분; 게이트는 미해결로 취급)' }
@@ -64,7 +64,7 @@ function verifyFinding(f, dimKey) {
   return agent(
     '다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n' +
       '실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ' + JSON.stringify(f),
-    { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
+    { schema: VERDICT_SCHEMA, model: 'sonnet', phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
   ).then((v) => (v
     ? (v.refuted ? null : Object.assign({}, dimObj, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
     : Object.assign({}, dimObj, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' })))
@@ -82,7 +82,7 @@ const verified = await pipeline(
   (d) => agent(
     `변경 파일: ${files.join(', ')}\n변경 내용은 git diff ${base} 로 보라(신규 파일은 전체). 설계서 ${design}, 분석서 ${analysis} 를 기준으로 삼아라.\n` +
       `관점: ${d.ask}\n이 관점의 실제 결함만 보고하라(스타일 취향 제외). 변경되지 않은 코드의 기존 문제는 변경이 그것을 악화시킬 때만. 아무것도 수정하지 마라.`,
-    { schema: FIND_SCHEMA, phase: '리뷰', label: `리뷰:${d.key}` },
+    { schema: FIND_SCHEMA, model: 'sonnet', phase: '리뷰', label: `리뷰:${d.key}` },
   ),
   (r, d) => parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean)),
 )
@@ -175,7 +175,7 @@ if (toFix.length) {
   }))).filter(Boolean).flat()
   retest = await agent(
     `리뷰 수정 후 빌드와 테스트를 실행하라. 명령 후보: ${A.testCmd || '(분석서의 빌드·테스트 방법)'}. 실패하면 원인만 진단해 반환하라(수정하지 마라).`,
-    { schema: { type: 'object', required: ['passed'], properties: { passed: { type: 'boolean' }, summary: { type: 'string' } } }, phase: '수정', label: '재테스트' },
+    { schema: { type: 'object', required: ['passed'], properties: { passed: { type: 'boolean' }, summary: { type: 'string' } } }, model: 'sonnet', phase: '수정', label: '재테스트' },
   )
 }
 
@@ -187,7 +187,7 @@ await agent(
   `다음 리뷰 결과로 ${OUT} 를 한국어 마크다운으로 작성하라. 이미 파일이 있으면 새 회차 절을 덧붙여라. ` +
     '구성: 요약(차원별·심각도별 건수, 수정/미해결, 재테스트 결과), 확정 지적 표(심각도·차원·위치·내용·조치), 미해결 목록과 권고, low 지적 목록.\n' +
     JSON.stringify({ base: base, files: files, confirmed: confirmed, fixes: fixes, retest: retest }),
-  { phase: '기록', label: '리뷰 기록', effort: 'low' },
+  { model: 'sonnet', phase: '기록', label: '리뷰 기록', effort: 'low' },
 )
 
 return {

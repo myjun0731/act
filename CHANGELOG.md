@@ -58,6 +58,12 @@
 - `test`: 실행 에이전트 실패(run=null)를 `stopReason='run-error'`로(이전엔 'maxFixRounds'로 원인 가림, analyze/design의 'error'와 일관).
 - `deliver`: 게이트 `clean` 조건에 `!test.planFailed` 추가 — 계획 실패로 새 테스트가 없으면 기존 테스트 통과만으로 통과시키지 않음.
 
+`sdlc` 0.3.0: 토큰 비용 최적화(모델 라우팅). dev-toolkit과 같은 원칙 — 실질 작업은 강 모델, 저부가는 하향. review 스모크가 2.9M까지 가던 비용을 줄인다.
+- **유지(기본 모델)**: agentType 전문가(각자 설정)·구현 에이전트(코드 작성)·수정 에이전트(코드 수정).
+- **sonnet**: 심사 패널 judges(채점·근거검증 — haiku는 환각으로 부적합), 제네릭 리뷰어(verify가 오탐 거름), 반박검증, 조사, test plan/run, report·record 작성.
+- **haiku**: 순수 기계(scope·load·copy·유형 분류).
+- 최대 절감처: analyze/design judges(라운드 곱셈)와 review 제네릭 4차원+verify+report.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
