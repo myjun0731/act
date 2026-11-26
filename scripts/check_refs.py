@@ -45,6 +45,34 @@ def _frontmatter_name(text):
     return nm.group(1).strip().strip("'\"") if nm else None
 
 
+def _frontmatter_tools(text):
+    """에이전트 frontmatter 의 tools 목록. 없으면 None(= 전체 도구)."""
+    m = re.match(r"---\s*\n(.*?)\n---", text, re.S)
+    if not m:
+        return None
+    t = re.search(r"^tools:\s*(.+?)\s*$", m.group(1), re.M)
+    if not t:
+        return None
+    raw = t.group(1).strip().strip("[]")
+    return {x.strip().strip("'\"") for x in raw.split(",") if x.strip()}
+
+
+# 프롬프트가 '파일 쓰기'를 요구하는 표현(쓰기 도구 필요). 0.4.0 결함(design.js 작성자=architect) 회귀 방지.
+WRITE_INTENT = re.compile(r"에\s*쓰고|에\s*써라|파일로\s*작성|저장하라|에도\s*저장|로\s*복사하라|덮어쓰기")
+WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit", "Bash"}
+
+
+def _agent_type_windows(text):
+    """각 agentType:'ns:name' 리터럴과, 그 직전 agent( 부터 agentType 까지의 구간(= 프롬프트)을 돌려준다.
+    중첩 템플릿 리터럴 때문에 괄호 파싱 대신 구간 방식을 쓴다(프롬프트가 변수면 그 정의는 못 본다 — 휴리스틱)."""
+    code = _strip_js_comments(text)
+    out = []
+    for m in re.finditer(r"agentType:\s*['\"]([^'\"]+)['\"]", code):
+        start = code.rfind("agent(", 0, m.start())
+        out.append((m.group(1), code[start if start >= 0 else m.start():m.start()]))
+    return out
+
+
 def _meta_name(text):
     m = re.search(r"export\s+const\s+meta\s*=\s*\{", text)
     if not m:
@@ -74,7 +102,7 @@ def build_inventory(root):
                 deps.add(d)
             elif isinstance(d, dict) and not d.get("marketplace") and d.get("name"):
                 deps.add(d["name"])
-        inv = {"workflows": set(), "agents": set(), "skills": set(), "orchestrators": set(), "dir": pdir, "deps": deps}
+        inv = {"workflows": set(), "agents": set(), "agent_tools": {}, "skills": set(), "orchestrators": set(), "dir": pdir, "deps": deps}
         wf_dir = pdir / "workflows"
         if wf_dir.is_dir():
             for f in wf_dir.glob("*.js"):
@@ -87,8 +115,10 @@ def build_inventory(root):
         ag_dir = pdir / "agents"
         if ag_dir.is_dir():
             for f in ag_dir.glob("*.md"):
-                n = _frontmatter_name(_read(f)) or f.stem
+                atxt = _read(f)
+                n = _frontmatter_name(atxt) or f.stem
                 inv["agents"].add(n)
+                inv["agent_tools"][n] = _frontmatter_tools(atxt)
         sk_dir = pdir / "skills"
         if sk_dir.is_dir():
             for d in sk_dir.iterdir():
@@ -165,6 +195,17 @@ def extract_and_check(root, plugins, skills_global):
                     add("ERROR", "agent", ref, rel, f"agentType '{ref}' — 알 수 없는 플러그인 '{ns}'")
                 elif nm not in plugins[ns]["agents"]:
                     add("ERROR", "agent", ref, rel, f"agentType '{ref}' — '{ns}'에 에이전트 '{nm}' 없음")
+
+            # 2.5) 쓰기 능력: 프롬프트가 파일 쓰기를 요구하는데 agentType 에이전트의 tools 에 쓰기 도구가 없음 → ERROR
+            for ref, window in _agent_type_windows(text):
+                ns, _, nm = ref.partition(":")
+                if ns not in plugins or nm not in plugins[ns]["agents"]:
+                    continue  # 위 2) 에서 이미 ERROR
+                tools = plugins[ns]["agent_tools"].get(nm)
+                hit = WRITE_INTENT.search(window)
+                if hit and tools is not None and not (tools & WRITE_TOOLS):
+                    add("ERROR", "agent-write", ref, rel,
+                        f"agentType '{ref}' — 프롬프트가 파일 쓰기('{hit.group(0)}')를 요구하지만 tools({', '.join(sorted(tools))})에 쓰기 도구가 없음")
 
             # 3) 프롬프트 스킬: '<kebab 토큰 런> 스킬'
             for run in re.findall(r"([a-z0-9][a-z0-9-]*(?:·[a-z0-9][a-z0-9-]*)*)\s*스킬", text):
