@@ -26,7 +26,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 | agentic | claude-pro | 에이전트 아키텍처·루프·파이프라인·보안 설계 스킬 12개 (외부 원본 내재화) |
 | overkill | claude-pro (외부 원본) | 고급 대안 제시 |
 | recursive-research | claude-pro (외부 원본) | 재귀 심층 조사 |
-| dev-toolkit | claude-pro | Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 48개, 동적 워크플로 10개, 커맨드 1개, 리뷰·구현 에이전트 16개 |
+| dev-toolkit | claude-pro | Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 48개, 동적 워크플로 11개, 커맨드 1개, 리뷰·구현 에이전트 16개 |
 | pr-review-toolkit | claude-plugins-official | PR 리뷰 에이전트 6종 (오류 삼킴·주석·테스트·타입·단순화·품질) |
 | feature-dev | claude-plugins-official | 기능 개발 워크플로: 코드 탐색·설계·리뷰 에이전트 |
 | code-modernization | claude-plugins-official | 레거시 평가·비즈니스 규칙 추출·마이그레이션 계획 |
