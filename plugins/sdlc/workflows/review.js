@@ -139,23 +139,23 @@ try {
   )
   if (!sec) { laneFailures.push('security'); log('⚠ 보안 리뷰 결과 없음(null 반환) → unresolvedHigh 에 반영(보안 커버 공백을 PASS로 두지 않음)') }
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
-} catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
+} catch (e) { laneFailures.push('security'); log('⚠ 보안 리뷰 생략(예외) — security-reviewer 미사용(dev-toolkit 미설치?). null 경로와 동일하게 보안 커버 공백을 게이트에 반영') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
 const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () => verifyFinding(f, null)))).filter(Boolean)
 
 const all = verified.filter(Boolean).flat().concat(extra)
-// 같은 위치·제목 중복 제거(제네릭 5차원과 전문/보안 레인이 같은 이슈를 다른 표현으로 보고해도 묶이도록
-// title 을 정규화 — 소문자화·공백 제거 후 앞 40자, file 은 경로표기 정규화). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
-const seen = new Set()
-const _nf = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '')  // './a.java' 와 'a.java' 를 같은 키로
-const confirmed = all.filter((f) => {
-  // 주의: /\W/ 는 한글을 비단어문자로 보고 전부 지워 한글 제목이 빈 문자열이 되면 서로 다른 지적이 합쳐진다.
-  // 공백만 제거하고 글자(한글 포함)는 보존한다.
-  const k = `${_nf(f.file)}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
-  if (seen.has(k)) return false
-  seen.add(k); return true
-})
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 }
+const _nf = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '')  // './a.java' 와 'a.java' 를 같은 키로
+// 같은 위치·제목 중복 제거 — 충돌 시 '가장 높은 severity'를 남긴다(dedup 이 정렬보다 먼저라, 같은 키의 high 가
+// medium 사본에 밀려 버려지면 unresolvedHigh 과소집계되던 문제 방지). title 은 소문자·공백제거 후 앞 40자(한글 보존).
+const _dk = (f) => `${_nf(f.file)}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
+const _byKey = new Map()
+const _rk = (s) => (RANK[s] == null ? 9 : RANK[s])
+for (const f of all) {
+  const k = _dk(f); const prev = _byKey.get(k)
+  if (!prev || _rk(f.severity) < _rk(prev.severity)) _byKey.set(k, f)
+}
+const confirmed = Array.from(_byKey.values())
 confirmed.sort((a, b) => RANK[a.severity] - RANK[b.severity])
 log(`확정 지적 ${confirmed.length}건 (critical ${confirmed.filter((f) => f.severity === 'critical').length}, high ${confirmed.filter((f) => f.severity === 'high').length})`)
 
@@ -213,7 +213,7 @@ return {
   bySeverity: ['critical', 'high', 'medium', 'low'].reduce((o, s) => { o[s] = confirmed.filter((f) => f.severity === s).length; return o }, {}),
   fixed: fixes.filter((x) => x.fixed).length,
   unresolved: unresolved.map((f) => ({ severity: f.severity, file: f.file, line: f.line, title: f.title })),
-  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length + (retest && retest.passed === false ? 1 : 0),
+  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length + ((retest && retest.passed === false) || (toFix.length > 0 && !retest) ? 1 : 0),  // 재테스트 null(에이전트 실패)도 수정 시도가 있었으면 '미검증'으로 가산
   laneFailures: laneFailures,
   testsPass: retest ? !!retest.passed : null,
 }

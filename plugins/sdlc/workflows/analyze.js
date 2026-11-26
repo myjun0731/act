@@ -125,13 +125,18 @@ function resolveQuality(q, defaults) {
   const LEVELS = Object.assign(Object.create(null), { standard: [75, 60], high: [85, 70], strict: [92, 80] })  // null-proto: q.level 이 constructor/toString 등이어도 상속값이 아닌 undefined → || LEVELS.high 폴백 동작
   const lv = LEVELS[q.level] || LEVELS.high
   const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d
-  const criteria = (Array.isArray(q.criteria) && q.criteria.length ? q.criteria : defaults)
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+  const criteria0 = (Array.isArray(q.criteria) && q.criteria.length ? q.criteria : defaults)
     .map((c, i) => (typeof c === 'string'
       ? { key: `c${i + 1}`, weight: 1, desc: c }
-      : { key: String(c.key || `c${i + 1}`), weight: num(c.weight, 1), desc: String(c.desc || c.key) }))
+      : (c && typeof c === 'object'
+        ? { key: String(c.key || `c${i + 1}`), weight: Math.max(0.0001, num(c.weight, 1)), desc: String(c.desc || c.key || `c${i + 1}`) }
+        : { key: `c${i + 1}`, weight: 1, desc: String(c) })))  // null/숫자 등 비정상 요소도 TypeError 없이 수용
+  const _sk = Object.create(null)  // key 중복 제거(같은 key 면 per/gaps 집계가 섞임)
+  const criteria = criteria0.map((c, i) => { let k = c.key; if (_sk[k]) k = `${k}_${i + 1}`; _sk[k] = true; return Object.assign({}, c, { key: k }) })
   return {
-    target: num(q.target, lv[0]),
-    floor: num(q.floor, lv[1]),
+    target: clamp(num(q.target, lv[0]), 0, 100),
+    floor: clamp(num(q.floor, lv[1]), 0, 100),
     judges: Math.max(1, Math.min(5, num(q.judges, 3))),
     maxRounds: Math.max(1, Math.min(10, num(q.maxRounds, 5))),
     patience: Math.max(1, num(q.patience, 2)),

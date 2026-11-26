@@ -102,6 +102,12 @@
 - [P1·자체 버그] mustHave 번호 매칭을 `/^\d+$/`(순수 숫자)로 한정 — 2차 재설계의 `parseInt` 가 '2FA 지원' 류를 2번으로 오매칭하던 것 수정(번호는 유지, 텍스트는 정확일치). `deliver` 의 `testCmd: undefined` 가 leaf 의 `Object.assign` 으로 호출자 `A.testCmd` 를 덮던 것 → 값 있을 때만 키 포함. 검증 실패(미검증) 지적은 자동 코드수정 대상에서 제외(미해결 집계엔 유지).
 - 로직 테스트 5/5(+이전 11/11·8/8). 남은 P2(저위험): catch `e.message` 로깅, `dir` 경로검증, `crit` null-proto, `maxBuildFixes` clamp, test 기록 실패 플래그 등.
 
+`sdlc` review·analyze·design·deliver: 게이트 재실행(NO-GO, high 3→1)이 남긴 집계 엣지케이스 수렴 수정.
+- review: ① 재테스트 null(에이전트 실패)도 수정 시도가 있었으면 `unresolvedHigh` 가산(이전엔 `passed===false`만 봐 null 경로가 뚫림). ② 보안 레인 `catch`(throw)도 null 경로처럼 `laneFailures` 반영(보안 커버 공백 은폐 제거). ③ dedup 을 Map 기반으로 — 충돌 시 '최고 severity' 유지(dedup 이 정렬보다 먼저라 같은 키의 high 가 medium 사본에 버려져 과소집계되던 것 제거).
+- analyze·design `resolveQuality`: criteria 에 null/숫자 등 비정상 요소가 와도 TypeError 없이 수용, key 중복 제거, weight 양수·target/floor 0~100 클램프.
+- deliver: 사이클 한도 blocker 가 구현단계 partial blocker 를 덮지 않고 누적. `plugins/sdlc/README.md` mustHave 설명을 현재 동작(번호매칭·정확일치·과반미평가 차단)으로 정정.
+- 로직 테스트 9/9.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
