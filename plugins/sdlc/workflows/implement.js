@@ -50,11 +50,27 @@ if (!plan || !plan.tasks || !plan.tasks.length) {
   return { phase: 'implementation', buildOk: false, stopReason: 'no-tasks', note: `작업 목록을 찾지 못함: ${TASKS}` }
 }
 let tasks = plan.tasks
-if (only) tasks = tasks.filter((t) => only.indexOf(t.id) >= 0)
+if (only) {
+  const known = tasks.filter((t) => only.indexOf(t.id) >= 0)
+  const unknown = only.filter((id) => !tasks.some((t) => t.id === id))
+  // only 필터 후 '빈 작업'을 빈 빌드/기록으로 흘려보내지 않는다(49행 빈검사는 필터 이전만 본다).
+  if (!known.length) return { phase: 'implementation', buildOk: false, stopReason: 'no-tasks', note: `only 로 지정된 작업 id 를 찾지 못함: ${only.join(', ')}` }
+  if (unknown.length) log(`⚠ only 에 존재하지 않는 id 무시: ${unknown.join(', ')}`)
+  tasks = known
+}
 const ids = new Set(tasks.map((t) => t.id))
 
 // 의존 계층(웨이브) → 계층 안에서 파일이 겹치지 않는 묶음으로 분할 (순수 코드)
-const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
+// 경로 정규화: 역슬래시·중복슬래시·'.'·'..' 를 실제로 해소해 'a/../b'와 'b', 'a//b'와 'a/b'를 같은 파일로 본다(병렬 동시수정 충돌 방지).
+const normPath = (p) => {
+  const out = []
+  for (const s of String(p || '').replace(/\\/g, '/').split('/')) {
+    if (s === '' || s === '.') continue
+    if (s === '..') { if (out.length && out[out.length - 1] !== '..') out.pop(); else out.push('..') }
+    else out.push(s)
+  }
+  return out.join('/')
+}
 const waves = []
 const placed = new Set()
 let remaining = tasks.slice()

@@ -30,7 +30,7 @@ const md = await agent(
     '## 5. 설계 이탈·결정 사항\n## 6. 남은 위험·미해결 항목\n## 7. 후속 조치 권고(커밋·PR·배포 전 확인 포함)\n' +
     (augment.length ? '## 8. 보강 분석 (dev-toolkit) — 영향·회귀·DB 감사·커버리지 등 하위 워크플로 결과를 요약(아래 보강 블록 근거, 게이트엔 미반영된 자문)\n' : '') +
     '문서에 없는 사실을 지어내지 말고, 확인 못 한 항목은 "미확인"으로 표시하라. 코드는 수정하지 마라. 작성한 보고서 본문을 그대로 반환하라.\n\n' +
-    `파이프라인 결과 요약(JSON): ${JSON.stringify({ outcome: A.outcome ? Object.assign({}, A.outcome, { augment: augment.map((a) => ({ step: a.step, ok: a.ok })) }) : null, history: A.history || null })}` +
+    `파이프라인 결과 요약(JSON): ${JSON.stringify({ outcome: (A.outcome && typeof A.outcome === 'object' && !Array.isArray(A.outcome)) ? Object.assign({}, A.outcome, { augment: augment.map((a) => ({ step: a.step, ok: a.ok })) }) : null, history: A.history || null }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').slice(0, 12000)}` +
     augGuard,
   { model: 'sonnet', phase: '보고서', label: 'REPORT.md' },
 )

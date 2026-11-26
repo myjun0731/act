@@ -77,6 +77,7 @@ const DIMS = [
   { key: 'maintainability', ask: '유지보수 — 기존 관례 위반, 중복, 과도한 복잡도, 죽은 코드, 누락된 테스트' },
 ]
 
+const laneFailures = []  // 차원·보안 리뷰 에이전트가 null(미실행)한 레인 — 게이트에 '미검증 high'로 반영(거짓 PASS 방지)
 const verified = await pipeline(
   DIMS,
   (d) => agent(
@@ -84,7 +85,10 @@ const verified = await pipeline(
       `관점: ${d.ask}\n이 관점의 실제 결함만 보고하라(스타일 취향 제외). 변경되지 않은 코드의 기존 문제는 변경이 그것을 악화시킬 때만. 아무것도 수정하지 마라.`,
     { schema: FIND_SCHEMA, model: 'sonnet', phase: '리뷰', label: `리뷰:${d.key}` },
   ),
-  (r, d) => parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean)),
+  (r, d) => {
+    if (!r) { laneFailures.push(d.key); log(`⚠ 리뷰 차원 '${d.key}' 에이전트 결과 없음 — '미실행' → unresolvedHigh 에 반영(거짓 PASS 방지)`) }
+    return parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean))
+  },
 )
 // Layer 2 (가산·선택): 변경 파일 유형별 dev-toolkit 전문 리뷰어 + 보안 상시 레인.
 // 실패(미설치·에이전트 오류)해도 try/catch·parallel 로 흡수 → 1계층 제네릭 5차원으로 완주한다.
@@ -107,6 +111,7 @@ try {
       '유형: java(.java)·sql_mapper(MyBatis 매퍼 XML·.sql)·frontend_react(.tsx/.jsx)·frontend_vue(.vue)·frontend_ts(.ts/.js)·migration(마이그레이션·DDL)·schema(스키마/엔티티)·config·other.',
     { schema: CLS_SCHEMA, model: 'haiku', effort: 'low', phase: '리뷰', label: '유형 분류' },
   )
+  if (!cls || !Array.isArray(cls.files)) log('유형 분류 결과 없음(null) — 전문(2계층) 리뷰 생략, 제네릭 5차원으로 계속')
   typed = (cls && Array.isArray(cls.files)) ? cls.files : []
 } catch (e) { log('유형 분류 실패 — 전문 리뷰 생략, 제네릭 5차원으로 계속') }
 // 유형별로 묶어 전문 리뷰어 1회씩 디스패치(비용 억제). 에이전트 반환값으로 키를 잡으므로 Object.create(null)(프로토타입 오염 방지).
@@ -120,6 +125,7 @@ const expertRaw = (await parallel(Object.keys(byType).map((t) => async () => {
         `${g.r.ask}\n실제 결함만 findings 로 보고하라(file·severity·title·detail·fix, 스타일 취향 제외). 아무것도 수정하지 마라.`,
       { agentType: g.r.agentType, schema: FIND_SCHEMA, phase: '리뷰', label: `전문:${t}` },
     )
+    if (!out) log(`⚠ 전문 리뷰 '${t}' 결과 없음(null) — 이 유형 심화 커버 없음(제네릭층 기본 커버)`)
     return ((out && out.findings) || []).map((f) => Object.assign({ dim: 'specialist' }, f))
   } catch (e) { log(`전문 리뷰 ${t} 생략(제네릭층이 커버)`); return [] }
 }))).filter(Boolean).flat()
@@ -131,33 +137,37 @@ try {
       '입력 검증·인젝션·인증/권한 확인·비밀정보 노출·안전하지 않은 기본값·OWASP Top 10 관점의 실제 취약점만 findings 로 보고하라. 아무것도 수정하지 마라.',
     { agentType: 'dev-toolkit:security-reviewer', schema: FIND_SCHEMA, phase: '리뷰', label: '보안 상시' },
   )
+  if (!sec) { laneFailures.push('security'); log('⚠ 보안 리뷰 결과 없음(null 반환) → unresolvedHigh 에 반영(보안 커버 공백을 PASS로 두지 않음)') }
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
-} catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
+} catch (e) { laneFailures.push('security'); log('⚠ 보안 리뷰 생략(예외) — security-reviewer 미사용(dev-toolkit 미설치?). null 경로와 동일하게 보안 커버 공백을 게이트에 반영') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
 const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () => verifyFinding(f, null)))).filter(Boolean)
 
 const all = verified.filter(Boolean).flat().concat(extra)
-// 같은 위치·제목 중복 제거(제네릭 5차원과 전문/보안 레인이 같은 이슈를 다른 표현으로 보고해도 묶이도록
-// title 을 정규화 — 소문자화·공백/구두점 제거 후 앞 30자). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
-const seen = new Set()
-const confirmed = all.filter((f) => {
-  // 주의: /\W/ 는 한글을 비단어문자로 보고 전부 지워 한글 제목이 빈 문자열이 되면 서로 다른 지적이 합쳐진다.
-  // 공백만 제거하고 글자(한글 포함)는 보존한다.
-  const k = `${f.file}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
-  if (seen.has(k)) return false
-  seen.add(k); return true
-})
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 }
+const _nf = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '')  // './a.java' 와 'a.java' 를 같은 키로
+// 같은 위치·제목 중복 제거 — 충돌 시 '가장 높은 severity'를 남긴다(dedup 이 정렬보다 먼저라, 같은 키의 high 가
+// medium 사본에 밀려 버려지면 unresolvedHigh 과소집계되던 문제 방지). title 은 소문자·공백제거 후 앞 40자(한글 보존).
+const _dk = (f) => `${_nf(f.file)}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
+const _byKey = new Map()
+const _rk = (s) => (RANK[s] == null ? 9 : RANK[s])
+for (const f of all) {
+  const k = _dk(f); const prev = _byKey.get(k)
+  if (!prev || _rk(f.severity) < _rk(prev.severity)) _byKey.set(k, f)
+}
+const confirmed = Array.from(_byKey.values())
 confirmed.sort((a, b) => RANK[a.severity] - RANK[b.severity])
 log(`확정 지적 ${confirmed.length}건 (critical ${confirmed.filter((f) => f.severity === 'critical').length}, high ${confirmed.filter((f) => f.severity === 'high').length})`)
 
 // 4) 수정 -------------------------------------------------------------------
 let fixes = []
 let retest = null
-const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low') : []
+// 검증 에이전트 실패로 '미검증 보존'된 지적(verifyNote 에 ⚠)은 오탐 가능성이 있어 자동 코드수정 대상에서 제외한다
+// (미해결 집계에는 그대로 남아 unresolved 로 노출 — 조용히 버리지 않음).
+const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low' && !(f.verifyNote && String(f.verifyNote).includes('⚠'))) : []
 if (toFix.length) {
   phase('수정')
-  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이(./foo vs foo)로 같은 파일이 다른 그룹에 들어가 병렬 수정 충돌하지 않도록
+  const normPath = (p) => { const out = []; for (const s of String(p || '').replace(/\\/g, '/').split('/')) { if (s === '' || s === '.') continue; if (s === '..') { if (out.length && out[out.length - 1] !== '..') out.pop(); else out.push('..') } else out.push(s) } return out.join('/') }  // 'a/../b'·'./a'·'//'·역슬래시 실제 해소(병렬 수정 충돌 방지)
   const byFile = Object.create(null)  // 정규화 경로로 키(프로토타입 오염 방지 위해 Object.create(null))
   toFix.forEach((f) => { const k = normPath(f.file); (byFile[k] = byFile[k] || []).push(f) })
   fixes = (await parallel(Object.keys(byFile).map((file) => () => {
@@ -173,7 +183,7 @@ if (toFix.length) {
     ).then((r) => {
       const byN = {}
       if (r && Array.isArray(r.items)) for (const it of r.items) if (it && typeof it.n === 'number') byN[it.n] = it
-      return items.map((f) => ({ file: f.file, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
+      return items.map((f) => ({ file: f.file, line: f.line, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
     })
   }))).filter(Boolean).flat()
   retest = await agent(
@@ -184,8 +194,11 @@ if (toFix.length) {
 
 // 5) 기록 -------------------------------------------------------------------
 phase('기록')
-const fixedTitles = new Set(fixes.filter((x) => x.fixed).map((x) => `${x.file}:${x.title}`))
-const unresolved = confirmed.filter((f) => f.severity !== 'low' && !fixedTitles.has(`${f.file}:${f.title}`))
+// dedup 키(file:line:title, 경로정규화)와 '동일 규칙'으로 매칭한다 — line 을 빼면 같은 파일·제목·다른 line
+// 2건 중 1건만 고쳐도 둘 다 fixed 로 과소집계되어 unresolvedHigh=0 거짓 PASS → deliver 거짓 completed 로 전파되던 결함.
+const _fk = (x) => `${_nf(x.file)}:${x.line || 0}:${String(x.title || '')}`
+const fixedKeys = new Set(fixes.filter((x) => x.fixed).map(_fk))
+const unresolved = confirmed.filter((f) => f.severity !== 'low' && !fixedKeys.has(_fk(f)))
 await agent(
   `다음 리뷰 결과로 ${OUT} 를 한국어 마크다운으로 작성하라. 이미 파일이 있으면 새 회차 절을 덧붙여라. ` +
     '구성: 요약(차원별·심각도별 건수, 수정/미해결, 재테스트 결과), 확정 지적 표(심각도·차원·위치·내용·조치), 미해결 목록과 권고, low 지적 목록.\n' +
@@ -200,6 +213,7 @@ return {
   bySeverity: ['critical', 'high', 'medium', 'low'].reduce((o, s) => { o[s] = confirmed.filter((f) => f.severity === s).length; return o }, {}),
   fixed: fixes.filter((x) => x.fixed).length,
   unresolved: unresolved.map((f) => ({ severity: f.severity, file: f.file, line: f.line, title: f.title })),
-  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length,
+  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length + ((retest && retest.passed === false) || (toFix.length > 0 && !retest) ? 1 : 0),  // 재테스트 null(에이전트 실패)도 수정 시도가 있었으면 '미검증'으로 가산
+  laneFailures: laneFailures,
   testsPass: retest ? !!retest.passed : null,
 }

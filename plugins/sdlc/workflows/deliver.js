@@ -55,14 +55,15 @@ let test = null
 let review = null
 if (status !== 'blocked') {
   for (let c = 1; c <= maxCycles; c++) {
-    test = await leaf('test', { mode: c === 1 ? 'full' : 'verify', testCmd: impl.testCmd || undefined })
+    const tc = impl.testCmd ? { testCmd: impl.testCmd } : {}  // testCmd:undefined 로 leaf 의 Object.assign 이 호출자 A.testCmd 를 덮어쓰지 않도록 키 자체를 넣지 않음
+    test = await leaf('test', Object.assign({ mode: c === 1 ? 'full' : 'verify' }, tc))
     if (test && test.stopReason === 'env') { status = 'blocked'; blocker = '테스트 환경 문제'; break }
-    review = await leaf('review', { testCmd: impl.testCmd || undefined })
+    review = await leaf('review', tc)
     // test.planFailed(계획 실패로 새 테스트 미작성)면 기존 테스트만 통과해도 clean 으로 보지 않는다.
     const clean = test && test.passed && !test.planFailed && review && review.unresolvedHigh === 0 && review.testsPass !== false
     log(`사이클 ${c}: 테스트 ${test && test.passed ? '통과' : '실패'}, 미해결 high+ ${review ? review.unresolvedHigh : '?'}`)
     if (clean) break
-    if (c === maxCycles) { status = 'partial'; blocker = '사이클 한도 내 미해결(테스트 실패 또는 high 이상 리뷰 지적)' }
+    if (c === maxCycles) { status = 'partial'; blocker = (blocker ? blocker + ' / ' : '') + '사이클 한도 내 미해결(테스트 실패 또는 high 이상 리뷰 지적)' }
   }
 }
 
