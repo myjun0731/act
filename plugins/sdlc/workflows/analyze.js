@@ -58,7 +58,7 @@ if (!A.previous) {
     agent(
       `요청:\n${request}\n${scope ? `\n조사 범위: ${scope}\n` : ''}${feedback ? `\n사용자 피드백(반드시 반영):\n${feedback}\n` : ''}\n` +
         `${p.ask}\n코드는 읽기만 하고 수정하지 마라. 추측은 추측이라고 표시하라.`,
-      { schema: NOTE_SCHEMA, phase: '조사', label: `조사:${p.key}` },
+      { schema: NOTE_SCHEMA, model: 'sonnet', phase: '조사', label: `조사:${p.key}` },
     ).then((r) => (r ? { probe: p.key, ...r } : null)),
   ))).filter(Boolean)
   log(`조사 노트 ${notes.length}건`)
@@ -111,7 +111,7 @@ phase('확정')
 let finalPath = null
 if (result.bestPath) {
   const copied = await agent(`${result.bestPath} 의 내용을 그대로 ${FINAL} 로 복사하라(덮어쓰기). 완료 후 "ok" 만 반환.`,
-    { phase: '확정', label: '확정본 복사', effort: 'low' })
+    { model: 'haiku', phase: '확정', label: '확정본 복사', effort: 'low' })
   // 복사 에이전트가 실패하면 FINAL 이 없을 수 있으니, 그 경우 라운드 본(bestPath)을 경로로 돌려준다(없는 파일을 성공으로 반환하지 않는다).
   finalPath = copied ? FINAL : result.bestPath
 }
@@ -184,7 +184,7 @@ async function qualityLoop(opt) {
           `당신의 관점: ${l.ask}\n\n아래 기준마다 0~100 점수와, 점수를 올리려면 보완할 구체적 지적(gaps)을 반환하라. ` +
           `90 이상은 "이대로 다음 단계에 넘겨도 문제없음", 70 은 "쓸 만하지만 보완 필요", 50 이하는 "재작성 수준"이다. ` +
           `관대하게 주지 마라.\n기준:\n${critList}${mustList}`,
-        { schema: JUDGE_SCHEMA, phase: '평가', label: `평가 r${round}:${l.key}` },
+        { schema: JUDGE_SCHEMA, model: 'sonnet', phase: '평가', label: `평가 r${round}:${l.key}` },
       ))))
       .filter(Boolean)
     if (!verdicts.length) return null
@@ -229,7 +229,8 @@ async function qualityLoop(opt) {
       .filter((c) => crit[c.key] < 100)
       .map((c) => `[${c.key} ${crit[c.key]}점] ${c.desc}\n` + Array.from(new Set(gaps[c.key])).slice(0, 8).map((g) => `  - ${g}`).join('\n'))
       .join('\n') +
-      (must.some((m) => !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '')
+      (must.some((m) => !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '') +
+      (must.some((m) => String(m.votes).includes('불명')) ? `\n[필수 항목 판정 불가 — 심사자가 판정 못 함(통과엔 미반영)]\n${must.filter((m) => String(m.votes).includes('불명')).map((m) => `  - ${m.item}`).join('\n')}` : '')
     return { score: score, min: Math.round(min * 10) / 10, criteria: crit, mustHave: must, passed: passed, gapText: gapText, judges: verdicts.length }
   }
 

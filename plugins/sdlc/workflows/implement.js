@@ -44,7 +44,7 @@ const LOAD_SCHEMA = {
 }
 const plan = await agent(
   `${TASKS} 를 읽어 그대로 반환하라. 파일이 없으면 ${design} 의 "작업 분해"에서 작업 목록을, ${analysis} 의 "빌드·테스트 실행 방법"에서 buildCmd·testCmd 를 추출하라. 아무것도 수정하지 마라.`,
-  { schema: LOAD_SCHEMA, phase: '준비', label: '작업 로드', effort: 'low' },
+  { schema: LOAD_SCHEMA, model: 'haiku', phase: '준비', label: '작업 로드', effort: 'low' },
 )
 if (!plan || !plan.tasks || !plan.tasks.length) {
   return { phase: 'implementation', buildOk: false, stopReason: 'no-tasks', note: `작업 목록을 찾지 못함: ${TASKS}` }
@@ -54,6 +54,7 @@ if (only) tasks = tasks.filter((t) => only.indexOf(t.id) >= 0)
 const ids = new Set(tasks.map((t) => t.id))
 
 // 의존 계층(웨이브) → 계층 안에서 파일이 겹치지 않는 묶음으로 분할 (순수 코드)
+const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
 const waves = []
 const placed = new Set()
 let remaining = tasks.slice()
@@ -62,11 +63,11 @@ while (remaining.length) {
   if (!ready.length) { log(`순환 의존 감지 — 남은 ${remaining.length}개를 순서대로 처리`); ready.push(remaining[0]) }
   const batches = []
   for (const t of ready) {
-    const fs = new Set(t.files || [])
-    let b = batches.find((x) => !(t.files || []).some((f) => x.files.has(f)))
+    const tf = (t.files || []).map(normPath)  // 경로 표기 차이로 같은 파일을 한 묶음에서 동시 수정하지 않도록 정규화
+    let b = batches.find((x) => !tf.some((f) => x.files.has(f)))
     if (!b) { b = { files: new Set(), tasks: [] }; batches.push(b) }
     b.tasks.push(t)
-    fs.forEach((f) => b.files.add(f))
+    tf.forEach((f) => b.files.add(f))
   }
   batches.forEach((b) => waves.push(b.tasks))
   ready.forEach((t) => placed.add(t.id))
@@ -129,7 +130,7 @@ await agent(
   `다음 구현 결과로 ${OUT} 를 한국어 마크다운으로 작성하라${only ? '(이번은 재시도 실행이니 기존 파일이 있으면 "재시도" 절을 덧붙여라)' : ''}. ` +
     '구성: 요약(완료/부분/실패 수, 빌드 결과), 작업별 표(ID·제목·상태·변경 파일·비고), 설계 이탈 사항, 빌드 로그 요약.\n' +
     JSON.stringify({ tasks: list, build: build }),
-  { phase: '기록', label: '구현 기록', effort: 'low' },
+  { model: 'sonnet', phase: '기록', label: '구현 기록', effort: 'low' },
 )
 
 const failed = list.filter((r) => r.status !== 'done').map((r) => r.id)

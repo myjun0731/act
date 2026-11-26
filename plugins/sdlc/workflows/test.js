@@ -48,7 +48,7 @@ if (mode === 'full') {
     `설계서 ${design} 의 "테스트 전략"과 "요구 추적표", 분석서 ${analysis} 의 수용기준·빌드·테스트 방법을 읽고, ` +
       '레포의 기존 테스트 프레임워크·위치 관례에 맞춰 테스트 단위(테스트 파일 하나 = 단위 하나)를 계획하라. 모든 AC 가 최소 하나의 케이스로 덮여야 한다. ' +
       '이미 있는 테스트 파일에 추가하는 게 관례라면 그 경로를 써도 되지만 단위끼리 파일이 겹치면 안 된다. 아무것도 수정하지 마라.',
-    { schema: PLAN_SCHEMA, phase: '계획', label: '테스트 계획' },
+    { schema: PLAN_SCHEMA, model: 'sonnet', phase: '계획', label: '테스트 계획' },
   )
   if (!plan) { planFailed = true; log('⚠ 테스트 계획 실패 — 새 테스트 없이 기존 테스트만 실행(AC 커버리지 미보장)') }
   if (plan) {
@@ -100,7 +100,7 @@ async function runTests(round) {
   return agent(
     `테스트를 실행하라. 명령 후보: ${testCmd || '(분석서 참고)'}. 이번 작업과 관련된 테스트와 기존 회귀 테스트를 모두 포함하라. ` +
       '실패마다 원인을 짧게 진단해 kind 와 의심 파일을 채워라. 아무것도 수정하지 마라.',
-    { schema: RUN_SCHEMA, phase: '실행', label: `실행 r${round}` },
+    { schema: RUN_SCHEMA, model: 'sonnet', phase: '실행', label: `실행 r${round}` },
   )
 }
 
@@ -114,9 +114,10 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   if (fails.every((f) => f.kind === 'env')) { stopReason = 'env'; log('환경 문제만 남음 — 수정 루프 중단'); break }
   phase('수정')
   // 의심 파일 기준으로 묶고, 파일이 겹치지 않게 그룹화
+  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이로 같은 파일을 동시 수정하지 않도록
   const groups = []
   for (const f of fails.filter((x) => x.kind !== 'env')) {
-    const files = (f.suspect && f.suspect.length) ? f.suspect : ['?']
+    const files = ((f.suspect && f.suspect.length) ? f.suspect : ['?']).map(normPath)
     // 이 실패와 파일이 겹치는 기존 그룹을 전부 찾아 하나로 병합한다. 첫 그룹만 합치면 서로 다른
     // 그룹이 같은 파일을 공유하게 돼, 병렬 수정이 같은 파일을 동시에 건드릴 수 있다.
     const hit = groups.filter((x) => files.some((p) => x.files.has(p)))
@@ -156,7 +157,7 @@ await agent(
     `구성: 요약(통과 여부·총/실패 수·수정 라운드), AC 커버리지 표(설계서 ${design} 의 AC → TC → 테스트 파일 → 결과), ` +
     '라운드별 실패·수정 이력, 남은 실패와 원인 진단, 테스트를 수정한 경우 그 근거.\n' +
     JSON.stringify({ mode: mode, written: written, rounds: rounds, last: run }),
-  { phase: '기록', label: '테스트 기록', effort: 'low' },
+  { model: 'sonnet', phase: '기록', label: '테스트 기록', effort: 'low' },
 )
 
 return {
@@ -164,13 +165,13 @@ return {
   path: OUT,
   mode: mode,
   planFailed: planFailed,
-  passed: !!(run && run.passed),
+  passed: !!(run && run.passed && !((run.total || 0) === 0 && mode === 'full')),  // full 모드에서 실행 0건을 '빈 통과'로 보지 않음
   stopReason: stopReason,
   total: run ? run.total || 0 : 0,
   failedCount: run ? (run.failedCount || (run.failures || []).length) : 0,
   remaining: run && !run.passed ? (run.failures || []).slice(0, 20) : [],
   fixRounds: rounds.length - 1,
-  testFiles: written.map((w) => w.testFile),
+  testFiles: written.filter((w) => w && w.summary !== '실패').map((w) => w.testFile),  // 작성 실패 파일은 제외
 }
 
 function summ(r, x) {

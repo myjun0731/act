@@ -22,6 +22,6 @@ const md = await agent(
     '## 5. 설계 이탈·결정 사항\n## 6. 남은 위험·미해결 항목\n## 7. 후속 조치 권고(커밋·PR·배포 전 확인 포함)\n' +
     '문서에 없는 사실을 지어내지 말고, 확인 못 한 항목은 "미확인"으로 표시하라. 코드는 수정하지 마라. 작성한 보고서 본문을 그대로 반환하라.\n\n' +
     `파이프라인 결과 요약(JSON): ${JSON.stringify({ outcome: A.outcome || null, history: A.history || null })}`,
-  { phase: '보고서', label: 'REPORT.md' },
+  { model: 'sonnet', phase: '보고서', label: 'REPORT.md' },
 )
 return { phase: 'report', path: OUT, report: md }
