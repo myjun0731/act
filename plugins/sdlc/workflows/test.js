@@ -164,7 +164,7 @@ return {
   path: OUT,
   mode: mode,
   planFailed: planFailed,
-  passed: !!(run && run.passed),
+  passed: !!(run && run.passed && !((run.total || 0) === 0 && mode === 'full')),  // full 모드에서 실행 0건을 '빈 통과'로 보지 않음
   stopReason: stopReason,
   total: run ? run.total || 0 : 0,
   failedCount: run ? (run.failedCount || (run.failures || []).length) : 0,

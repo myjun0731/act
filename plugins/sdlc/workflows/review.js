@@ -141,7 +141,9 @@ const all = verified.filter(Boolean).flat().concat(extra)
 // title 을 정규화 — 소문자화·공백/구두점 제거 후 앞 30자). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
 const seen = new Set()
 const confirmed = all.filter((f) => {
-  const k = `${f.file}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/[\s\W]+/g, '').slice(0, 30)}`
+  // 주의: /\W/ 는 한글을 비단어문자로 보고 전부 지워 한글 제목이 빈 문자열이 되면 서로 다른 지적이 합쳐진다.
+  // 공백만 제거하고 글자(한글 포함)는 보존한다.
+  const k = `${f.file}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
   if (seen.has(k)) return false
   seen.add(k); return true
 })
