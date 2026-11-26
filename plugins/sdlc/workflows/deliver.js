@@ -26,6 +26,7 @@ async function leaf(name, a) {
     return r
   } catch (e) {
     const msg = String((e && e.message) ? e.message : e)
+    log(`✖ sdlc:${name} 실패: ${msg}`)  // 실행 중 실패를 바로 보이게(steps 에만 묻혀 '결과 없음'과 구분 안 되는 문제)
     steps.push({ step: name, ok: false, error: msg })
     return null
   }
@@ -39,7 +40,12 @@ let impl = await leaf('implement')
 if (impl && impl.failed && impl.failed.length) {
   log(`실패 작업 ${impl.failed.join(', ')} 재시도`)
   const retry = await leaf('implement', { only: impl.failed })
-  if (retry) impl = Object.assign({}, impl, { buildOk: retry.buildOk, failed: retry.failed, buildErrors: retry.buildErrors })
+  // 재시도로 성공한 작업의 changedFiles·done 이 보강 단계(아래 changed 계산)에 빠지지 않도록 tasks·done 도 병합(중복은 대상선정 heuristic 상 무해).
+  if (retry) impl = Object.assign({}, impl, {
+    buildOk: retry.buildOk, failed: retry.failed, buildErrors: retry.buildErrors,
+    tasks: (impl.tasks || []).concat(retry.tasks || []),
+    done: (impl.done || []).concat(retry.done || []),
+  })
 }
 if (!impl || !impl.buildOk) { status = 'blocked'; blocker = `구현/빌드 실패: ${impl ? impl.buildErrors || impl.failed : '구현 워크플로 실패'}` }
 else if (impl.failed && impl.failed.length) { status = 'partial'; blocker = `구현 실패 작업 잔존(빌드는 통과): ${impl.failed.join(', ')}` }
