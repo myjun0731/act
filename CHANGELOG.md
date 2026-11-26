@@ -88,6 +88,31 @@
 - [medium] 투영만 하고 비교하지 않던 diff 추가: 같은 이름 인덱스의 **unique·컬럼 변경**, **FK 존재**(이름 없어 columns→refTable 시그니처로), **제약 존재·kind/expr 변경**. 이관 핵심인 UNIQUE 해제·FK/CHECK 삭제를 놓치던 공백 보강.
 - 합성 테스트(프로토타입 이름 + FK/인덱스/제약 시나리오) 7/7 통과.
 
+`sdlc` analyze·design·report·review: rc 승격 전 2차 검증(런타임 리뷰 50에이전트, high 0·medium 6·low 3) 포착 결함 중 명확·안전한 것 수정.
+- [medium] analyze·design qualityLoop의 `LEVELS[q.level]`가 프로토타입 키(`constructor`·`toString`·`__proto__`)를 통과시켜 lv=함수 → `|| LEVELS.high` 폴백 미동작 → target/floor undefined → `score >= target` 영구 false로 루프가 영원히 미통과하던 문제 → `Object.create(null)`(폴백 테스트 8/8).
+- [medium] report의 outcome/history 프롬프트 JSON에 이스케이프·길이제한·객체검사가 없던 것 → `<>` 무력화·12000자 상한·outcome 객체 가드(간접 프롬프트 주입·비대화·문자열 outcome의 문자인덱스 펼침 방지).
+- [medium] review의 차원·보안·전문·분류 에이전트가 throw 아닌 null 반환 시 '커버 공백'이 '지적 없음'으로 조용히 처리되던 것 → null 결과 경고 로그(관측성). 게이트(unresolvedHigh) 반영은 후속 과제.
+- 2차 재설계로 나머지도 해결(게이트/매칭 로직 테스트 11/11):
+  - mustHave: 심사자 판정을 **번호 기반 매칭**으로 전환(부분일치 'API'↔'API 인증' 오매칭 제거, 번호 없으면 정규화 정확일치 폴백). **'미평가=자동통과' 구멍 제거** — 평가된 항목이 과반 미충족이면 차단, 필수항목이 있는데 절반 넘게 미평가면 '심사 누락'으로 차단, 미평가가 소수일 때만 허용(정확불일치로 영원히 미통과하던 회귀는 회피).
+  - review: 차원·보안 리뷰 에이전트가 null(미실행) 반환 시 `laneFailures`로 모아 `unresolvedHigh`에 가산(실패 레인을 '지적 없음'으로 두지 않아 거짓 PASS 방지). dedup 키에 경로표기 정규화 적용(주석/코드 정합).
+  - implement: `only`-필터 후 빈 작업을 빈 빌드/기록으로 흘리지 않도록 재검사·미존재 id 보고, `normPath`를 실제 경로 정규화(`..`·`.`·중복슬래시 해소)로 재설계.
+
+`sdlc` review·deliver·analyze·design: 최종 pre-merge-gate(오케스트레이터, 91에이전트 → NO-GO) 포착 결함 수정 — 거짓 PASS 연쇄 + 2차 재설계 자체 버그.
+- [P0·거짓 PASS 연쇄] review 의 `fixedTitles`/`unresolved` 매칭 키가 `file:title`(line 누락)이라 dedup 키(`file:line:title`)와 불일치 → 같은 파일·제목·다른 line 2건 중 1건만 고쳐도 둘 다 fixed 로 과소집계 → `unresolvedHigh=0` 거짓 clean → `deliver` 거짓 `completed` 로 전파되던 교차모듈 결함. 키를 `file:line:title`(경로정규화)로 통일하고 수정 결과에 `line` 보존. `unresolvedHigh` 에 재테스트 실패(`testsPass===false`)도 가산.
+- [P1·자체 버그] mustHave 번호 매칭을 `/^\d+$/`(순수 숫자)로 한정 — 2차 재설계의 `parseInt` 가 '2FA 지원' 류를 2번으로 오매칭하던 것 수정(번호는 유지, 텍스트는 정확일치). `deliver` 의 `testCmd: undefined` 가 leaf 의 `Object.assign` 으로 호출자 `A.testCmd` 를 덮던 것 → 값 있을 때만 키 포함. 검증 실패(미검증) 지적은 자동 코드수정 대상에서 제외(미해결 집계엔 유지).
+- 로직 테스트 5/5(+이전 11/11·8/8). 남은 P2(저위험): catch `e.message` 로깅, `dir` 경로검증, `crit` null-proto, `maxBuildFixes` clamp, test 기록 실패 플래그 등.
+
+`sdlc` review·analyze·design·deliver: 게이트 재실행(NO-GO, high 3→1)이 남긴 집계 엣지케이스 수렴 수정.
+- review: ① 재테스트 null(에이전트 실패)도 수정 시도가 있었으면 `unresolvedHigh` 가산(이전엔 `passed===false`만 봐 null 경로가 뚫림). ② 보안 레인 `catch`(throw)도 null 경로처럼 `laneFailures` 반영(보안 커버 공백 은폐 제거). ③ dedup 을 Map 기반으로 — 충돌 시 '최고 severity' 유지(dedup 이 정렬보다 먼저라 같은 키의 high 가 medium 사본에 버려져 과소집계되던 것 제거).
+- analyze·design `resolveQuality`: criteria 에 null/숫자 등 비정상 요소가 와도 TypeError 없이 수용, key 중복 제거, weight 양수·target/floor 0~100 클램프.
+- deliver: 사이클 한도 blocker 가 구현단계 partial blocker 를 덮지 않고 누적. `plugins/sdlc/README.md` mustHave 설명을 현재 동작(번호매칭·정확일치·과반미평가 차단)으로 정정.
+- 로직 테스트 9/9.
+
+`sdlc` test·review: 게이트 3라운드(조건부 GO, high 0)가 남긴 확정 결함 수정 — 테스트 파일 키 경로 미정규화.
+- `test.js`: 작성 단계 `byFile` 키가 `u.testFile` 원문이라 `./a`·`a`·`a/../b` 가 서로 다른 키 → 같은 파일을 병렬로 쓰는 에이전트가 둘 생길 여지. `normPath`(`..`·`.`·중복슬래시 실제 해소) 적용 + 빈/undefined `testFile` 단위 제외('undefined' 키로 뭉치지 않도록).
+- `test.js`(수정 단계)·`review.js`(수정 단계)의 약한 `normPath`(접두만 처리)를 `..` 해소 정식 버전으로 통일 — 3파일(implement 포함) 일관.
+- 게이트 수렴: NO-GO → NO-GO → **조건부 GO(high 0)**. 잔여 '조건부'는 코드 결함이 아니라 REGRESSION.md 원장·회귀 실행 등 프로세스 권고이며, review→deliver 반환 계약은 단위 테스트(9/9·5/5·11/11)로 검증됨.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

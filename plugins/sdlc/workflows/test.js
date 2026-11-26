@@ -53,11 +53,14 @@ if (mode === 'full') {
   if (!plan) { planFailed = true; log('⚠ 테스트 계획 실패 — 새 테스트 없이 기존 테스트만 실행(AC 커버리지 미보장)') }
   if (plan) {
     testCmd = testCmd || plan.testCmd || ''
-    // 같은 파일을 가리키는 단위는 합친다(병렬 쓰기 충돌 방지). 경로(에이전트 반환)로 키를 잡으므로 Object.create(null).
+    // 같은 파일을 가리키는 단위는 합친다(병렬 쓰기 충돌 방지). 경로표기('./a' vs 'a', 'a/../b' vs 'b')를 실제 정규화해 같은 키로.
+    const normPath = (p) => { const out = []; for (const s of String(p || '').replace(/\\/g, '/').split('/')) { if (s === '' || s === '.') continue; if (s === '..') { if (out.length && out[out.length - 1] !== '..') out.pop(); else out.push('..') } else out.push(s) } return out.join('/') }
     const byFile = Object.create(null)
     for (const u of plan.units || []) {
-      if (!byFile[u.testFile]) byFile[u.testFile] = { testFile: u.testFile, target: u.target || '', cases: [] }
-      byFile[u.testFile].cases.push(...(u.cases || []))
+      const key = normPath(u.testFile)
+      if (!key) { log(`⚠ 테스트 계획에 testFile 없는 단위 — 건너뜀: ${u.target || '(target 미상)'}`); continue }  // undefined/빈 경로가 'undefined' 키로 뭉치지 않도록
+      if (!byFile[key]) byFile[key] = { testFile: u.testFile, target: u.target || '', cases: [] }
+      byFile[key].cases.push(...(u.cases || []))
     }
     const units = Object.keys(byFile).map((k) => byFile[k])
     log(`테스트 단위 ${units.length}개`)
@@ -114,7 +117,7 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   if (fails.every((f) => f.kind === 'env')) { stopReason = 'env'; log('환경 문제만 남음 — 수정 루프 중단'); break }
   phase('수정')
   // 의심 파일 기준으로 묶고, 파일이 겹치지 않게 그룹화
-  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이로 같은 파일을 동시 수정하지 않도록
+  const normPath = (p) => { const out = []; for (const s of String(p || '').replace(/\\/g, '/').split('/')) { if (s === '' || s === '.') continue; if (s === '..') { if (out.length && out[out.length - 1] !== '..') out.pop(); else out.push('..') } else out.push(s) } return out.join('/') }  // 'a/../b'·'./a'·'//'·역슬래시 실제 해소(동시 수정 충돌 방지)
   const groups = []
   for (const f of fails.filter((x) => x.kind !== 'env')) {
     const files = ((f.suspect && f.suspect.length) ? f.suspect : ['?']).map(normPath)

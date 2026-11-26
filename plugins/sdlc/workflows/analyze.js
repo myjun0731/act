@@ -122,16 +122,21 @@ return Object.assign({ phase: 'analysis', path: finalPath }, result)
 // ===========================================================================
 function resolveQuality(q, defaults) {
   q = q || {}
-  const LEVELS = { standard: [75, 60], high: [85, 70], strict: [92, 80] }
+  const LEVELS = Object.assign(Object.create(null), { standard: [75, 60], high: [85, 70], strict: [92, 80] })  // null-proto: q.level 이 constructor/toString 등이어도 상속값이 아닌 undefined → || LEVELS.high 폴백 동작
   const lv = LEVELS[q.level] || LEVELS.high
   const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d
-  const criteria = (Array.isArray(q.criteria) && q.criteria.length ? q.criteria : defaults)
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+  const criteria0 = (Array.isArray(q.criteria) && q.criteria.length ? q.criteria : defaults)
     .map((c, i) => (typeof c === 'string'
       ? { key: `c${i + 1}`, weight: 1, desc: c }
-      : { key: String(c.key || `c${i + 1}`), weight: num(c.weight, 1), desc: String(c.desc || c.key) }))
+      : (c && typeof c === 'object'
+        ? { key: String(c.key || `c${i + 1}`), weight: Math.max(0.0001, num(c.weight, 1)), desc: String(c.desc || c.key || `c${i + 1}`) }
+        : { key: `c${i + 1}`, weight: 1, desc: String(c) })))  // null/숫자 등 비정상 요소도 TypeError 없이 수용
+  const _sk = Object.create(null)  // key 중복 제거(같은 key 면 per/gaps 집계가 섞임)
+  const criteria = criteria0.map((c, i) => { let k = c.key; if (_sk[k]) k = `${k}_${i + 1}`; _sk[k] = true; return Object.assign({}, c, { key: k }) })
   return {
-    target: num(q.target, lv[0]),
-    floor: num(q.floor, lv[1]),
+    target: clamp(num(q.target, lv[0]), 0, 100),
+    floor: clamp(num(q.floor, lv[1]), 0, 100),
     judges: Math.max(1, Math.min(5, num(q.judges, 3))),
     maxRounds: Math.max(1, Math.min(10, num(q.maxRounds, 5))),
     patience: Math.max(1, num(q.patience, 2)),
@@ -177,7 +182,7 @@ async function qualityLoop(opt) {
 
   async function evaluate(round, path) {
     const critList = Q.criteria.map((c) => `- ${c.key}: ${c.desc}`).join('\n')
-    const mustList = Q.mustHave.length ? `\n필수 항목(각각 충족 여부 판정):\n${Q.mustHave.map((m) => `- ${m}`).join('\n')}` : ''
+    const mustList = Q.mustHave.length ? `\n필수 항목(아래 '번호'로 각각 충족 여부 판정 — mustHave 에 {item: "번호", met} 로 반환):\n${Q.mustHave.map((m, mi) => `${mi + 1}. ${m}`).join('\n')}` : ''
     const verdicts = (await parallel(LENSES.slice(0, Q.judges).map((l) => () =>
       agent(
         `${opt.context}\n평가 대상 ${opt.docKind}: ${path} (파일을 읽어라. 필요하면 코드도 확인하라. 아무것도 수정하지 마라.)\n\n` +
@@ -212,25 +217,33 @@ async function qualityLoop(opt) {
     }
     const score = wtot ? Math.round((wsum / wtot) * 10) / 10 : 0
     const _nrm = (s) => String(s || '').toLowerCase().replace(/\s+/g, '')
-    const must = Q.mustHave.map((item) => {
-      // 정확 문자열 일치 대신 정규화 후 부분일치 — 심사자가 항목을 바꿔 적어도 매칭된다.
+    // 심사자는 프롬프트에서 부여한 '번호'로 필수 항목을 판정한다(mustList 참조). 번호 매칭 우선,
+    // 번호가 없을 때만 정규화 '정확 일치'로 폴백한다(부분일치는 'API'↔'API 인증' 류 오매칭을 내므로 제거).
+    const must = Q.mustHave.map((item, mi) => {
       const ni = _nrm(item)
       const votes = verdicts.map((v) => (v.mustHave || []).find((m) => {
-        const nm = _nrm(m.item); return nm === ni || (nm && ni && (nm.includes(ni) || ni.includes(nm)))
+        const t = String(m.item).trim()
+        return /^\d+$/.test(t) ? (parseInt(t, 10) === mi + 1) : (_nrm(m.item) === ni)  // '순수 숫자'만 번호 — '2FA 지원' 류가 parseInt 로 2번에 오매칭되지 않도록
       })).filter(Boolean)
+      const assessed = votes.length > 0
       const yes = votes.filter((m) => m.met).length
-      // 아무도 판정 못 한 항목(매칭 실패)은 통과를 막지 않고 '불명'으로 둔다(정확 불일치로 영원히 미통과 되던 문제 방지).
-      return { item: item, met: votes.length === 0 || yes * 2 > votes.length, votes: votes.length ? `${yes}/${votes.length}` : '0/0(불명)' }
+      return { item: item, assessed: assessed, met: assessed && yes * 2 > votes.length, votes: assessed ? `${yes}/${votes.length}` : '0/0(미평가)' }
     })
-    const passed = score >= Q.target && min >= Q.floor && must.every((m) => m.met)
+    // 게이트: 평가된 필수항목이 하나라도 과반 미충족이면 차단. 필수항목이 있는데 '절반 넘게 미평가'면
+    // 심사 누락으로 보고 차단(이전 '미평가=자동통과' 구멍 제거). 미평가가 소수면 개별로는 차단하지 않아
+    // '정확불일치로 영원히 미통과'하던 회귀는 피한다.
+    const assessedCnt = must.filter((m) => m.assessed).length
+    const mustFailed = must.some((m) => m.assessed && !m.met)
+    const mustUnknownMajority = Q.mustHave.length > 0 && assessedCnt * 2 < Q.mustHave.length
+    const passed = score >= Q.target && min >= Q.floor && !mustFailed && !mustUnknownMajority
     // 약한 기준 순으로 지적 정리
     const ordered = Q.criteria.slice().sort((a, b) => crit[a.key] - crit[b.key])
     const gapText = ordered
       .filter((c) => crit[c.key] < 100)
       .map((c) => `[${c.key} ${crit[c.key]}점] ${c.desc}\n` + Array.from(new Set(gaps[c.key])).slice(0, 8).map((g) => `  - ${g}`).join('\n'))
       .join('\n') +
-      (must.some((m) => !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '') +
-      (must.some((m) => String(m.votes).includes('불명')) ? `\n[필수 항목 판정 불가 — 심사자가 판정 못 함(통과엔 미반영)]\n${must.filter((m) => String(m.votes).includes('불명')).map((m) => `  - ${m.item}`).join('\n')}` : '')
+      (must.some((m) => m.assessed && !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => m.assessed && !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '') +
+      (must.some((m) => !m.assessed) ? `\n[필수 항목 판정 불가${mustUnknownMajority ? ' — 과반 미평가 → 통과 차단' : ' — 소수(통과엔 미반영)'}]\n${must.filter((m) => !m.assessed).map((m) => `  - ${m.item}`).join('\n')}` : '')
     return { score: score, min: Math.round(min * 10) / 10, criteria: crit, mustHave: must, passed: passed, gapText: gapText, judges: verdicts.length }
   }
 
