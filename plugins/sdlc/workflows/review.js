@@ -77,6 +77,7 @@ const DIMS = [
   { key: 'maintainability', ask: '유지보수 — 기존 관례 위반, 중복, 과도한 복잡도, 죽은 코드, 누락된 테스트' },
 ]
 
+const laneFailures = []  // 차원·보안 리뷰 에이전트가 null(미실행)한 레인 — 게이트에 '미검증 high'로 반영(거짓 PASS 방지)
 const verified = await pipeline(
   DIMS,
   (d) => agent(
@@ -85,7 +86,7 @@ const verified = await pipeline(
     { schema: FIND_SCHEMA, model: 'sonnet', phase: '리뷰', label: `리뷰:${d.key}` },
   ),
   (r, d) => {
-    if (!r) log(`⚠ 리뷰 차원 '${d.key}' 에이전트 결과 없음 — '지적 없음'이 아니라 '미실행'(커버 공백; 게이트 반영은 후속 과제)`)
+    if (!r) { laneFailures.push(d.key); log(`⚠ 리뷰 차원 '${d.key}' 에이전트 결과 없음 — '미실행' → unresolvedHigh 에 반영(거짓 PASS 방지)`) }
     return parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean))
   },
 )
@@ -136,7 +137,7 @@ try {
       '입력 검증·인젝션·인증/권한 확인·비밀정보 노출·안전하지 않은 기본값·OWASP Top 10 관점의 실제 취약점만 findings 로 보고하라. 아무것도 수정하지 마라.',
     { agentType: 'dev-toolkit:security-reviewer', schema: FIND_SCHEMA, phase: '리뷰', label: '보안 상시' },
   )
-  if (!sec) log('⚠ 보안 리뷰 결과 없음(에이전트 null 반환 — throw 아니라 catch 미발동). 이 실행엔 보안 커버 없음')
+  if (!sec) { laneFailures.push('security'); log('⚠ 보안 리뷰 결과 없음(null 반환) → unresolvedHigh 에 반영(보안 커버 공백을 PASS로 두지 않음)') }
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
 } catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
@@ -144,12 +145,13 @@ const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () => ver
 
 const all = verified.filter(Boolean).flat().concat(extra)
 // 같은 위치·제목 중복 제거(제네릭 5차원과 전문/보안 레인이 같은 이슈를 다른 표현으로 보고해도 묶이도록
-// title 을 정규화 — 소문자화·공백/구두점 제거 후 앞 30자). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
+// title 을 정규화 — 소문자화·공백 제거 후 앞 40자, file 은 경로표기 정규화). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
 const seen = new Set()
+const _nf = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '')  // './a.java' 와 'a.java' 를 같은 키로
 const confirmed = all.filter((f) => {
   // 주의: /\W/ 는 한글을 비단어문자로 보고 전부 지워 한글 제목이 빈 문자열이 되면 서로 다른 지적이 합쳐진다.
   // 공백만 제거하고 글자(한글 포함)는 보존한다.
-  const k = `${f.file}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
+  const k = `${_nf(f.file)}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/\s+/g, '').slice(0, 40)}`
   if (seen.has(k)) return false
   seen.add(k); return true
 })
@@ -206,6 +208,7 @@ return {
   bySeverity: ['critical', 'high', 'medium', 'low'].reduce((o, s) => { o[s] = confirmed.filter((f) => f.severity === s).length; return o }, {}),
   fixed: fixes.filter((x) => x.fixed).length,
   unresolved: unresolved.map((f) => ({ severity: f.severity, file: f.file, line: f.line, title: f.title })),
-  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length,
+  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length,
+  laneFailures: laneFailures,
   testsPass: retest ? !!retest.passed : null,
 }
