@@ -88,6 +88,12 @@
 - [medium] 투영만 하고 비교하지 않던 diff 추가: 같은 이름 인덱스의 **unique·컬럼 변경**, **FK 존재**(이름 없어 columns→refTable 시그니처로), **제약 존재·kind/expr 변경**. 이관 핵심인 UNIQUE 해제·FK/CHECK 삭제를 놓치던 공백 보강.
 - 합성 테스트(프로토타입 이름 + FK/인덱스/제약 시나리오) 7/7 통과.
 
+`sdlc` analyze·design·report·review: rc 승격 전 2차 검증(런타임 리뷰 50에이전트, high 0·medium 6·low 3) 포착 결함 중 명확·안전한 것 수정.
+- [medium] analyze·design qualityLoop의 `LEVELS[q.level]`가 프로토타입 키(`constructor`·`toString`·`__proto__`)를 통과시켜 lv=함수 → `|| LEVELS.high` 폴백 미동작 → target/floor undefined → `score >= target` 영구 false로 루프가 영원히 미통과하던 문제 → `Object.create(null)`(폴백 테스트 8/8).
+- [medium] report의 outcome/history 프롬프트 JSON에 이스케이프·길이제한·객체검사가 없던 것 → `<>` 무력화·12000자 상한·outcome 객체 가드(간접 프롬프트 주입·비대화·문자열 outcome의 문자인덱스 펼침 방지).
+- [medium] review의 차원·보안·전문·분류 에이전트가 throw 아닌 null 반환 시 '커버 공백'이 '지적 없음'으로 조용히 처리되던 것 → null 결과 경고 로그(관측성). 게이트(unresolvedHigh) 반영은 후속 과제.
+- 미수정(후속 판단 필요): mustHave 부분일치·미평가 자동통과(analyze/design, 문서화된 트레이드오프), implement `only`-필터 후 빈검사·normPath 경로정규화 한계, review dedup 키 normPath 미적용.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

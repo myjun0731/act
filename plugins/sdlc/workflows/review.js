@@ -84,7 +84,10 @@ const verified = await pipeline(
       `관점: ${d.ask}\n이 관점의 실제 결함만 보고하라(스타일 취향 제외). 변경되지 않은 코드의 기존 문제는 변경이 그것을 악화시킬 때만. 아무것도 수정하지 마라.`,
     { schema: FIND_SCHEMA, model: 'sonnet', phase: '리뷰', label: `리뷰:${d.key}` },
   ),
-  (r, d) => parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean)),
+  (r, d) => {
+    if (!r) log(`⚠ 리뷰 차원 '${d.key}' 에이전트 결과 없음 — '지적 없음'이 아니라 '미실행'(커버 공백; 게이트 반영은 후속 과제)`)
+    return parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean))
+  },
 )
 // Layer 2 (가산·선택): 변경 파일 유형별 dev-toolkit 전문 리뷰어 + 보안 상시 레인.
 // 실패(미설치·에이전트 오류)해도 try/catch·parallel 로 흡수 → 1계층 제네릭 5차원으로 완주한다.
@@ -107,6 +110,7 @@ try {
       '유형: java(.java)·sql_mapper(MyBatis 매퍼 XML·.sql)·frontend_react(.tsx/.jsx)·frontend_vue(.vue)·frontend_ts(.ts/.js)·migration(마이그레이션·DDL)·schema(스키마/엔티티)·config·other.',
     { schema: CLS_SCHEMA, model: 'haiku', effort: 'low', phase: '리뷰', label: '유형 분류' },
   )
+  if (!cls || !Array.isArray(cls.files)) log('유형 분류 결과 없음(null) — 전문(2계층) 리뷰 생략, 제네릭 5차원으로 계속')
   typed = (cls && Array.isArray(cls.files)) ? cls.files : []
 } catch (e) { log('유형 분류 실패 — 전문 리뷰 생략, 제네릭 5차원으로 계속') }
 // 유형별로 묶어 전문 리뷰어 1회씩 디스패치(비용 억제). 에이전트 반환값으로 키를 잡으므로 Object.create(null)(프로토타입 오염 방지).
@@ -120,6 +124,7 @@ const expertRaw = (await parallel(Object.keys(byType).map((t) => async () => {
         `${g.r.ask}\n실제 결함만 findings 로 보고하라(file·severity·title·detail·fix, 스타일 취향 제외). 아무것도 수정하지 마라.`,
       { agentType: g.r.agentType, schema: FIND_SCHEMA, phase: '리뷰', label: `전문:${t}` },
     )
+    if (!out) log(`⚠ 전문 리뷰 '${t}' 결과 없음(null) — 이 유형 심화 커버 없음(제네릭층 기본 커버)`)
     return ((out && out.findings) || []).map((f) => Object.assign({ dim: 'specialist' }, f))
   } catch (e) { log(`전문 리뷰 ${t} 생략(제네릭층이 커버)`); return [] }
 }))).filter(Boolean).flat()
@@ -131,6 +136,7 @@ try {
       '입력 검증·인젝션·인증/권한 확인·비밀정보 노출·안전하지 않은 기본값·OWASP Top 10 관점의 실제 취약점만 findings 로 보고하라. 아무것도 수정하지 마라.',
     { agentType: 'dev-toolkit:security-reviewer', schema: FIND_SCHEMA, phase: '리뷰', label: '보안 상시' },
   )
+  if (!sec) log('⚠ 보안 리뷰 결과 없음(에이전트 null 반환 — throw 아니라 catch 미발동). 이 실행엔 보안 커버 없음')
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
 } catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)

@@ -150,7 +150,7 @@ return Object.assign({
 // ===========================================================================
 function resolveQuality(q, defaults) {
   q = q || {}
-  const LEVELS = { standard: [75, 60], high: [85, 70], strict: [92, 80] }
+  const LEVELS = Object.assign(Object.create(null), { standard: [75, 60], high: [85, 70], strict: [92, 80] })  // null-proto: q.level 이 constructor/toString 등이어도 상속값이 아닌 undefined → || LEVELS.high 폴백 동작
   const lv = LEVELS[q.level] || LEVELS.high
   const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d
   const criteria = (Array.isArray(q.criteria) && q.criteria.length ? q.criteria : defaults)
