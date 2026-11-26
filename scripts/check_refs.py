@@ -8,7 +8,8 @@ Claude Code는 워크플로→리프(`workflow('ns:name')`), 워크플로→에�
 
 심각도
   ERROR  리터럴 리프·에이전트 참조가 해당 플러그인 인벤토리에 없음(런타임 하드 실패) → 종료코드 1
-  WARN   프롬프트 스킬이 같은 플러그인엔 없고 다른 로컬 플러그인에만 있음(번들 드리프트; "있으면 적용")
+  WARN   프롬프트 스킬이 같은 플러그인·선언된 의존 플러그인 어디에도 없고 다른 로컬 플러그인에만 있음
+         (의존성 미선언 번들 드리프트; dependencies 로 선언하면 WARN 아님. "있으면 적용")
   ERROR  프롬프트 스킬이 어디에도 없음(오타) — 단, 같은 참조 런에 해석된 스킬이 1개 이상일 때만(오탐 억제)
   INFO   유사 중복 스킬명(예: database-migration vs database-migrations)
 
@@ -65,8 +66,15 @@ def build_inventory(root):
         pj_path = pdir / ".claude-plugin" / "plugin.json"
         if not pj_path.exists():
             continue
-        name = json.loads(pj_path.read_text(encoding="utf-8")).get("name") or e.get("name")
-        inv = {"workflows": set(), "agents": set(), "skills": set(), "dir": pdir}
+        pj = json.loads(pj_path.read_text(encoding="utf-8"))
+        name = pj.get("name") or e.get("name")
+        deps = set()  # 선언된 로컬 의존 플러그인(같은 마켓의 bare 이름, 또는 marketplace 미지정 객체)
+        for d in (pj.get("dependencies") or []):
+            if isinstance(d, str):
+                deps.add(d)
+            elif isinstance(d, dict) and not d.get("marketplace") and d.get("name"):
+                deps.add(d["name"])
+        inv = {"workflows": set(), "agents": set(), "skills": set(), "dir": pdir, "deps": deps}
         wf_dir = pdir / "workflows"
         if wf_dir.is_dir():
             for f in wf_dir.glob("*.js"):
@@ -141,9 +149,12 @@ def extract_and_check(root, plugins, skills_global):
                     if t in inv["skills"]:
                         continue  # 같은 플러그인 OK
                     elif t in skills_global:
-                        other = ",".join(sorted(skills_global[t]))
+                        providers = skills_global[t]
+                        if providers & inv.get("deps", set()):
+                            continue  # 선언된 의존 플러그인이 제공 → 동반 설치 보장, 경고 아님
+                        other = ",".join(sorted(providers))
                         add("WARN", "skill", t, rel,
-                            f"스킬 '{t}' — '{pname}'에 없고 '{other}'에만 있음(단독 설치 시 누락)")
+                            f"스킬 '{t}' — '{pname}'에 없고 '{other}'에만 있음(의존성 미선언, 단독 설치 시 누락)")
                     else:
                         add("ERROR", "skill", t, rel, f"스킬 '{t}' — 어느 로컬 플러그인에도 없음(오타 의심)")
 

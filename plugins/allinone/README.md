@@ -21,6 +21,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 | 플러그인 | 마켓플레이스 | 내용 |
 |---|---|---|
 | core | claude-pro | 비밀파일 가드·prettier 훅, 상태줄, /core:setup, 메모리 커맨드, 설정 정리·스킬 점검 스킬 |
+| sdlc | claude-pro | SDLC 파이프라인: 분석·설계(사용자 지정 품질까지 반복) → 구현·테스트·리뷰·보고서 자동 연계, 동적 워크플로 7개 |
 | design-eng | claude-pro | 디자인·애니메이션 스킬 7종 (+ design-for-ai 의존성) |
 | agentic | claude-pro | 에이전트 아키텍처·루프·파이프라인·보안 설계 스킬 12개 (외부 원본 내재화) |
 | overkill | claude-pro (외부 원본) | 고급 대안 제시 |

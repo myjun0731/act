@@ -25,6 +25,39 @@
 - 채점 모델 `haiku` → `sonnet`(배칭은 유지 — 여전히 opus×12 대비 큰 절감). 다렌즈 1~5점 매핑은 추출이 아니라 판정 작업이라 haiku엔 부적합.
 - 환각 방어: 프롬프트에 "주어진 렌즈 키만 사용·새 기준 금지" 명시 + 집계 시 알려진 LENSES 키의 점수만 반영(환각 렌즈·결측 배제). 수집·분류 등 순수 추출 단계는 haiku 유지(판정 아님).
 
+새 플러그인 `sdlc` 0.1.0 추가(자체 저작물) — 분석 → 설계 → 구현 → 테스트 → 리뷰 → 완료 보고서를 동적 워크플로 단위로 연계.
+- `/sdlc:pipeline` 스킬: 진행 규약. 분석·설계는 **사용자 관문**(품질 루프 후 승인), 설계 승인 뒤 구현·테스트·리뷰·보고서는 Claude가 묻지 않고 게이트 규칙에 따라 호출. 산출물·재개 상태는 대상 레포 `.sdlc/<slug>/`.
+- 워크플로 7종: `analyze`·`design`(품질 루프), `implement`(의존·파일 비중첩 웨이브 병렬 구현 + 빌드 수정), `test`(AC→TC 작성, 실행↔수정 루프, `verify` 모드), `review`(5차원 리뷰 → 반박 검증 → 확정 지적 수정·재테스트), `report`(요구 추적 매트릭스), `deliver`(오케스트레이터: implement → test↔review 최대 N사이클 → report).
+- 품질 루프: 심사 패널(관점별 독립 채점, 기준별 0~100) 가중 평균이 `target` 이상 ∧ 모든 기준 `floor` 이상 ∧ `mustHave` 과반 충족일 때 통과. 미달이면 최고본에서 약한 기준부터 보강 반복, `patience` 연속 무개선 시 정체 종료, `maxRounds` 상한. 수준 프리셋 standard 75/60 · high 85/70 · strict 92/80.
+- `deliver.js` 는 `LEAVES` 배열로 리프를 선언해 `scripts/check_refs.py` 가 `sdlc:<리프>` 참조를 검증한다.
+- `allinone` 0.4.1 → 0.5.0: 의존성에 `sdlc` 추가. 기존 설치는 `claude plugin install sdlc@claude-pro` 로 따로 설치.
+
+`sdlc` 0.1.0 → 0.2.0: dev-toolkit 전문 에이전트/스킬 연계(구현 전 `design-approaches` 워크플로로 접근안 비교·검증 → risk-minimal 안 채택).
+- **전문성 주입 이원화**: 페르소나=`agentType`(설치 안전·ERROR급 검증), 방법론·지식=소프트 스킬참조("있으면 적용"). 반박검증·심사 패널·종료 가드는 제네릭 유지(독립 평가자 보존).
+- `review` 2계층화: 1계층=제네릭 5차원(설계준수·요구추적은 제네릭 전담 — dev-toolkit 리뷰어는 설계서/AC 모름), 2계층=변경 파일 유형별 전문 리뷰어(java-reviewer·sql-pro·typescript/react/vue-reviewer·database-architect) + `security-reviewer` **보안 상시 레인**(유형 무관 전 변경 1회). 전 디스패치 try/catch → 미설치·오류 시 제네릭으로 완주. findings에 `dim` 부여(5차원 투영).
+- `test`→`test-automator`, `implement` 빌드수정→`build-error-resolver`, `design`→`architect`; 각 단계에 test-driven-development·systematic-debugging·설계 스킬 소프트 참조.
+- `plugin.json`에 `dependencies: ["dev-toolkit"]` 선언(allinone 번들 전제, 단독 설치 시 자동 동반). 심사 패널·qualityLoop·종료 가드는 불변.
+
+`scripts/check_refs.py`: **선언된 의존성 인식** 추가 — 플러그인이 `dependencies`로 선언한 다른 로컬 플러그인의 스킬을 프롬프트에서 참조하면 더는 WARN이 아니다(동반 설치 보장). sdlc의 dev-toolkit 소프트 스킬 참조 9건이 WARN 0으로 정리(rc/ga strict 통과). 의존성 미선언 cross-plugin 스킬 참조만 WARN 유지.
+
+`sdlc` 0.2.1: 연계 review 스모크(32에이전트)가 포착한 pre-existing 버그 수정.
+- `review`: ① 범위 수집 에이전트 실패(null)를 "변경 없음(PASS)"과 구분 — 실패 시 `blocked`+`unresolvedHigh:1`로 게이트가 미해결 취급(거짓 PASS 방지). ② 반박검증 에이전트 실패 시 critical/high 지적을 조용히 폐기하지 않고 "미검증 보존"으로 남김(제네릭·전문 레인 양쪽).
+- `deliver`: `maxCycles`를 최소 1로 클램프(0/음수면 검증 사이클 생략→거짓 completed). 빌드는 통과하나 작업 실패가 남으면 `partial` 반영.
+- `test`: 실패 그룹화가 겹치는 그룹을 전부 병합(첫 그룹만 합쳐 병렬 수정이 같은 파일을 동시에 건드리던 문제 수정).
+- `analyze`: 확정본 복사 에이전트 실패 시 없는 FINAL 경로를 성공으로 반환하지 않고 라운드 본 경로로 폴백.
+- 남은 지적(review 수정완료 title 일치, analyze mustHave 정확일치, test 계획 실패 시 기존 테스트만으로 통과)은 후속 과제.
+
+`sdlc` 0.2.2: 남은 후속 지적 3건 수정.
+- `review`: 수정 완료 판정을 title 문자열 일치 대신 **번호(n) 기반 매칭**으로 — 에이전트가 title을 바꿔 적어도 fixed 판정이 어긋나지 않음(출력 title은 원본 보존).
+- `analyze`·`design` qualityLoop: mustHave 판정을 **정규화 후 부분일치**로(심사자 패러프레이즈 허용), 아무도 판정 못 한 항목은 통과를 막지 않고 '불명' 표기(정확 불일치로 영원히 미통과 되던 문제 방지).
+- `test`: full 모드에서 테스트 계획 실패 시 `planFailed` 플래그·경고 로그(새 테스트 없이 기존 테스트만으로 passed가 되는 상황을 가시화).
+
+`sdlc` 0.2.3: 스모크 low 지적 + 수정 중 드러난 잔여 약점 정리(견고성).
+- **프로토타입 오염 방지**: 에이전트 반환 key 로 인덱싱하던 plain object를 `Object.create(null)`로 — qualityLoop `per`/`gaps`(analyze·design), review `byType`/`byFile`, test `byFile`. `constructor`/`__proto__` 등이 와도 `.push` TypeError·루프 중단 없음.
+- `review`: 제네릭·전문/보안 반박검증을 **단일 `verifyFinding()` 헬퍼**로 통합(복제 제거, 한쪽만 고쳐 어긋날 위험 제거). dedup 키의 title 을 정규화(소문자·공백/구두점 제거 후 30자)해 레인 간 유사 중복을 더 묶음.
+- `test`: 실행 에이전트 실패(run=null)를 `stopReason='run-error'`로(이전엔 'maxFixRounds'로 원인 가림, analyze/design의 'error'와 일관).
+- `deliver`: 게이트 `clean` 조건에 `!test.planFailed` 추가 — 계획 실패로 새 테스트가 없으면 기존 테스트 통과만으로 통과시키지 않음.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
