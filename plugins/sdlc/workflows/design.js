@@ -245,8 +245,8 @@ async function qualityLoop(opt) {
     const must = Q.mustHave.map((item, mi) => {
       const ni = _nrm(item)
       const votes = verdicts.map((v) => (v.mustHave || []).find((m) => {
-        const num = parseInt(String(m.item).trim(), 10)
-        return Number.isInteger(num) ? (num === mi + 1) : (_nrm(m.item) === ni)
+        const t = String(m.item).trim()
+        return /^\d+$/.test(t) ? (parseInt(t, 10) === mi + 1) : (_nrm(m.item) === ni)  // '순수 숫자'만 번호 — '2FA 지원' 류가 parseInt 로 2번에 오매칭되지 않도록
       })).filter(Boolean)
       const assessed = votes.length > 0
       const yes = votes.filter((m) => m.met).length

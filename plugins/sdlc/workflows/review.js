@@ -162,7 +162,9 @@ log(`확정 지적 ${confirmed.length}건 (critical ${confirmed.filter((f) => f.
 // 4) 수정 -------------------------------------------------------------------
 let fixes = []
 let retest = null
-const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low') : []
+// 검증 에이전트 실패로 '미검증 보존'된 지적(verifyNote 에 ⚠)은 오탐 가능성이 있어 자동 코드수정 대상에서 제외한다
+// (미해결 집계에는 그대로 남아 unresolved 로 노출 — 조용히 버리지 않음).
+const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low' && !(f.verifyNote && String(f.verifyNote).includes('⚠'))) : []
 if (toFix.length) {
   phase('수정')
   const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이(./foo vs foo)로 같은 파일이 다른 그룹에 들어가 병렬 수정 충돌하지 않도록
@@ -181,7 +183,7 @@ if (toFix.length) {
     ).then((r) => {
       const byN = {}
       if (r && Array.isArray(r.items)) for (const it of r.items) if (it && typeof it.n === 'number') byN[it.n] = it
-      return items.map((f) => ({ file: f.file, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
+      return items.map((f) => ({ file: f.file, line: f.line, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
     })
   }))).filter(Boolean).flat()
   retest = await agent(
@@ -192,8 +194,11 @@ if (toFix.length) {
 
 // 5) 기록 -------------------------------------------------------------------
 phase('기록')
-const fixedTitles = new Set(fixes.filter((x) => x.fixed).map((x) => `${x.file}:${x.title}`))
-const unresolved = confirmed.filter((f) => f.severity !== 'low' && !fixedTitles.has(`${f.file}:${f.title}`))
+// dedup 키(file:line:title, 경로정규화)와 '동일 규칙'으로 매칭한다 — line 을 빼면 같은 파일·제목·다른 line
+// 2건 중 1건만 고쳐도 둘 다 fixed 로 과소집계되어 unresolvedHigh=0 거짓 PASS → deliver 거짓 completed 로 전파되던 결함.
+const _fk = (x) => `${_nf(x.file)}:${x.line || 0}:${String(x.title || '')}`
+const fixedKeys = new Set(fixes.filter((x) => x.fixed).map(_fk))
+const unresolved = confirmed.filter((f) => f.severity !== 'low' && !fixedKeys.has(_fk(f)))
 await agent(
   `다음 리뷰 결과로 ${OUT} 를 한국어 마크다운으로 작성하라. 이미 파일이 있으면 새 회차 절을 덧붙여라. ` +
     '구성: 요약(차원별·심각도별 건수, 수정/미해결, 재테스트 결과), 확정 지적 표(심각도·차원·위치·내용·조치), 미해결 목록과 권고, low 지적 목록.\n' +
@@ -208,7 +213,7 @@ return {
   bySeverity: ['critical', 'high', 'medium', 'low'].reduce((o, s) => { o[s] = confirmed.filter((f) => f.severity === s).length; return o }, {}),
   fixed: fixes.filter((x) => x.fixed).length,
   unresolved: unresolved.map((f) => ({ severity: f.severity, file: f.file, line: f.line, title: f.title })),
-  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length,
+  unresolvedHigh: unresolved.filter((f) => f.severity === 'critical' || f.severity === 'high').length + laneFailures.length + (retest && retest.passed === false ? 1 : 0),
   laneFailures: laneFailures,
   testsPass: retest ? !!retest.passed : null,
 }

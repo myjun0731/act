@@ -97,6 +97,11 @@
   - review: 차원·보안 리뷰 에이전트가 null(미실행) 반환 시 `laneFailures`로 모아 `unresolvedHigh`에 가산(실패 레인을 '지적 없음'으로 두지 않아 거짓 PASS 방지). dedup 키에 경로표기 정규화 적용(주석/코드 정합).
   - implement: `only`-필터 후 빈 작업을 빈 빌드/기록으로 흘리지 않도록 재검사·미존재 id 보고, `normPath`를 실제 경로 정규화(`..`·`.`·중복슬래시 해소)로 재설계.
 
+`sdlc` review·deliver·analyze·design: 최종 pre-merge-gate(오케스트레이터, 91에이전트 → NO-GO) 포착 결함 수정 — 거짓 PASS 연쇄 + 2차 재설계 자체 버그.
+- [P0·거짓 PASS 연쇄] review 의 `fixedTitles`/`unresolved` 매칭 키가 `file:title`(line 누락)이라 dedup 키(`file:line:title`)와 불일치 → 같은 파일·제목·다른 line 2건 중 1건만 고쳐도 둘 다 fixed 로 과소집계 → `unresolvedHigh=0` 거짓 clean → `deliver` 거짓 `completed` 로 전파되던 교차모듈 결함. 키를 `file:line:title`(경로정규화)로 통일하고 수정 결과에 `line` 보존. `unresolvedHigh` 에 재테스트 실패(`testsPass===false`)도 가산.
+- [P1·자체 버그] mustHave 번호 매칭을 `/^\d+$/`(순수 숫자)로 한정 — 2차 재설계의 `parseInt` 가 '2FA 지원' 류를 2번으로 오매칭하던 것 수정(번호는 유지, 텍스트는 정확일치). `deliver` 의 `testCmd: undefined` 가 leaf 의 `Object.assign` 으로 호출자 `A.testCmd` 를 덮던 것 → 값 있을 때만 키 포함. 검증 실패(미검증) 지적은 자동 코드수정 대상에서 제외(미해결 집계엔 유지).
+- 로직 테스트 5/5(+이전 11/11·8/8). 남은 P2(저위험): catch `e.message` 로깅, `dir` 경로검증, `crit` null-proto, `maxBuildFixes` clamp, test 기록 실패 플래그 등.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
