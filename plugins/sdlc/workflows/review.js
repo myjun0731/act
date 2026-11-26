@@ -167,7 +167,7 @@ let retest = null
 const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low' && !(f.verifyNote && String(f.verifyNote).includes('⚠'))) : []
 if (toFix.length) {
   phase('수정')
-  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이(./foo vs foo)로 같은 파일이 다른 그룹에 들어가 병렬 수정 충돌하지 않도록
+  const normPath = (p) => { const out = []; for (const s of String(p || '').replace(/\\/g, '/').split('/')) { if (s === '' || s === '.') continue; if (s === '..') { if (out.length && out[out.length - 1] !== '..') out.pop(); else out.push('..') } else out.push(s) } return out.join('/') }  // 'a/../b'·'./a'·'//'·역슬래시 실제 해소(병렬 수정 충돌 방지)
   const byFile = Object.create(null)  // 정규화 경로로 키(프로토타입 오염 방지 위해 Object.create(null))
   toFix.forEach((f) => { const k = normPath(f.file); (byFile[k] = byFile[k] || []).push(f) })
   fixes = (await parallel(Object.keys(byFile).map((file) => () => {

@@ -108,6 +108,11 @@
 - deliver: 사이클 한도 blocker 가 구현단계 partial blocker 를 덮지 않고 누적. `plugins/sdlc/README.md` mustHave 설명을 현재 동작(번호매칭·정확일치·과반미평가 차단)으로 정정.
 - 로직 테스트 9/9.
 
+`sdlc` test·review: 게이트 3라운드(조건부 GO, high 0)가 남긴 확정 결함 수정 — 테스트 파일 키 경로 미정규화.
+- `test.js`: 작성 단계 `byFile` 키가 `u.testFile` 원문이라 `./a`·`a`·`a/../b` 가 서로 다른 키 → 같은 파일을 병렬로 쓰는 에이전트가 둘 생길 여지. `normPath`(`..`·`.`·중복슬래시 실제 해소) 적용 + 빈/undefined `testFile` 단위 제외('undefined' 키로 뭉치지 않도록).
+- `test.js`(수정 단계)·`review.js`(수정 단계)의 약한 `normPath`(접두만 처리)를 `..` 해소 정식 버전으로 통일 — 3파일(implement 포함) 일관.
+- 게이트 수렴: NO-GO → NO-GO → **조건부 GO(high 0)**. 잔여 '조건부'는 코드 결함이 아니라 REGRESSION.md 원장·회귀 실행 등 프로세스 권고이며, review→deliver 반환 계약은 단위 테스트(9/9·5/5·11/11)로 검증됨.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
