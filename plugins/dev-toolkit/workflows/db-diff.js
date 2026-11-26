@@ -101,7 +101,7 @@ function dataBlock(obj) {
 }
 
 function byName(arr) {
-  const m = {}
+  const m = Object.create(null)  // __proto__/constructor/toString 이름도 own key로 — 프로토타입 오염·상속 오탐 방지(결정적 완전성 계약, 입력은 신뢰불가 외부 DB)
   if (Array.isArray(arr)) for (const x of arr) if (x && x.name != null) m[pStr(x.name)] = x
   return m
 }
@@ -111,7 +111,7 @@ function nameList(arr) {
   return s
 }
 function diffNames(b, o) {
-  const bs = {}, os = {}
+  const bs = Object.create(null), os = Object.create(null)  // 상속 프로퍼티(constructor·toString·hasOwnProperty 등)를 '존재'로 오판하지 않도록 null-proto
   for (const n of b) bs[n] = true
   for (const n of o) os[n] = true
   return { onlyBase: b.filter((n) => !os[n]), onlyOther: o.filter((n) => !bs[n]), shared: b.filter((n) => os[n]) }
@@ -212,11 +212,34 @@ function computeDiffs(base, other) {
         out.push({ object: t + '.' + c, category: 'attribute', kind: 'default_changed', baseVal: ad || '(없음)', otherVal: bd || '(없음)' })
       }
     }
-    const idd = diffNames(nameList(bt[t].indexes), nameList(ot[t].indexes))
+    const bix = byName(bt[t].indexes), oix = byName(ot[t].indexes)
+    const idd = diffNames(Object.keys(bix), Object.keys(oix))
     for (const ix of idd.onlyBase) out.push({ object: t + '.' + ix, category: 'presence', kind: 'index_dropped', baseVal: '존재', otherVal: '없음' })
     for (const ix of idd.onlyOther) out.push({ object: t + '.' + ix, category: 'presence', kind: 'index_added', baseVal: '없음', otherVal: '존재' })
+    for (const ix of idd.shared) {  // 같은 이름 인덱스의 unique·컬럼 변경(이름 존재만 보던 공백 보강)
+      const a = bix[ix], b = oix[ix]
+      if (!!a.unique !== !!b.unique) out.push({ object: t + '.' + ix, category: 'attribute', kind: 'index_unique_changed', baseVal: (a.unique ? 'UNIQUE' : '비고유'), otherVal: (b.unique ? 'UNIQUE' : '비고유') })
+      const ac = pStrArr(a.columns).join(','), bc2 = pStrArr(b.columns).join(',')
+      if (ac !== bc2) out.push({ object: t + '.' + ix, category: 'attribute', kind: 'index_columns_changed', baseVal: ac || '(없음)', otherVal: bc2 || '(없음)' })
+    }
     const bpk = pStrArr(bt[t].primaryKey).join(','), opk = pStrArr(ot[t].primaryKey).join(',')
     if (bpk !== opk) out.push({ object: t, category: 'attribute', kind: 'pk_changed', baseVal: bpk || '(없음)', otherVal: opk || '(없음)' })
+    // FK(이름 없음 → 시그니처 columns→refTable(refColumns)로 존재 비교)
+    const fkSig = (f) => pStrArr(f.columns).join(',') + '→' + pStr(f.refTable) + '(' + pStrArr(f.refColumns).join(',') + ')'
+    const bfk = Object.create(null), ofk = Object.create(null)
+    for (const f of (bt[t].foreignKeys || [])) bfk[fkSig(f)] = true
+    for (const f of (ot[t].foreignKeys || [])) ofk[fkSig(f)] = true
+    for (const s of Object.keys(bfk)) if (!ofk[s]) out.push({ object: t, category: 'presence', kind: 'fk_dropped', baseVal: s, otherVal: '없음' })
+    for (const s of Object.keys(ofk)) if (!bfk[s]) out.push({ object: t, category: 'presence', kind: 'fk_added', baseVal: '없음', otherVal: s })
+    // 제약(이름 있음): 존재 + kind/expr 변경
+    const bk = byName(bt[t].constraints), ok = byName(ot[t].constraints)
+    const kd = diffNames(Object.keys(bk), Object.keys(ok))
+    for (const k of kd.onlyBase) out.push({ object: t + '.' + k, category: 'presence', kind: 'constraint_dropped', baseVal: pStr(bk[k].kind) || '존재', otherVal: '없음' })
+    for (const k of kd.onlyOther) out.push({ object: t + '.' + k, category: 'presence', kind: 'constraint_added', baseVal: '없음', otherVal: pStr(ok[k].kind) || '존재' })
+    for (const k of kd.shared) {
+      const a = bk[k], b = ok[k]
+      if (pStr(a.kind) !== pStr(b.kind) || pStr(a.expr) !== pStr(b.expr)) out.push({ object: t + '.' + k, category: 'attribute', kind: 'constraint_changed', baseVal: (pStr(a.kind) + ' ' + pStr(a.expr)).trim(), otherVal: (pStr(b.kind) + ' ' + pStr(b.expr)).trim() })
+    }
   }
   return out
 }
