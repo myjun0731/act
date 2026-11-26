@@ -113,6 +113,21 @@ Workflow({ name: "sdlc:deliver", args: { dir, baseRef, maxCycles: 2, history } }
 
 단계별 호출은 Claude 가 결과를 읽고 설계 결함 여부를 판단할 수 있어 기본으로 권장하고, `deliver` 는 무인 실행용이다.
 
+### dev-toolkit 보강 연계 (선택)
+
+sdlc 리프는 이미 dev-toolkit 전문 **에이전트**(리뷰어·architect·test-automator 등)를 쓴다. 더 나아가 dev-toolkit **완성 워크플로**를 연계할 수 있는데, **중첩 1단 제한**(workflow 안에서 또 workflow 를 부르면 런타임이 던짐) 때문에 배치 층이 갈린다.
+
+- **세션/스킬 층(여기)** — 중첩 제한 없음. 필요하면 각 단계 전후에 `Workflow` 로 직접 호출하고 결과(마크다운)를 읽어 사용자에게 전하거나 다음 단계 컨텍스트로 준다. **오케스트레이터도 호출 가능**:
+  - 분석 전(큰 모듈·온보딩): `Workflow({ name: "dev-toolkit:codebase-map", args: { target: <경로> } })` → 구조 맵을 분석서 참고로.
+  - 이관 작업: `Workflow({ name: "dev-toolkit:migration-readiness", args })` → 준비도.
+  - 병합 전 종합 판정: `Workflow({ name: "dev-toolkit:pre-merge-gate", args })` → GO/NO-GO. (오케스트레이터라 `deliver` 안에서는 못 부른다 — 세션 층에서만.)
+- **deliver 층(보강 phase)** — `deliver` args 에 `augment: true` 를 주면 test↔review 수렴 뒤 **dev-toolkit 리프**(impact-analysis; 변경에 SQL/매퍼면 sql-db-audit; 이관이면 migration-verify)를 1단 형제로 1회 호출해 **report 의 "보강 분석" 절**로 싣는다. `coverage: true` 면 test-coverage-boost(테스트 생성)도. **게이트에는 반영하지 않는다** — 자율 사이클 판정은 sdlc 리프 구조화 반환만으로(결정성 보존).
+
+  ```
+  Workflow({ name: "sdlc:deliver", args: { dir, baseRef, maxCycles: 2, augment: true } })
+  ```
+- 보강은 비용이 크므로 **기본 off(opt-in)**. 범위를 좁게 두고 `deliver` 는 `large` 규모로 둔다.
+
 ## 규칙
 
 - 어떤 단계도 **git commit·push 하지 않는다**. 커밋·PR 은 보고서 후 사용자가 요청할 때만.

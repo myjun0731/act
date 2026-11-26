@@ -59,8 +59,32 @@ if (status !== 'blocked') {
   }
 }
 
+// 보강(opt-in: args.augment): test↔review 사이클 수렴 뒤 1회만(루프 아님), dev-toolkit "리프" 워크플로를
+// 1단 형제로 호출한다. 오케스트레이터는 금지(deliver→오케스트레이터→... = 2단 중첩 → 런타임 throw).
+// 결과(마크다운 문자열)는 게이트에 절대 넣지 않고 outcome.augment 로 report 보강에만 흐른다(결정성 보존).
+const augment = []
+if (A.augment && status !== 'blocked') {
+  phase('보강')
+  const AUGMENT_LEAVES = ['impact-analysis', 'sql-db-audit', 'migration-verify', 'test-coverage-boost']  // 리프만(오케스트레이터 미포함)
+  const changed = (impl && Array.isArray(impl.tasks)) ? impl.tasks.reduce((a, t) => a.concat(t.changedFiles || []), []) : []
+  const targets = ['impact-analysis']  // 변경 영향·회귀 계획은 항상
+  if (changed.some((f) => /\.(sql|xml)$/i.test(String(f)))) targets.push('sql-db-audit')         // SQL/매퍼 변경이 있을 때만
+  if (changed.some((f) => /(migrat|ddl|schema|entit)/i.test(String(f)))) targets.push('migration-verify')  // 이관/DDL 변경이 있을 때만
+  if (A.coverage) targets.push('test-coverage-boost')  // 테스트 "생성"은 레포를 바꾸므로 별도 opt-in
+  for (const name of targets) {
+    if (AUGMENT_LEAVES.indexOf(name) < 0) continue  // 화이트리스트 밖(=오케스트레이터)은 호출 금지
+    log(`▶ 보강 dev-toolkit:${name}`)
+    try {
+      const r = await workflow(`dev-toolkit:${name}`, A.baseRef ? { target: A.baseRef } : {})
+      augment.push({ step: name, ok: true, report: String(r || '').slice(0, 8000) })
+    } catch (e) {
+      augment.push({ step: name, ok: false, error: String((e && e.message) ? e.message : e) })
+    }
+  }
+}
+
 phase('완료')
-const outcome = { status: status, blocker: blocker, steps: steps.map((s) => ({ step: s.step, ok: s.ok, error: s.error })) }
+const outcome = { status: status, blocker: blocker, augment: augment, steps: steps.map((s) => ({ step: s.step, ok: s.ok, error: s.error })) }
 const report = await leaf('report', { outcome: outcome, history: A.history || null })
 return {
   status: status,
@@ -68,5 +92,6 @@ return {
   implementation: impl ? { buildOk: impl.buildOk, done: impl.done, total: impl.total, failed: impl.failed } : null,
   test: test ? { passed: test.passed, failedCount: test.failedCount, fixRounds: test.fixRounds } : null,
   review: review ? { confirmed: review.confirmed, fixed: review.fixed, unresolvedHigh: review.unresolvedHigh } : null,
+  augment: augment.map((a) => ({ step: a.step, ok: a.ok })),
   reportPath: report ? report.path : null,
 }

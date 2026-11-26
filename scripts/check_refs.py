@@ -74,13 +74,16 @@ def build_inventory(root):
                 deps.add(d)
             elif isinstance(d, dict) and not d.get("marketplace") and d.get("name"):
                 deps.add(d["name"])
-        inv = {"workflows": set(), "agents": set(), "skills": set(), "dir": pdir, "deps": deps}
+        inv = {"workflows": set(), "agents": set(), "skills": set(), "orchestrators": set(), "dir": pdir, "deps": deps}
         wf_dir = pdir / "workflows"
         if wf_dir.is_dir():
             for f in wf_dir.glob("*.js"):
-                n = _meta_name(_read(f))
+                txt = _read(f)
+                n = _meta_name(txt)
                 if n:
                     inv["workflows"].add(n)
+                    if re.search(r"\bworkflow\(", txt):  # workflow() 를 호출하면 오케스트레이터(자식으로 호출되면 2단 중첩 throw)
+                        inv["orchestrators"].add(n)
         ag_dir = pdir / "agents"
         if ag_dir.is_dir():
             for f in ag_dir.glob("*.md"):
@@ -118,18 +121,34 @@ def extract_and_check(root, plugins, skills_global):
             text = _read(f)
             rel = f.relative_to(root).as_posix()
 
-            # 1) 리터럴 workflow('ns:name')
+            # 1) 리터럴 workflow('ns:name') — 미해석은 ERROR
             lit_wf = set(re.findall(r"workflow\(\s*['\"]([^'\"]+)['\"]", text))
-            # 템플릿 workflow(`ns:${...}`) → 같은 파일의 평범한 문자열 배열 요소를 ns와 결합
+            # 템플릿 workflow(`ns:${...}`) → 같은 파일의 평범한 문자열 배열 요소를 ns와 결합(크로스곱 "추정").
+            # 파일에 여러 ns 템플릿이 있으면 크로스곱이 섞이므로, 템플릿 추정분은 미해석을 ERROR 로 보지 않고
+            # "해석되는 참조의 오케스트레이터 2단 중첩"만 잡는다(리터럴만 엄격).
+            tmpl_wf = set()
             for ns in set(re.findall(r"workflow\(\s*`([a-z0-9-]+):\$\{", text)):
                 for elem in _plain_string_arrays(text):
-                    lit_wf.add(f"{ns}:{elem}")
-            for ref in sorted(lit_wf):
+                    tmpl_wf.add(f"{ns}:{elem}")
+
+            def _chk_wf(ref, strict):
                 ns, _, nm = ref.partition(":")
                 if ns not in plugins:
-                    add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — 알 수 없는 플러그인 '{ns}'")
-                elif nm not in plugins[ns]["workflows"]:
-                    add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — '{ns}'에 워크플로 '{nm}' 없음")
+                    if strict:
+                        add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — 알 수 없는 플러그인 '{ns}'")
+                    return
+                if nm not in plugins[ns]["workflows"]:
+                    if strict:
+                        add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — '{ns}'에 워크플로 '{nm}' 없음")
+                    return
+                if nm in plugins[ns].get("orchestrators", set()):
+                    add("ERROR", "workflow", ref, rel,
+                        f"워크플로 참조 '{ref}' — 대상이 오케스트레이터(workflow() 호출)라 workflow()로 부르면 2단 중첩(런타임 throw). 리프만 호출하라")
+
+            for ref in sorted(lit_wf):
+                _chk_wf(ref, True)
+            for ref in sorted(tmpl_wf - lit_wf):
+                _chk_wf(ref, False)
 
             # 2) agentType: 'ns:name'
             for ref in sorted(set(re.findall(r"agentType:\s*['\"]([^'\"]+)['\"]", text))):
