@@ -57,7 +57,7 @@ const VERDICT_SCHEMA = {
 const DIMS = [
   { key: 'conformance', ask: '설계 준수·요구 추적 — 설계서의 구조·인터페이스와 다르게 구현됐거나, 분석서의 REQ/AC 중 구현되지 않은 것' },
   { key: 'correctness', ask: '정확성 — 로직 오류, 경계값, null/빈 값, 동시성, 에러 처리 누락, 기존 동작 회귀' },
-  { key: 'security', ask: '보안 — 입력 검증, 인젝션, 권한 확인, 비밀정보 노출, 안전하지 않은 기본값' },
+  // 보안은 아래 '보안 상시 레인'(security-reviewer)이 전담 — 제네릭 security 차원과의 중복·이중 반박검증을 피하려 제거.
   { key: 'performance', ask: '성능 — 불필요한 반복 I/O·N+1 쿼리, 비효율 자료구조, 자원 누수' },
   { key: 'maintainability', ask: '유지보수 — 기존 관례 위반, 중복, 과도한 복잡도, 죽은 코드, 누락된 테스트' },
 ]
@@ -123,7 +123,7 @@ try {
     { agentType: 'dev-toolkit:security-reviewer', schema: FIND_SCHEMA, phase: '리뷰', label: '보안 상시' },
   )
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
-} catch (e) { log('보안 전문 리뷰 생략(제네릭 security 차원이 커버)') }
+} catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
 const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () =>
   agent(
