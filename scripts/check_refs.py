@@ -8,7 +8,8 @@ Claude Code는 워크플로→리프(`workflow('ns:name')`), 워크플로→에�
 
 심각도
   ERROR  리터럴 리프·에이전트 참조가 해당 플러그인 인벤토리에 없음(런타임 하드 실패) → 종료코드 1
-  WARN   프롬프트 스킬이 같은 플러그인엔 없고 다른 로컬 플러그인에만 있음(번들 드리프트; "있으면 적용")
+  WARN   프롬프트 스킬이 같은 플러그인·선언된 의존 플러그인 어디에도 없고 다른 로컬 플러그인에만 있음
+         (의존성 미선언 번들 드리프트; dependencies 로 선언하면 WARN 아님. "있으면 적용")
   ERROR  프롬프트 스킬이 어디에도 없음(오타) — 단, 같은 참조 런에 해석된 스킬이 1개 이상일 때만(오탐 억제)
   INFO   유사 중복 스킬명(예: database-migration vs database-migrations)
 
@@ -65,14 +66,24 @@ def build_inventory(root):
         pj_path = pdir / ".claude-plugin" / "plugin.json"
         if not pj_path.exists():
             continue
-        name = json.loads(pj_path.read_text(encoding="utf-8")).get("name") or e.get("name")
-        inv = {"workflows": set(), "agents": set(), "skills": set(), "dir": pdir}
+        pj = json.loads(pj_path.read_text(encoding="utf-8"))
+        name = pj.get("name") or e.get("name")
+        deps = set()  # 선언된 로컬 의존 플러그인(같은 마켓의 bare 이름, 또는 marketplace 미지정 객체)
+        for d in (pj.get("dependencies") or []):
+            if isinstance(d, str):
+                deps.add(d)
+            elif isinstance(d, dict) and not d.get("marketplace") and d.get("name"):
+                deps.add(d["name"])
+        inv = {"workflows": set(), "agents": set(), "skills": set(), "orchestrators": set(), "dir": pdir, "deps": deps}
         wf_dir = pdir / "workflows"
         if wf_dir.is_dir():
             for f in wf_dir.glob("*.js"):
-                n = _meta_name(_read(f))
+                txt = _read(f)
+                n = _meta_name(txt)
                 if n:
                     inv["workflows"].add(n)
+                    if re.search(r"\bworkflow\(", _strip_js_comments(txt)):  # workflow() 를 '호출'하면 오케스트레이터. 주석 속 workflow( 오탐 방지로 주석 제거 후 탐지(자식으로 호출되면 2단 중첩 throw)
+                        inv["orchestrators"].add(n)
         ag_dir = pdir / "agents"
         if ag_dir.is_dir():
             for f in ag_dir.glob("*.md"):
@@ -86,6 +97,14 @@ def build_inventory(root):
                     skills_global.setdefault(d.name, set()).add(name)
         plugins[name] = inv
     return plugins, skills_global
+
+
+def _strip_js_comments(text):
+    """JS 소스에서 주석을 제거한다(블록 /* */ · 라인 //). 오케스트레이터 판별 시
+    주석·문자열에 적힌 'workflow(' 를 실제 호출로 오인하지 않도록 쓴다(호출이 아니면 제거돼도 무방)."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)   # 블록 주석
+    text = re.sub(r"//[^\n]*", "", text)                  # 라인 주석
+    return text
 
 
 def _plain_string_arrays(text):
@@ -110,18 +129,34 @@ def extract_and_check(root, plugins, skills_global):
             text = _read(f)
             rel = f.relative_to(root).as_posix()
 
-            # 1) 리터럴 workflow('ns:name')
+            # 1) 리터럴 workflow('ns:name') — 미해석은 ERROR
             lit_wf = set(re.findall(r"workflow\(\s*['\"]([^'\"]+)['\"]", text))
-            # 템플릿 workflow(`ns:${...}`) → 같은 파일의 평범한 문자열 배열 요소를 ns와 결합
+            # 템플릿 workflow(`ns:${...}`) → 같은 파일의 평범한 문자열 배열 요소를 ns와 결합(크로스곱 "추정").
+            # 파일에 여러 ns 템플릿이 있으면 크로스곱이 섞이므로, 템플릿 추정분은 미해석을 ERROR 로 보지 않고
+            # "해석되는 참조의 오케스트레이터 2단 중첩"만 잡는다(리터럴만 엄격).
+            tmpl_wf = set()
             for ns in set(re.findall(r"workflow\(\s*`([a-z0-9-]+):\$\{", text)):
                 for elem in _plain_string_arrays(text):
-                    lit_wf.add(f"{ns}:{elem}")
-            for ref in sorted(lit_wf):
+                    tmpl_wf.add(f"{ns}:{elem}")
+
+            def _chk_wf(ref, strict):
                 ns, _, nm = ref.partition(":")
                 if ns not in plugins:
-                    add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — 알 수 없는 플러그인 '{ns}'")
-                elif nm not in plugins[ns]["workflows"]:
-                    add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — '{ns}'에 워크플로 '{nm}' 없음")
+                    if strict:
+                        add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — 알 수 없는 플러그인 '{ns}'")
+                    return
+                if nm not in plugins[ns]["workflows"]:
+                    if strict:
+                        add("ERROR", "workflow", ref, rel, f"워크플로 참조 '{ref}' — '{ns}'에 워크플로 '{nm}' 없음")
+                    return
+                if nm in plugins[ns].get("orchestrators", set()):
+                    add("ERROR", "workflow", ref, rel,
+                        f"워크플로 참조 '{ref}' — 대상이 오케스트레이터(workflow() 호출)라 workflow()로 부르면 2단 중첩(런타임 throw). 리프만 호출하라")
+
+            for ref in sorted(lit_wf):
+                _chk_wf(ref, True)
+            for ref in sorted(tmpl_wf - lit_wf):
+                _chk_wf(ref, False)
 
             # 2) agentType: 'ns:name'
             for ref in sorted(set(re.findall(r"agentType:\s*['\"]([^'\"]+)['\"]", text))):
@@ -141,9 +176,12 @@ def extract_and_check(root, plugins, skills_global):
                     if t in inv["skills"]:
                         continue  # 같은 플러그인 OK
                     elif t in skills_global:
-                        other = ",".join(sorted(skills_global[t]))
+                        providers = skills_global[t]
+                        if providers & inv.get("deps", set()):
+                            continue  # 선언된 의존 플러그인이 제공 → 동반 설치 보장, 경고 아님
+                        other = ",".join(sorted(providers))
                         add("WARN", "skill", t, rel,
-                            f"스킬 '{t}' — '{pname}'에 없고 '{other}'에만 있음(단독 설치 시 누락)")
+                            f"스킬 '{t}' — '{pname}'에 없고 '{other}'에만 있음(의존성 미선언, 단독 설치 시 누락)")
                     else:
                         add("ERROR", "skill", t, rel, f"스킬 '{t}' — 어느 로컬 플러그인에도 없음(오타 의심)")
 

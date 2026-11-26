@@ -91,7 +91,7 @@ async function verify(f) {
   const v = await agent(
     '다음 이관 검증 지적을 반박하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다.\n' +
       `파일: ${f.file}${f.line ? ':' + f.line : ''}\n분류: ${f.category || ''}\n심각도: ${f.severity}\n지적: ${f.summary}\n상세: ${f.detail || ''}`,
-    { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${f.file}` },
+    { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${f.file}` },
   )
   return (v && v.real) ? f : null
 }
@@ -105,7 +105,7 @@ const collected = await agent(
   `${scope}\n` +
     '이관(마이그레이션 스크립트·DDL 변경·엔티티 정의·매퍼) 단위를 찾아 나열하고 종류(migration/ddl/entity/mapper/other)로 분류하라. ' +
     '생성물·백업은 제외하라.',
-  { schema: COLLECT_SCHEMA, effort: 'low', label: '이관 단위 수집' },
+  { schema: COLLECT_SCHEMA, model: 'haiku', effort: 'low', label: '이관 단위 수집' },
 )
 const units = (collected && Array.isArray(collected.units)) ? collected.units : []
 log(`이관 단위 ${units.length}건 수집`)
@@ -208,6 +208,6 @@ const report = await agent(
     '① 위험 요약(심각도 high→low, 차원별), ② 롤백·무중단 준비 상태, ③ 테스트 공백과 추가 권고, ④ 단위별 상세(`파일:라인`·분류·요약·권고). ' +
     '지적이 없으면 통과(PASS)임을 명시하라.\n\n' +
     JSON.stringify(confirmed),
-  { label: '리포트 작성' },
+  { model: 'sonnet', label: '리포트 작성' },
 )
 return report
