@@ -83,6 +83,11 @@
 
 `scripts/check_refs.py`: 워크플로 참조 검증 강화 — **대상이 오케스트레이터(workflow() 호출)면 ERROR**(workflow()로 부르면 그 자식이 또 workflow()를 불러 2단 중첩 런타임 throw). 템플릿 `workflow(\`ns:${}\`)` 크로스곱 추정은 다중 네임스페이스 오탐을 막기 위해 미해석을 ERROR로 보지 않고(리터럴만 엄격) 해석되는 오케스트레이터만 잡는다.
 
+`dev-toolkit` db-diff: 완전성·견고성 보강(rc 승격 전 런타임 리뷰가 포착한 high 1·medium 1 수정).
+- [high] 룩업 맵을 `Object.create(null)`로(`byName`·`diffNames`) — `__proto__`·`constructor`·`toString`·`hasOwnProperty` 이름의 테이블·컬럼·인덱스가 상속 프로퍼티 오탐·프로토타입 변조로 조용히 누락되던 문제 수정(결정적 완전성이 계약이고 입력이 신뢰불가 외부 DB라 중요).
+- [medium] 투영만 하고 비교하지 않던 diff 추가: 같은 이름 인덱스의 **unique·컬럼 변경**, **FK 존재**(이름 없어 columns→refTable 시그니처로), **제약 존재·kind/expr 변경**. 이관 핵심인 UNIQUE 해제·FK/CHECK 삭제를 놓치던 공백 보강.
+- 합성 테스트(프로토타입 이름 + FK/인덱스/제약 시나리오) 7/7 통과.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
