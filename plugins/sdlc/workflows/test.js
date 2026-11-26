@@ -114,9 +114,10 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   if (fails.every((f) => f.kind === 'env')) { stopReason = 'env'; log('환경 문제만 남음 — 수정 루프 중단'); break }
   phase('수정')
   // 의심 파일 기준으로 묶고, 파일이 겹치지 않게 그룹화
+  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이로 같은 파일을 동시 수정하지 않도록
   const groups = []
   for (const f of fails.filter((x) => x.kind !== 'env')) {
-    const files = (f.suspect && f.suspect.length) ? f.suspect : ['?']
+    const files = ((f.suspect && f.suspect.length) ? f.suspect : ['?']).map(normPath)
     // 이 실패와 파일이 겹치는 기존 그룹을 전부 찾아 하나로 병합한다. 첫 그룹만 합치면 서로 다른
     // 그룹이 같은 파일을 공유하게 돼, 병렬 수정이 같은 파일을 동시에 건드릴 수 있다.
     const hit = groups.filter((x) => files.some((p) => x.files.has(p)))
@@ -170,7 +171,7 @@ return {
   failedCount: run ? (run.failedCount || (run.failures || []).length) : 0,
   remaining: run && !run.passed ? (run.failures || []).slice(0, 20) : [],
   fixRounds: rounds.length - 1,
-  testFiles: written.map((w) => w.testFile),
+  testFiles: written.filter((w) => w && w.summary !== '실패').map((w) => w.testFile),  // 작성 실패 파일은 제외
 }
 
 function summ(r, x) {

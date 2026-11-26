@@ -229,7 +229,8 @@ async function qualityLoop(opt) {
       .filter((c) => crit[c.key] < 100)
       .map((c) => `[${c.key} ${crit[c.key]}점] ${c.desc}\n` + Array.from(new Set(gaps[c.key])).slice(0, 8).map((g) => `  - ${g}`).join('\n'))
       .join('\n') +
-      (must.some((m) => !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '')
+      (must.some((m) => !m.met) ? `\n[필수 항목 미충족]\n${must.filter((m) => !m.met).map((m) => `  - ${m.item}`).join('\n')}` : '') +
+      (must.some((m) => String(m.votes).includes('불명')) ? `\n[필수 항목 판정 불가 — 심사자가 판정 못 함(통과엔 미반영)]\n${must.filter((m) => String(m.votes).includes('불명')).map((m) => `  - ${m.item}`).join('\n')}` : '')
     return { score: score, min: Math.round(min * 10) / 10, criteria: crit, mustHave: must, passed: passed, gapText: gapText, judges: verdicts.length }
   }
 

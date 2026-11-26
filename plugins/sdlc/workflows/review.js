@@ -64,7 +64,7 @@ function verifyFinding(f, dimKey) {
   return agent(
     '다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n' +
       '실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ' + JSON.stringify(f),
-    { schema: VERDICT_SCHEMA, model: 'sonnet', phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
+    { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
   ).then((v) => (v
     ? (v.refuted ? null : Object.assign({}, dimObj, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
     : Object.assign({}, dimObj, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' })))
@@ -157,8 +157,9 @@ let retest = null
 const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low') : []
 if (toFix.length) {
   phase('수정')
-  const byFile = Object.create(null)  // 파일 경로(에이전트 반환)로 키를 잡으므로 프로토타입 오염 방지
-  toFix.forEach((f) => { (byFile[f.file] = byFile[f.file] || []).push(f) })
+  const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')  // 경로 표기 차이(./foo vs foo)로 같은 파일이 다른 그룹에 들어가 병렬 수정 충돌하지 않도록
+  const byFile = Object.create(null)  // 정규화 경로로 키(프로토타입 오염 방지 위해 Object.create(null))
+  toFix.forEach((f) => { const k = normPath(f.file); (byFile[k] = byFile[k] || []).push(f) })
   fixes = (await parallel(Object.keys(byFile).map((file) => () => {
     // 지적마다 번호 n 을 부여해 넘기고 그 번호로 되받는다 — 에이전트가 title 을 바꿔 적어도 수정 완료 매칭이 어긋나지 않도록.
     const items = byFile[file].map((f, i) => Object.assign({ n: i + 1 }, f))
@@ -172,7 +173,7 @@ if (toFix.length) {
     ).then((r) => {
       const byN = {}
       if (r && Array.isArray(r.items)) for (const it of r.items) if (it && typeof it.n === 'number') byN[it.n] = it
-      return items.map((f) => ({ file: file, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
+      return items.map((f) => ({ file: f.file, title: f.title, fixed: !!(byN[f.n] && byN[f.n].fixed), note: byN[f.n] ? (byN[f.n].note || '') : '에이전트 미응답' }))
     })
   }))).filter(Boolean).flat()
   retest = await agent(

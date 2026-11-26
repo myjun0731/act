@@ -54,6 +54,7 @@ if (only) tasks = tasks.filter((t) => only.indexOf(t.id) >= 0)
 const ids = new Set(tasks.map((t) => t.id))
 
 // 의존 계층(웨이브) → 계층 안에서 파일이 겹치지 않는 묶음으로 분할 (순수 코드)
+const normPath = (p) => String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
 const waves = []
 const placed = new Set()
 let remaining = tasks.slice()
@@ -62,11 +63,11 @@ while (remaining.length) {
   if (!ready.length) { log(`순환 의존 감지 — 남은 ${remaining.length}개를 순서대로 처리`); ready.push(remaining[0]) }
   const batches = []
   for (const t of ready) {
-    const fs = new Set(t.files || [])
-    let b = batches.find((x) => !(t.files || []).some((f) => x.files.has(f)))
+    const tf = (t.files || []).map(normPath)  // 경로 표기 차이로 같은 파일을 한 묶음에서 동시 수정하지 않도록 정규화
+    let b = batches.find((x) => !tf.some((f) => x.files.has(f)))
     if (!b) { b = { files: new Set(), tasks: [] }; batches.push(b) }
     b.tasks.push(t)
-    fs.forEach((f) => b.files.add(f))
+    tf.forEach((f) => b.files.add(f))
   }
   batches.forEach((b) => waves.push(b.tasks))
   ready.forEach((t) => placed.add(t.id))

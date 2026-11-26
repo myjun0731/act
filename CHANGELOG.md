@@ -58,15 +58,22 @@
 - `test`: 실행 에이전트 실패(run=null)를 `stopReason='run-error'`로(이전엔 'maxFixRounds'로 원인 가림, analyze/design의 'error'와 일관).
 - `deliver`: 게이트 `clean` 조건에 `!test.planFailed` 추가 — 계획 실패로 새 테스트가 없으면 기존 테스트 통과만으로 통과시키지 않음.
 
-`sdlc` 0.3.0: 토큰 비용 최적화(모델 라우팅). dev-toolkit과 같은 원칙 — 실질 작업은 강 모델, 저부가는 하향. review 스모크가 2.9M까지 가던 비용을 줄인다.
+`sdlc` 0.3.0: 토큰 비용 최적화(모델 라우팅). dev-toolkit과 같은 원칙 — 실질 작업은 강 모델, 저부가는 하향. review 스모크가 2.9M까지 가던 비용을 줄인다(실측은 아래 0.3.1 항목: 2.06M·-29%·4.7배, 무거운 단계가 cheaper 모델로 이동해 실비용은 더 큰 절감).
 - **유지(기본 모델)**: agentType 전문가(각자 설정)·구현 에이전트(코드 작성)·수정 에이전트(코드 수정).
-- **sonnet**: 심사 패널 judges(채점·근거검증 — haiku는 환각으로 부적합), 제네릭 리뷰어(verify가 오탐 거름), 반박검증, 조사, test plan/run, report·record 작성.
-- **haiku**: 순수 기계(scope·load·copy·유형 분류).
+- **sonnet**: 심사 패널 judges(채점·근거검증 — haiku는 환각으로 부적합), 제네릭 리뷰어(verify가 오탐 거름), 반박검증, 조사, test plan/run, report·record 작성, design 작업목록 추출(확정).
+- **haiku**: 순수 기계(scope·load·분류, analyze 확정본 복사). design의 확정(tasks 추출)은 판정이라 sonnet.
 - 최대 절감처: analyze/design judges(라운드 곱셈)와 review 제네릭 4차원+verify+report.
 
 `sdlc` 0.3.1: 최적화 스모크(25에이전트·2.06M, 직전 2.9M 대비 -29%·4.7배 빠름)가 포착한 버그 2종.
 - `review`: dedup 키의 title 정규화가 `/\W/`로 **한글을 전부 지워**(한글=비단어문자) 한글 제목이 빈 문자열이 되면 서로 다른 지적이 하나로 합쳐지던 회귀(dev.7 도입분) → 공백만 제거하고 글자 보존.
 - `test`: full 모드에서 실행된 테스트가 0건인데 `passed=true`로 보고되던 '빈 통과' → full 모드 0건은 통과로 보지 않음.
+
+`sdlc` 0.3.2: 최적화 스모크 low 지적 9건 정리.
+- `design`: 확정본 복사+추출 에이전트 실패 시 없는 FINAL 대신 라운드 본 경로 반환(analyze.js의 dev.6 수정과 짝 — 놓쳤던 쌍둥이).
+- `review`: verify에 `effort:'low'` 추가(dev-toolkit 관례 일치·추가 절감). 수정 그룹핑을 **경로 정규화**(`./foo` vs `foo`) 후 묶어 같은 파일 병렬 수정 충돌 방지(implement·test 그룹핑도 동일 적용).
+- `test`: 작성 실패한 테스트 파일을 `testFiles`에서 제외.
+- `analyze`·`design` qualityLoop: 심사자가 판정 못 한(투표 0) 필수 항목을 gapText에 "판정 불가(통과엔 미반영)"로 **노출**(무음 통과 가시화).
+- 문서: README 플러그인 표 버전 동기화, CHANGELOG 절감 실측·haiku/sonnet 서술 정합.
 
 ## [1.11.0] - 2026-11-24
 
