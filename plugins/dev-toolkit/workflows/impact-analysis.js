@@ -66,7 +66,7 @@ const scope = target
   : '대상: 현재 작업 트리의 변경(git diff HEAD).'
 const collected = await agent(
   `${scope}\n변경된 심볼(클래스·메서드·엔드포인트), 파일, 영향받을 수 있는 테이블/컬럼을 식별해 changes로 반환하라.`,
-  { schema: CHANGES_SCHEMA, effort: 'low', label: '변경 식별' },
+  { schema: CHANGES_SCHEMA, model: 'haiku', effort: 'low', label: '변경 식별' },
 )
 const changes = (collected && Array.isArray(collected.changes)) ? collected.changes : []
 log(`변경 ${changes.length}건 식별`)
@@ -110,7 +110,7 @@ const confirmed = (await parallel(
     const v = await agent(
       '다음 "영향받음" 주장을 반박하라. 실제로 변경에 의해 영향받지 않거나 근거가 약하면 real=false.\n' +
         `영역: ${it.area}\n파일: ${it.file || ''}\n각도: ${it.angle}\n근거: ${it.reason}`,
-      { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${it.area}` },
+      { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${it.area}` },
     )
     return (v && v.real) ? it : null
   }),
@@ -123,6 +123,6 @@ const plan = await agent(
   '다음은 변경의 확인된 영향 영역(JSON)이다. module-regression 스킬 지침이 있으면 적용해 한국어 마크다운 "회귀 테스트 계획"을 작성하라. ' +
     '구성: ① 영향 요약(risk 높은 순·각도별), ② 재테스트 대상(모듈·화면·쿼리)과 우선순위, ③ 권장 회귀 범위. 영향이 없으면 그 사실을 명시.\n\n' +
     JSON.stringify(confirmed),
-  { label: '회귀 계획' },
+  { model: 'sonnet', label: '회귀 계획' },
 )
 return plan

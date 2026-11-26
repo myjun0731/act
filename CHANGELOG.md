@@ -2,6 +2,117 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.12.0] - 2026-11-25
+
+`dev-toolkit` 0.10.2 → 0.10.3: 새 동적 워크플로 `db-diff` 추가(동적 워크플로 10 → 11).
+- `/dev-toolkit:db-diff` — 2개 이상 DB의 정규 스키마 스냅샷(계약)의 구조 차이를 **결정적으로 계산**하고, 에이전트가 이관 심각도·방언 함정을 분류해 심각도순 이관 리포트+ADR로 합친다. **DB에 직접 접속하지 않는다**(스냅샷 없으면 읽기 전용 조회 지시서 출력 → 외부 DB 조회 도구로 떠서 재투입). 실제 접속 어댑터는 도메인 플러그인 몫(경계).
+  - 설계는 `dev-toolkit:design-approaches` 워크플로로 생성(`docs/design/db-diff.md`). 1차(스키마·방언 diff) → 2차(data_profile opt-in: 값 없는 집계 계약으로 행수·NULL비율·distinct 차이).
+  - 보안(security-guidance 리뷰 4건 반영): 허용목록 투영(계약 외 필드 폐기), 간접 프롬프트 주입 방어(신뢰불가 데이터 delimit 블록·구분자 위조 방지·라벨 strict charset), 집계 계약은 실제 값·min/max·샘플 미반입.
+  - 완전성: 적대적 verify 대신 **결정적 계산 + 백필**(스모크에서 verify가 진짜 차이를 삭제하는 역효과 확인 후 재설계). 방언 등가 노이즈는 삭제 않고 low "방언 등가"로 표시.
+  - `migration-readiness` 리프에 합류(복합 args로 스냅샷 제공 시 실제 비교).
+- 오케스트레이터 3종(`pre-merge-gate`·`migration-readiness`·`onboard-pack`) 리프 결과를 신뢰불가 데이터 가드로 일괄 하드닝(간접 프롬프트 주입 방지).
+
+`dev-toolkit` 0.10.3 → 0.10.4: 워크플로 토큰 최적화 2차(모델 라우팅). fork-3의 `effort:low`(1차)에 이어 **per-agent `model` 라우팅**을 전 워크플로에 도입.
+- **원칙**: `agentType` 디스패치 에이전트(리뷰어·architect·DB·test-automator·java-build-resolver 등 — 실제 지적/설계를 하는 단계)는 **세션 모델(opus) 유지**. 제네릭 저부가 단계만 하향.
+  - 수집·분류·구획·스코프(기계) → `haiku`+`effort:low`
+  - 채점(design-approaches 렌즈) → `haiku`+`effort:low`, **4렌즈를 접근안당 1호출로 배칭(렌즈 호출 12 → 3)**
+  - 검증(반박) → `sonnet`+`effort:low`
+  - 제네릭 리포트/합성(agentType 없음) → `sonnet`
+- **보존**: 발견/탐색 제네릭 단계(impact 스위프, migration 차원·완전성, sql 방언·함정, db-diff 결정적 계산·분류)는 opus 유지 — 품질 핵심. `pre-merge-gate`의 GO/NO-GO 판정도 opus 유지(병합 차단 결정이라 오판 회피).
+- 효과: 최대 소비처 design-approaches의 채점 12호출→3, review/sql/migration의 무한 팬아웃 검증을 sonnet로. 리뷰 품질 저하 없이 토큰 절감.
+
+`dev-toolkit` 0.10.4 → 0.10.5: 스모크 실측 기반 채점 모델 교정. design-approaches를 실행해보니(7에이전트·410k 토큰, 1.24M 대비 ~67%↓) **haiku 배칭 채점이 3회 중 2회 실패**(렌즈 환각 'smoke_probe', 빈 결과)해 순위가 채점 실패의 산물이 됨.
+- 채점 모델 `haiku` → `sonnet`(배칭은 유지 — 여전히 opus×12 대비 큰 절감). 다렌즈 1~5점 매핑은 추출이 아니라 판정 작업이라 haiku엔 부적합.
+- 환각 방어: 프롬프트에 "주어진 렌즈 키만 사용·새 기준 금지" 명시 + 집계 시 알려진 LENSES 키의 점수만 반영(환각 렌즈·결측 배제). 수집·분류 등 순수 추출 단계는 haiku 유지(판정 아님).
+
+새 플러그인 `sdlc` 0.1.0 추가(자체 저작물) — 분석 → 설계 → 구현 → 테스트 → 리뷰 → 완료 보고서를 동적 워크플로 단위로 연계.
+- `/sdlc:pipeline` 스킬: 진행 규약. 분석·설계는 **사용자 관문**(품질 루프 후 승인), 설계 승인 뒤 구현·테스트·리뷰·보고서는 Claude가 묻지 않고 게이트 규칙에 따라 호출. 산출물·재개 상태는 대상 레포 `.sdlc/<slug>/`.
+- 워크플로 7종: `analyze`·`design`(품질 루프), `implement`(의존·파일 비중첩 웨이브 병렬 구현 + 빌드 수정), `test`(AC→TC 작성, 실행↔수정 루프, `verify` 모드), `review`(5차원 리뷰 → 반박 검증 → 확정 지적 수정·재테스트), `report`(요구 추적 매트릭스), `deliver`(오케스트레이터: implement → test↔review 최대 N사이클 → report).
+- 품질 루프: 심사 패널(관점별 독립 채점, 기준별 0~100) 가중 평균이 `target` 이상 ∧ 모든 기준 `floor` 이상 ∧ `mustHave` 과반 충족일 때 통과. 미달이면 최고본에서 약한 기준부터 보강 반복, `patience` 연속 무개선 시 정체 종료, `maxRounds` 상한. 수준 프리셋 standard 75/60 · high 85/70 · strict 92/80.
+- `deliver.js` 는 `LEAVES` 배열로 리프를 선언해 `scripts/check_refs.py` 가 `sdlc:<리프>` 참조를 검증한다.
+- `allinone` 0.4.1 → 0.5.0: 의존성에 `sdlc` 추가. 기존 설치는 `claude plugin install sdlc@claude-pro` 로 따로 설치.
+
+`sdlc` 0.1.0 → 0.2.0: dev-toolkit 전문 에이전트/스킬 연계(구현 전 `design-approaches` 워크플로로 접근안 비교·검증 → risk-minimal 안 채택).
+- **전문성 주입 이원화**: 페르소나=`agentType`(설치 안전·ERROR급 검증), 방법론·지식=소프트 스킬참조("있으면 적용"). 반박검증·심사 패널·종료 가드는 제네릭 유지(독립 평가자 보존).
+- `review` 2계층화: 1계층=제네릭 5차원(설계준수·요구추적은 제네릭 전담 — dev-toolkit 리뷰어는 설계서/AC 모름), 2계층=변경 파일 유형별 전문 리뷰어(java-reviewer·sql-pro·typescript/react/vue-reviewer·database-architect) + `security-reviewer` **보안 상시 레인**(유형 무관 전 변경 1회). 전 디스패치 try/catch → 미설치·오류 시 제네릭으로 완주. findings에 `dim` 부여(5차원 투영).
+- `test`→`test-automator`, `implement` 빌드수정→`build-error-resolver`, `design`→`architect`; 각 단계에 test-driven-development·systematic-debugging·설계 스킬 소프트 참조.
+- `plugin.json`에 `dependencies: ["dev-toolkit"]` 선언(allinone 번들 전제, 단독 설치 시 자동 동반). 심사 패널·qualityLoop·종료 가드는 불변.
+
+`scripts/check_refs.py`: **선언된 의존성 인식** 추가 — 플러그인이 `dependencies`로 선언한 다른 로컬 플러그인의 스킬을 프롬프트에서 참조하면 더는 WARN이 아니다(동반 설치 보장). sdlc의 dev-toolkit 소프트 스킬 참조 9건이 WARN 0으로 정리(rc/ga strict 통과). 의존성 미선언 cross-plugin 스킬 참조만 WARN 유지.
+
+`sdlc` 0.2.1: 연계 review 스모크(32에이전트)가 포착한 pre-existing 버그 수정.
+- `review`: ① 범위 수집 에이전트 실패(null)를 "변경 없음(PASS)"과 구분 — 실패 시 `blocked`+`unresolvedHigh:1`로 게이트가 미해결 취급(거짓 PASS 방지). ② 반박검증 에이전트 실패 시 critical/high 지적을 조용히 폐기하지 않고 "미검증 보존"으로 남김(제네릭·전문 레인 양쪽).
+- `deliver`: `maxCycles`를 최소 1로 클램프(0/음수면 검증 사이클 생략→거짓 completed). 빌드는 통과하나 작업 실패가 남으면 `partial` 반영.
+- `test`: 실패 그룹화가 겹치는 그룹을 전부 병합(첫 그룹만 합쳐 병렬 수정이 같은 파일을 동시에 건드리던 문제 수정).
+- `analyze`: 확정본 복사 에이전트 실패 시 없는 FINAL 경로를 성공으로 반환하지 않고 라운드 본 경로로 폴백.
+- 남은 지적(review 수정완료 title 일치, analyze mustHave 정확일치, test 계획 실패 시 기존 테스트만으로 통과)은 후속 과제.
+
+`sdlc` 0.2.2: 남은 후속 지적 3건 수정.
+- `review`: 수정 완료 판정을 title 문자열 일치 대신 **번호(n) 기반 매칭**으로 — 에이전트가 title을 바꿔 적어도 fixed 판정이 어긋나지 않음(출력 title은 원본 보존).
+- `analyze`·`design` qualityLoop: mustHave 판정을 **정규화 후 부분일치**로(심사자 패러프레이즈 허용), 아무도 판정 못 한 항목은 통과를 막지 않고 '불명' 표기(정확 불일치로 영원히 미통과 되던 문제 방지).
+- `test`: full 모드에서 테스트 계획 실패 시 `planFailed` 플래그·경고 로그(새 테스트 없이 기존 테스트만으로 passed가 되는 상황을 가시화).
+
+`sdlc` 0.2.3: 스모크 low 지적 + 수정 중 드러난 잔여 약점 정리(견고성).
+- **프로토타입 오염 방지**: 에이전트 반환 key 로 인덱싱하던 plain object를 `Object.create(null)`로 — qualityLoop `per`/`gaps`(analyze·design), review `byType`/`byFile`, test `byFile`. `constructor`/`__proto__` 등이 와도 `.push` TypeError·루프 중단 없음.
+- `review`: 제네릭·전문/보안 반박검증을 **단일 `verifyFinding()` 헬퍼**로 통합(복제 제거, 한쪽만 고쳐 어긋날 위험 제거). dedup 키의 title 을 정규화(소문자·공백/구두점 제거 후 30자)해 레인 간 유사 중복을 더 묶음.
+- `test`: 실행 에이전트 실패(run=null)를 `stopReason='run-error'`로(이전엔 'maxFixRounds'로 원인 가림, analyze/design의 'error'와 일관).
+- `deliver`: 게이트 `clean` 조건에 `!test.planFailed` 추가 — 계획 실패로 새 테스트가 없으면 기존 테스트 통과만으로 통과시키지 않음.
+
+`sdlc` 0.3.0: 토큰 비용 최적화(모델 라우팅). dev-toolkit과 같은 원칙 — 실질 작업은 강 모델, 저부가는 하향. review 스모크가 2.9M까지 가던 비용을 줄인다(실측은 아래 0.3.1 항목: 2.06M·-29%·4.7배, 무거운 단계가 cheaper 모델로 이동해 실비용은 더 큰 절감).
+- **유지(기본 모델)**: agentType 전문가(각자 설정)·구현 에이전트(코드 작성)·수정 에이전트(코드 수정).
+- **sonnet**: 심사 패널 judges(채점·근거검증 — haiku는 환각으로 부적합), 제네릭 리뷰어(verify가 오탐 거름), 반박검증, 조사, test plan/run, report·record 작성, design 작업목록 추출(확정).
+- **haiku**: 순수 기계(scope·load·분류, analyze 확정본 복사). design의 확정(tasks 추출)은 판정이라 sonnet.
+- 최대 절감처: analyze/design judges(라운드 곱셈)와 review 제네릭 4차원+verify+report.
+
+`sdlc` 0.3.1: 최적화 스모크(25에이전트·2.06M, 직전 2.9M 대비 -29%·4.7배 빠름)가 포착한 버그 2종.
+- `review`: dedup 키의 title 정규화가 `/\W/`로 **한글을 전부 지워**(한글=비단어문자) 한글 제목이 빈 문자열이 되면 서로 다른 지적이 하나로 합쳐지던 회귀(dev.7 도입분) → 공백만 제거하고 글자 보존.
+- `test`: full 모드에서 실행된 테스트가 0건인데 `passed=true`로 보고되던 '빈 통과' → full 모드 0건은 통과로 보지 않음.
+
+`sdlc` 0.3.2: 최적화 스모크 low 지적 9건 정리.
+- `design`: 확정본 복사+추출 에이전트 실패 시 없는 FINAL 대신 라운드 본 경로 반환(analyze.js의 dev.6 수정과 짝 — 놓쳤던 쌍둥이).
+- `review`: verify에 `effort:'low'` 추가(dev-toolkit 관례 일치·추가 절감). 수정 그룹핑을 **경로 정규화**(`./foo` vs `foo`) 후 묶어 같은 파일 병렬 수정 충돌 방지(implement·test 그룹핑도 동일 적용).
+- `test`: 작성 실패한 테스트 파일을 `testFiles`에서 제외.
+- `analyze`·`design` qualityLoop: 심사자가 판정 못 한(투표 0) 필수 항목을 gapText에 "판정 불가(통과엔 미반영)"로 **노출**(무음 통과 가시화).
+- 문서: README 플러그인 표 버전 동기화, CHANGELOG 절감 실측·haiku/sonnet 서술 정합.
+
+`sdlc` 0.4.0: dev-toolkit **풀 워크플로** 깊은 연계(에이전트에 더해 완성 워크플로 재사용). `design-approaches`로 검증한 "가장 깊은 안전 층 3층 배치".
+- **deliver 보강 phase(opt-in `augment:true`)**: test↔review 수렴 뒤 1회, dev-toolkit **리프 워크플로**(impact-analysis; SQL/매퍼면 sql-db-audit; 이관이면 migration-verify; `coverage:true`면 test-coverage-boost)를 1단 형제로 호출해 **report "보강 분석" 절**로 싣는다. 변경셋 유형으로 조건 디스패치. 결과는 **게이트에 미반영**(결정성 보존 — 자율 사이클 판정은 sdlc 리프 구조화 반환만). 오케스트레이터 호출 금지(2단 중첩).
+- **세션/스킬 층**(`/sdlc:pipeline`): 분석 전 `codebase-map`·이관 `migration-readiness`·병합 전 `pre-merge-gate` 등 **오케스트레이터까지** 호출 가능(중첩 제한 없음). SKILL.md에 선·후행 단계 명시.
+- `review-changes`는 deliver에 미투입(sdlc:review와 같은 리뷰어·diff 중복 = 순손실).
+- 보강 마크다운은 외부 코드/DB 파생 신뢰불가라 가드(delimit·`<>` 이스케이프)로 report에 투입.
+
+`scripts/check_refs.py`: 워크플로 참조 검증 강화 — **대상이 오케스트레이터(workflow() 호출)면 ERROR**(workflow()로 부르면 그 자식이 또 workflow()를 불러 2단 중첩 런타임 throw). 템플릿 `workflow(\`ns:${}\`)` 크로스곱 추정은 다중 네임스페이스 오탐을 막기 위해 미해석을 ERROR로 보지 않고(리터럴만 엄격) 해석되는 오케스트레이터만 잡는다.
+
+`dev-toolkit` db-diff: 완전성·견고성 보강(rc 승격 전 런타임 리뷰가 포착한 high 1·medium 1 수정).
+- [high] 룩업 맵을 `Object.create(null)`로(`byName`·`diffNames`) — `__proto__`·`constructor`·`toString`·`hasOwnProperty` 이름의 테이블·컬럼·인덱스가 상속 프로퍼티 오탐·프로토타입 변조로 조용히 누락되던 문제 수정(결정적 완전성이 계약이고 입력이 신뢰불가 외부 DB라 중요).
+- [medium] 투영만 하고 비교하지 않던 diff 추가: 같은 이름 인덱스의 **unique·컬럼 변경**, **FK 존재**(이름 없어 columns→refTable 시그니처로), **제약 존재·kind/expr 변경**. 이관 핵심인 UNIQUE 해제·FK/CHECK 삭제를 놓치던 공백 보강.
+- 합성 테스트(프로토타입 이름 + FK/인덱스/제약 시나리오) 7/7 통과.
+
+`sdlc` analyze·design·report·review: rc 승격 전 2차 검증(런타임 리뷰 50에이전트, high 0·medium 6·low 3) 포착 결함 중 명확·안전한 것 수정.
+- [medium] analyze·design qualityLoop의 `LEVELS[q.level]`가 프로토타입 키(`constructor`·`toString`·`__proto__`)를 통과시켜 lv=함수 → `|| LEVELS.high` 폴백 미동작 → target/floor undefined → `score >= target` 영구 false로 루프가 영원히 미통과하던 문제 → `Object.create(null)`(폴백 테스트 8/8).
+- [medium] report의 outcome/history 프롬프트 JSON에 이스케이프·길이제한·객체검사가 없던 것 → `<>` 무력화·12000자 상한·outcome 객체 가드(간접 프롬프트 주입·비대화·문자열 outcome의 문자인덱스 펼침 방지).
+- [medium] review의 차원·보안·전문·분류 에이전트가 throw 아닌 null 반환 시 '커버 공백'이 '지적 없음'으로 조용히 처리되던 것 → null 결과 경고 로그(관측성). 게이트(unresolvedHigh) 반영은 후속 과제.
+- 2차 재설계로 나머지도 해결(게이트/매칭 로직 테스트 11/11):
+  - mustHave: 심사자 판정을 **번호 기반 매칭**으로 전환(부분일치 'API'↔'API 인증' 오매칭 제거, 번호 없으면 정규화 정확일치 폴백). **'미평가=자동통과' 구멍 제거** — 평가된 항목이 과반 미충족이면 차단, 필수항목이 있는데 절반 넘게 미평가면 '심사 누락'으로 차단, 미평가가 소수일 때만 허용(정확불일치로 영원히 미통과하던 회귀는 회피).
+  - review: 차원·보안 리뷰 에이전트가 null(미실행) 반환 시 `laneFailures`로 모아 `unresolvedHigh`에 가산(실패 레인을 '지적 없음'으로 두지 않아 거짓 PASS 방지). dedup 키에 경로표기 정규화 적용(주석/코드 정합).
+  - implement: `only`-필터 후 빈 작업을 빈 빌드/기록으로 흘리지 않도록 재검사·미존재 id 보고, `normPath`를 실제 경로 정규화(`..`·`.`·중복슬래시 해소)로 재설계.
+
+`sdlc` review·deliver·analyze·design: 최종 pre-merge-gate(오케스트레이터, 91에이전트 → NO-GO) 포착 결함 수정 — 거짓 PASS 연쇄 + 2차 재설계 자체 버그.
+- [P0·거짓 PASS 연쇄] review 의 `fixedTitles`/`unresolved` 매칭 키가 `file:title`(line 누락)이라 dedup 키(`file:line:title`)와 불일치 → 같은 파일·제목·다른 line 2건 중 1건만 고쳐도 둘 다 fixed 로 과소집계 → `unresolvedHigh=0` 거짓 clean → `deliver` 거짓 `completed` 로 전파되던 교차모듈 결함. 키를 `file:line:title`(경로정규화)로 통일하고 수정 결과에 `line` 보존. `unresolvedHigh` 에 재테스트 실패(`testsPass===false`)도 가산.
+- [P1·자체 버그] mustHave 번호 매칭을 `/^\d+$/`(순수 숫자)로 한정 — 2차 재설계의 `parseInt` 가 '2FA 지원' 류를 2번으로 오매칭하던 것 수정(번호는 유지, 텍스트는 정확일치). `deliver` 의 `testCmd: undefined` 가 leaf 의 `Object.assign` 으로 호출자 `A.testCmd` 를 덮던 것 → 값 있을 때만 키 포함. 검증 실패(미검증) 지적은 자동 코드수정 대상에서 제외(미해결 집계엔 유지).
+- 로직 테스트 5/5(+이전 11/11·8/8). 남은 P2(저위험): catch `e.message` 로깅, `dir` 경로검증, `crit` null-proto, `maxBuildFixes` clamp, test 기록 실패 플래그 등.
+
+`sdlc` review·analyze·design·deliver: 게이트 재실행(NO-GO, high 3→1)이 남긴 집계 엣지케이스 수렴 수정.
+- review: ① 재테스트 null(에이전트 실패)도 수정 시도가 있었으면 `unresolvedHigh` 가산(이전엔 `passed===false`만 봐 null 경로가 뚫림). ② 보안 레인 `catch`(throw)도 null 경로처럼 `laneFailures` 반영(보안 커버 공백 은폐 제거). ③ dedup 을 Map 기반으로 — 충돌 시 '최고 severity' 유지(dedup 이 정렬보다 먼저라 같은 키의 high 가 medium 사본에 버려져 과소집계되던 것 제거).
+- analyze·design `resolveQuality`: criteria 에 null/숫자 등 비정상 요소가 와도 TypeError 없이 수용, key 중복 제거, weight 양수·target/floor 0~100 클램프.
+- deliver: 사이클 한도 blocker 가 구현단계 partial blocker 를 덮지 않고 누적. `plugins/sdlc/README.md` mustHave 설명을 현재 동작(번호매칭·정확일치·과반미평가 차단)으로 정정.
+- 로직 테스트 9/9.
+
+`sdlc` test·review: 게이트 3라운드(조건부 GO, high 0)가 남긴 확정 결함 수정 — 테스트 파일 키 경로 미정규화.
+- `test.js`: 작성 단계 `byFile` 키가 `u.testFile` 원문이라 `./a`·`a`·`a/../b` 가 서로 다른 키 → 같은 파일을 병렬로 쓰는 에이전트가 둘 생길 여지. `normPath`(`..`·`.`·중복슬래시 실제 해소) 적용 + 빈/undefined `testFile` 단위 제외('undefined' 키로 뭉치지 않도록).
+- `test.js`(수정 단계)·`review.js`(수정 단계)의 약한 `normPath`(접두만 처리)를 `..` 해소 정식 버전으로 통일 — 3파일(implement 포함) 일관.
+- 게이트 수렴: NO-GO → NO-GO → **조건부 GO(high 0)**. 잔여 '조건부'는 코드 결함이 아니라 REGRESSION.md 원장·회귀 실행 등 프로세스 권고이며, review→deliver 반환 계약은 단위 테스트(9/9·5/5·11/11)로 검증됨.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.
