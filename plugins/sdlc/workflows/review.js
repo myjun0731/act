@@ -56,6 +56,19 @@ const VERDICT_SCHEMA = {
   required: ['refuted'],
   properties: { refuted: { type: 'boolean' }, reason: { type: 'string' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] } },
 }
+// 지적 1건을 반박 검증(제네릭 5차원·전문/보안 레인 공용 — 한쪽만 고쳐 기준이 어긋나지 않도록 단일 헬퍼).
+// 검증 에이전트 실패(null)는 폐기하지 않고 미검증으로 보존한다. dimKey 가 있으면 dim 을 부여(없으면 f 의 기존 dim 유지).
+function verifyFinding(f, dimKey) {
+  const tag = dimKey ? dimKey + ':' : ''
+  const dimObj = dimKey ? { dim: dimKey } : {}
+  return agent(
+    '다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n' +
+      '실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ' + JSON.stringify(f),
+    { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
+  ).then((v) => (v
+    ? (v.refuted ? null : Object.assign({}, dimObj, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
+    : Object.assign({}, dimObj, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' })))
+}
 const DIMS = [
   { key: 'conformance', ask: '설계 준수·요구 추적 — 설계서의 구조·인터페이스와 다르게 구현됐거나, 분석서의 REQ/AC 중 구현되지 않은 것' },
   { key: 'correctness', ask: '정확성 — 로직 오류, 경계값, null/빈 값, 동시성, 에러 처리 누락, 기존 동작 회귀' },
@@ -71,15 +84,7 @@ const verified = await pipeline(
       `관점: ${d.ask}\n이 관점의 실제 결함만 보고하라(스타일 취향 제외). 변경되지 않은 코드의 기존 문제는 변경이 그것을 악화시킬 때만. 아무것도 수정하지 마라.`,
     { schema: FIND_SCHEMA, phase: '리뷰', label: `리뷰:${d.key}` },
   ),
-  (r, d) => parallel(((r && r.findings) || []).map((f) => () =>
-    agent(
-      `다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n` +
-        `실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적(${d.key}): ${JSON.stringify(f)}`,
-      { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${d.key}:${(f.file || '').split('/').pop()}` },
-    ).then((v) => (v
-      ? (v.refuted ? null : Object.assign({ dim: d.key }, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
-      : Object.assign({ dim: d.key }, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' }))),
-  )).then((xs) => xs.filter(Boolean)),
+  (r, d) => parallel(((r && r.findings) || []).map((f) => () => verifyFinding(f, d.key))).then((xs) => xs.filter(Boolean)),
 )
 // Layer 2 (가산·선택): 변경 파일 유형별 dev-toolkit 전문 리뷰어 + 보안 상시 레인.
 // 실패(미설치·에이전트 오류)해도 try/catch·parallel 로 흡수 → 1계층 제네릭 5차원으로 완주한다.
@@ -104,8 +109,8 @@ try {
   )
   typed = (cls && Array.isArray(cls.files)) ? cls.files : []
 } catch (e) { log('유형 분류 실패 — 전문 리뷰 생략, 제네릭 5차원으로 계속') }
-// 유형별로 묶어 전문 리뷰어 1회씩 디스패치(비용 억제)
-const byType = {}
+// 유형별로 묶어 전문 리뷰어 1회씩 디스패치(비용 억제). 에이전트 반환값으로 키를 잡으므로 Object.create(null)(프로토타입 오염 방지).
+const byType = Object.create(null)
 for (const f of typed) { const r = reviewerFor(f.type); if (r && f.path) { (byType[f.type] = byType[f.type] || { r: r, files: [] }).files.push(f.path) } }
 const expertRaw = (await parallel(Object.keys(byType).map((t) => async () => {
   const g = byType[t]
@@ -129,21 +134,14 @@ try {
   securityRaw = ((sec && sec.findings) || []).map((f) => Object.assign({ dim: 'security' }, f))
 } catch (e) { log('⚠ 보안 리뷰 생략 — security-reviewer 미사용(dev-toolkit 미설치?). 이 실행엔 보안 커버 없음') }
 // 전문/보안 지적도 제네릭과 동일하게 반박검증(독립 평가자 유지 — 전문가를 채점/검증엔 넣지 않는다)
-const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () =>
-  agent(
-    `다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n` +
-      `실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ${JSON.stringify(f)}`,
-    { schema: VERDICT_SCHEMA, phase: '검증', label: `검증:${(f.file || '').split('/').pop()}` },
-  ).then((v) => (v
-    ? (v.refuted ? null : Object.assign({}, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
-    : Object.assign({}, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' }))),
-))).filter(Boolean)
+const extra = (await parallel(expertRaw.concat(securityRaw).map((f) => () => verifyFinding(f, null)))).filter(Boolean)
 
 const all = verified.filter(Boolean).flat().concat(extra)
-// 같은 위치·제목 중복 제거
+// 같은 위치·제목 중복 제거(제네릭 5차원과 전문/보안 레인이 같은 이슈를 다른 표현으로 보고해도 묶이도록
+// title 을 정규화 — 소문자화·공백/구두점 제거 후 앞 30자). 완전히 다른 서술의 동일 이슈는 아래 반박검증이 흡수.
 const seen = new Set()
 const confirmed = all.filter((f) => {
-  const k = `${f.file}:${f.line || 0}:${(f.title || '').slice(0, 40)}`
+  const k = `${f.file}:${f.line || 0}:${String(f.title || '').toLowerCase().replace(/[\s\W]+/g, '').slice(0, 30)}`
   if (seen.has(k)) return false
   seen.add(k); return true
 })
@@ -157,7 +155,7 @@ let retest = null
 const toFix = doFix ? confirmed.filter((f) => f.severity !== 'low') : []
 if (toFix.length) {
   phase('수정')
-  const byFile = {}
+  const byFile = Object.create(null)  // 파일 경로(에이전트 반환)로 키를 잡으므로 프로토타입 오염 방지
   toFix.forEach((f) => { (byFile[f.file] = byFile[f.file] || []).push(f) })
   fixes = (await parallel(Object.keys(byFile).map((file) => () => {
     // 지적마다 번호 n 을 부여해 넘기고 그 번호로 되받는다 — 에이전트가 title 을 바꿔 적어도 수정 완료 매칭이 어긋나지 않도록.

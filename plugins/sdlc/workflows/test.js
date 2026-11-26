@@ -53,8 +53,8 @@ if (mode === 'full') {
   if (!plan) { planFailed = true; log('⚠ 테스트 계획 실패 — 새 테스트 없이 기존 테스트만 실행(AC 커버리지 미보장)') }
   if (plan) {
     testCmd = testCmd || plan.testCmd || ''
-    // 같은 파일을 가리키는 단위는 합친다(병렬 쓰기 충돌 방지)
-    const byFile = {}
+    // 같은 파일을 가리키는 단위는 합친다(병렬 쓰기 충돌 방지). 경로(에이전트 반환)로 키를 잡으므로 Object.create(null).
+    const byFile = Object.create(null)
     for (const u of plan.units || []) {
       if (!byFile[u.testFile]) byFile[u.testFile] = { testFile: u.testFile, target: u.target || '', cases: [] }
       byFile[u.testFile].cases.push(...(u.cases || []))
@@ -107,7 +107,7 @@ async function runTests(round) {
 const rounds = []
 let run = await runTests(0)
 rounds.push(summ(0, run))
-let stopReason = run && run.passed ? 'passed' : 'maxFixRounds'
+let stopReason = run ? (run.passed ? 'passed' : 'maxFixRounds') : 'run-error'  // run=null(실행 에이전트 실패)을 maxFixRounds 로 가리지 않는다
 for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   const fails = run.failures || []
   if (!fails.length) { stopReason = 'unknown-failure'; break }
@@ -146,6 +146,7 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
   rounds.push(summ(r, run))
   log(`r${r}: ${run && run.passed ? '통과' : `실패 ${run ? run.failedCount || (run.failures || []).length : '?'}건`}`)
   if (run && run.passed) stopReason = 'passed'
+  else if (!run) { stopReason = 'run-error'; break }
 }
 
 // 5) 기록 -------------------------------------------------------------------

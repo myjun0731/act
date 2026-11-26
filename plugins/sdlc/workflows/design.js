@@ -217,8 +217,8 @@ async function qualityLoop(opt) {
       .filter(Boolean)
     if (!verdicts.length) return null
 
-    const per = {}
-    const gaps = {}
+    const per = Object.create(null)   // 심사자 반환 key 로 인덱싱하므로 프로토타입 오염 방지(constructor 등)
+    const gaps = Object.create(null)
     for (const c of Q.criteria) { per[c.key] = []; gaps[c.key] = [] }
     for (const v of verdicts) {
       for (const s of (v.scores || [])) {

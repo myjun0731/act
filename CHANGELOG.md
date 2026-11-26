@@ -52,6 +52,12 @@
 - `analyze`·`design` qualityLoop: mustHave 판정을 **정규화 후 부분일치**로(심사자 패러프레이즈 허용), 아무도 판정 못 한 항목은 통과를 막지 않고 '불명' 표기(정확 불일치로 영원히 미통과 되던 문제 방지).
 - `test`: full 모드에서 테스트 계획 실패 시 `planFailed` 플래그·경고 로그(새 테스트 없이 기존 테스트만으로 passed가 되는 상황을 가시화).
 
+`sdlc` 0.2.3: 스모크 low 지적 + 수정 중 드러난 잔여 약점 정리(견고성).
+- **프로토타입 오염 방지**: 에이전트 반환 key 로 인덱싱하던 plain object를 `Object.create(null)`로 — qualityLoop `per`/`gaps`(analyze·design), review `byType`/`byFile`, test `byFile`. `constructor`/`__proto__` 등이 와도 `.push` TypeError·루프 중단 없음.
+- `review`: 제네릭·전문/보안 반박검증을 **단일 `verifyFinding()` 헬퍼**로 통합(복제 제거, 한쪽만 고쳐 어긋날 위험 제거). dedup 키의 title 을 정규화(소문자·공백/구두점 제거 후 30자)해 레인 간 유사 중복을 더 묶음.
+- `test`: 실행 에이전트 실패(run=null)를 `stopReason='run-error'`로(이전엔 'maxFixRounds'로 원인 가림, analyze/design의 'error'와 일관).
+- `deliver`: 게이트 `clean` 조건에 `!test.planFailed` 추가 — 계획 실패로 새 테스트가 없으면 기존 테스트 통과만으로 통과시키지 않음.
+
 ## [1.11.0] - 2026-11-24
 
 `dev-toolkit` 0.9.0 → 0.10.0: wshobson/agents(MIT)에서 스택 심화 항목을 선별 내재화. ECC가 아닌 새 소스.

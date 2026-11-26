@@ -51,7 +51,8 @@ if (status !== 'blocked') {
     test = await leaf('test', { mode: c === 1 ? 'full' : 'verify', testCmd: impl.testCmd || undefined })
     if (test && test.stopReason === 'env') { status = 'blocked'; blocker = '테스트 환경 문제'; break }
     review = await leaf('review', { testCmd: impl.testCmd || undefined })
-    const clean = test && test.passed && review && review.unresolvedHigh === 0 && review.testsPass !== false
+    // test.planFailed(계획 실패로 새 테스트 미작성)면 기존 테스트만 통과해도 clean 으로 보지 않는다.
+    const clean = test && test.passed && !test.planFailed && review && review.unresolvedHigh === 0 && review.testsPass !== false
     log(`사이클 ${c}: 테스트 ${test && test.passed ? '통과' : '실패'}, 미해결 high+ ${review ? review.unresolvedHigh : '?'}`)
     if (clean) break
     if (c === maxCycles) { status = 'partial'; blocker = '사이클 한도 내 미해결(테스트 실패 또는 high 이상 리뷰 지적)' }
