@@ -88,10 +88,11 @@ async function draft(round, prev, gaps) {
       `평가 기준(가중치):\n${Q.criteria.map((c) => `- ${c.key}(${c.weight}): ${c.desc}`).join('\n')}\n` +
       (Q.mustHave.length ? `필수 포함 항목:\n${Q.mustHave.map((m) => `- ${m}`).join('\n')}\n` : '') +
       `\n코드 구조 파악에 codebase-onboarding 스킬 지침이 있으면 적용하라.` +
-      `\n완성본을 ${path} 에 쓰고(디렉터리가 없으면 만든다), 쓴 경로 한 줄만 반환하라. 코드 파일은 수정하지 마라.`,
-    { phase: '작성', label: `작성 r${round}` },
+      `\n완성본을 ${path} 에 파일로 작성하라(디렉터리가 없으면 만든다). 코드 파일은 수정하지 마라.\n` +
+      writeAck(),
+    { schema: writeSchema(), phase: '작성', label: `작성 r${round}` },
   )
-  return out ? path : null
+  return writeResult(out, path, round)
 }
 
 const ctx = `요청:\n${request}\n${feedback ? `\n사용자 피드백:\n${feedback}\n` : ''}`
@@ -120,6 +121,27 @@ return Object.assign({ phase: 'analysis', path: finalPath }, result)
 // ===========================================================================
 // 공통: 품질 루프 (analyze.js / design.js 동일 구현 — 워크플로는 import 불가)
 // ===========================================================================
+// 작성 결과 계약: 작성 에이전트는 파일을 쓴 뒤 다시 읽어 확인하고 { written, path, bytes, reason } 를 반환한다.
+// 0.4.0 결함(쓰기 도구 없는 에이전트가 실패 문장을 반환 → 'out 이 truthy' 라 성공 처리 → 없는 파일을 채점)을 막는다.
+function writeSchema() {
+  return {
+    type: 'object',
+    required: ['written', 'path'],
+    properties: { written: { type: 'boolean' }, path: { type: 'string' }, bytes: { type: 'integer' }, reason: { type: 'string' } },
+  }
+}
+function writeAck() {
+  return '파일을 쓴 뒤 같은 경로를 다시 읽어 내용이 실제로 저장됐는지 확인하고 { written, path, bytes, reason } 로 반환하라. ' +
+    '쓰기 도구가 없거나 쓰기·확인에 실패했으면 본문을 반환값에 싣지 말고 written=false 와 reason(원인)을 반환하라. 확인하지 않은 written=true 는 금지한다.'
+}
+// written=true 가 아니면 경로 대신 { error } 를 돌려 qualityLoop 가 점수 0 루프 없이 즉시 'error' 로 중단하게 한다.
+function writeResult(out, path, round) {
+  if (!out) return { error: `r${round} 작성 에이전트 결과 없음(null) — ${path}` }
+  if (out.written !== true) return { error: `r${round} 작성 실패 — ${String(out.reason || '원인 미보고').slice(0, 300)} (${path})` }
+  if (typeof out.bytes === 'number' && out.bytes <= 0) return { error: `r${round} 작성 파일이 비어 있음 (${path})` }
+  return path
+}
+
 function resolveQuality(q, defaults) {
   q = q || {}
   const LEVELS = Object.assign(Object.create(null), { standard: [75, 60], high: [85, 70], strict: [92, 80] })  // null-proto: q.level 이 constructor/toString 등이어도 상속값이 아닌 undefined → || LEVELS.high 폴백 동작
@@ -170,6 +192,7 @@ async function qualityLoop(opt) {
           properties: { item: { type: 'string' }, met: { type: 'boolean' }, evidence: { type: 'string' } },
         },
       },
+      targetMissing: { type: 'boolean' },
     },
   }
   const LENSES = [
@@ -188,11 +211,15 @@ async function qualityLoop(opt) {
         `${opt.context}\n평가 대상 ${opt.docKind}: ${path} (파일을 읽어라. 필요하면 코드도 확인하라. 아무것도 수정하지 마라.)\n\n` +
           `당신의 관점: ${l.ask}\n\n아래 기준마다 0~100 점수와, 점수를 올리려면 보완할 구체적 지적(gaps)을 반환하라. ` +
           `90 이상은 "이대로 다음 단계에 넘겨도 문제없음", 70 은 "쓸 만하지만 보완 필요", 50 이하는 "재작성 수준"이다. ` +
-          `관대하게 주지 마라.\n기준:\n${critList}${mustList}`,
+          `관대하게 주지 마라.\n평가 대상 파일이 없거나 비어 있어 읽을 수 없으면 채점하지 말고 targetMissing=true, scores=[] 로 반환하라.\n` +
+          `기준:\n${critList}${mustList}`,
         { schema: JUDGE_SCHEMA, model: 'sonnet', phase: '평가', label: `평가 r${round}:${l.key}` },
       ))))
       .filter(Boolean)
     if (!verdicts.length) return null
+    // 심사 전 차단: 과반이 '대상 파일 없음'을 보고하면 채점하지 않는다(없는 파일에 0점 → 품질 미달로 위장되던 문제)
+    const missingVotes = verdicts.filter((v) => v.targetMissing === true).length
+    if (missingVotes * 2 > verdicts.length) return { missing: missingVotes, judges: verdicts.length }
 
     const per = Object.create(null)   // 심사자 반환 key 로 인덱싱하므로 프로토타입 오염 방지(constructor 등)
     const gaps = Object.create(null)
@@ -253,16 +280,23 @@ async function qualityLoop(opt) {
   let evalr = null
   let stale = 0
   let stopReason = 'maxRounds'
+  let error = null
 
   for (let round = 1; round <= Q.maxRounds; round++) {
     // 작성 (initial 문서가 있으면 1라운드는 그 문서를 먼저 평가)
     if (!(round === 1 && path)) {
-      path = await opt.draft(round, best ? best.path : (opt.seed || null),
+      const d = await opt.draft(round, best ? best.path : (opt.seed || null),
         evalr ? evalr.gapText : '(평가 전 — 사용자 피드백을 반영하라)')
-      if (!path) { stopReason = 'error'; log(`r${round} 작성 실패`); break }
+      if (typeof d !== 'string' || !d) { stopReason = 'error'; error = (d && d.error) || `r${round} 작성 실패`; log(`⚠ ${error}`); break }
+      path = d
     }
     evalr = await evaluate(round, path)
-    if (!evalr) { stopReason = 'error'; log(`r${round} 평가 실패`); break }
+    if (!evalr) { stopReason = 'error'; error = `r${round} 평가 실패(심사 결과 없음)`; log(`⚠ ${error}`); break }
+    if (evalr.missing) {
+      stopReason = 'error'
+      error = `r${round} 평가 대상 ${path} 없음 또는 빈 파일 — 심사 ${evalr.missing}/${evalr.judges}명 보고(채점하지 않고 중단)`
+      log(`⚠ ${error}`); break
+    }
     history.push({ round: round, path: path, score: evalr.score, min: evalr.min, passed: evalr.passed, criteria: evalr.criteria })
     log(`r${round}: 점수 ${evalr.score} (최저 기준 ${evalr.min}) → ${evalr.passed ? '통과' : '미달'}`)
 
@@ -283,6 +317,7 @@ async function qualityLoop(opt) {
   return {
     passed: !!(best && best.passed),
     stopReason: stopReason,
+    error: error,
     target: Q.target,
     floor: Q.floor,
     score: best ? best.score : 0,
