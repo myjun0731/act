@@ -44,7 +44,8 @@ except Exception:
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = ROOT / "scripts" / "skillcheck_baseline.json"
-TEXT_EXT = {".md", ".txt", ".json", ".yaml", ".yml", ".py", ".js", ".mjs", ".cjs", ".ts", ".sh", ".ps1", ".toml", ""}
+TEXT_EXT = {".md", ".txt", ".json", ".yaml", ".yml", ".py", ".js", ".mjs", ".cjs", ".ts", ".sh", ".ps1", ".toml", "",
+            ".lua", ".rb", ".bash", ".zsh", ".tsx", ".jsx"}  # 스킬에 동봉될 수 있는 스크립트 언어도 검사
 MAX_TEXT_BYTES = 2_000_000
 
 ALLOWED_KEYS = {
