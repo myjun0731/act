@@ -1,6 +1,6 @@
 # 릴리스 채널 (애플 OS식 4단계)
 
-claude-pro 는 애플 OS 출시 단계를 **브랜치 채널**로 흉내 낸다. Claude Code 에는 채널 개념이 없어,
+act 는 애플 OS 출시 단계를 **브랜치 채널**로 흉내 낸다. Claude Code 에는 채널 개념이 없어,
 채널 격리는 전적으로 **git 브랜치**가 담당한다. 단계 접미사와 `v<버전>` 태그는 사람이 읽고
 특정 시드/정식에 **고정(pin)** 하기 위한 라벨이다.
 
@@ -20,17 +20,17 @@ claude-pro 는 애플 OS 출시 단계를 **브랜치 채널**로 흉내 낸다.
 ## 설치 (채널별)
 
 ```
-claude plugin marketplace add myjun0731/claude-pro            # 정식(GA)
-claude plugin marketplace add myjun0731/claude-pro#rc         # RC
-claude plugin marketplace add myjun0731/claude-pro#beta       # 공개 베타
-claude plugin marketplace add myjun0731/claude-pro#dev        # 개발자 베타
-claude plugin marketplace add myjun0731/claude-pro#v1.11.0-rc.1   # 특정 시드 고정
+claude plugin marketplace add myjun0731/act            # 정식(GA)
+claude plugin marketplace add myjun0731/act#rc         # RC
+claude plugin marketplace add myjun0731/act#beta       # 공개 베타
+claude plugin marketplace add myjun0731/act#dev        # 개발자 베타
+claude plugin marketplace add myjun0731/act#v1.11.0-rc.1   # 특정 시드 고정
 ```
 
 - 브랜치 ref(`#dev` 등)는 그 브랜치의 **최신 커밋**을 따라간다(= 그 채널의 새 시드를 계속 받음).
 - 태그 ref(`#v1.11.0-rc.1`)는 **그 시드에 고정**된다(움직이지 않음).
-- 채널 전환: `claude plugin marketplace remove claude-pro` 후 다른 ref 로 재추가.
-  (마켓 `name` 이 `claude-pro` 하나라 **동시 1개 채널**. dev+정식 동시 사용은 지원 범위 밖 — 전환식.)
+- 채널 전환: `claude plugin marketplace remove act` 후 다른 ref 로 재추가.
+  (마켓 `name` 이 `act` 하나라 **동시 1개 채널**. dev+정식 동시 사용은 지원 범위 밖 — 전환식.)
 
 ## 릴리스 절차
 

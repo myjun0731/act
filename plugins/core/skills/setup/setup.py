@@ -206,7 +206,9 @@ def main():
         notes.append("이 core 의 설치 기록을 못 찾음(로컬 테스트로 보임) → 자동 업데이트 설정 생략")
 
     # 5) rules
-    trusted = tuple(base.get("payloadMarketplaces") or [])
+    # 신뢰 마켓: base.json(공개 기본값, 비어 있음) + PC별 환경변수 CORE_PAYLOAD_MARKETPLACES(쉼표 구분)
+    env_trusted = [s.strip() for s in os.environ.get("CORE_PAYLOAD_MARKETPLACES", "").split(",") if s.strip()]
+    trusted = tuple(dict.fromkeys(list(base.get("payloadMarketplaces") or []) + env_trusted))
     rules = rules_sources(marketplace, reg, trusted)
     rules_todo = []
     for name, p in rules:

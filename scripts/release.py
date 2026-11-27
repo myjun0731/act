@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""claude-pro 릴리스 스크립트 (채널형) — 검증하고 버전을 올리고 태그를 만든다.
+"""act 릴리스 스크립트 (채널형) — 검증하고 버전을 올리고 태그를 만든다.
 
 애플 OS식 4단계 채널을 브랜치로 구현한다.
   dev-beta     개발자 베타   브랜치 dev    버전 1.x.y-dev.N    (prerelease)
@@ -15,7 +15,7 @@
 
 태그
   v<마켓플레이스 버전>         저장소 스냅샷. 설치를 특정 시드/정식에 고정할 때 쓴다.
-                              예) claude plugin marketplace add myjun0731/claude-pro#v1.11.0-rc.1
+                              예) claude plugin marketplace add myjun0731/act#v1.11.0-rc.1
   <플러그인>--v<플러그인 버전>  (ga 에서만) 의존성 범위 해석용 플러그인별 태그.
 
 규칙
@@ -223,7 +223,7 @@ def main():
         git("add", ".claude-plugin/marketplace.json")
         git("commit", "-m", f"release: {newv}")
         head = git("rev-parse", "HEAD").stdout.strip()
-    git("tag", "-a", mtag, "-m", f"claude-pro {newv}")
+    git("tag", "-a", mtag, "-m", f"act {newv}")
     for t, msg in plugin_tags:
         git("tag", "-a", t, "-m", msg)
     print(f"로컬 태그 생성: {mtag}" + (f" + 플러그인 {len(plugin_tags)}개" if plugin_tags else ""))
@@ -242,12 +242,12 @@ def main():
         print("gh 가 없어 GitHub Release 는 건너뜀.")
         return
     install_ref = f"#{mtag}" if cfg["prerelease"] else ""
-    notes = changelog_section(changelog, base) or f"claude-pro {newv}"
+    notes = changelog_section(changelog, base) or f"act {newv}"
     notes += (
         f"\n\n단계: {a.stage}\n설치를 이 버전으로 고정하려면:\n```\n"
-        f"claude plugin marketplace add myjun0731/claude-pro{install_ref}\n"
-        "claude plugin install allinone@claude-pro\n```\n")
-    cmd = [gh, "release", "create", mtag, "--verify-tag", "--title", f"claude-pro {newv}", "--notes-file", "-"]
+        f"claude plugin marketplace add myjun0731/act{install_ref}\n"
+        "claude plugin install allinone@act\n```\n")
+    cmd = [gh, "release", "create", mtag, "--verify-tag", "--title", f"act {newv}", "--notes-file", "-"]
     if cfg["prerelease"]:
         cmd.append("--prerelease")
     if cfg["latest"]:
