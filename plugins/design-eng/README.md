@@ -3,7 +3,7 @@
 디자인 엔지니어링과 애니메이션 작업용 플러그인.
 
 ```
-/plugin install design-eng --marketplace myjun0731/claude-pro
+/plugin install design-eng --marketplace myjun0731/act
 ```
 
 ## 들어 있는 것
