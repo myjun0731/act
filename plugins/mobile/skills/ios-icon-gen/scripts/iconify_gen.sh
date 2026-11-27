@@ -20,8 +20,27 @@ readonly CURL_OPTS=(--fail --silent --show-error --connect-timeout 10 --max-time
 # Defaults
 SIZE=68
 COLOR="8E8E93"
-OUTPUT="/tmp/icons"
+OUTPUT="./icons"
 LIMIT=20
+
+# Inputs flow into file paths and the API URL: allow only the characters those need.
+validate_icon_id() {
+    if [[ ! "$1" =~ ^[a-z0-9]+([_-][a-z0-9]+)*:[a-z0-9]+([_-][a-z0-9]+)*$ ]]; then
+        echo "ERROR: invalid icon id '$1' (expected <collection>:<icon-name>, lowercase letters, digits, - or _)" >&2
+        exit 1
+    fi
+}
+validate_asset_name() {
+    if [[ ! "$1" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]*$ || "$1" == *..* ]]; then
+        echo "ERROR: invalid asset name '$1' (letters, digits, _ . - only; no path separators)" >&2
+        exit 1
+    fi
+}
+validate_options() {
+    [[ "$COLOR" =~ ^([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$ ]] || { echo "ERROR: --color must be 3 or 6 hex digits without #" >&2; exit 1; }
+    [[ "$SIZE" =~ ^[1-9][0-9]{0,3}$ ]] || { echo "ERROR: --size must be a positive integer" >&2; exit 1; }
+    [[ "$LIMIT" =~ ^[1-9][0-9]{0,3}$ ]] || { echo "ERROR: --limit must be a positive integer" >&2; exit 1; }
+}
 
 require_value() {
     local flag="$1"
@@ -43,7 +62,7 @@ Usage:
 Generate Options:
   --size <pt>       Base size in points (default: 68)
   --color <hex>     Color hex without # (default: 8E8E93)
-  --output <dir>    Output directory (default: /tmp/icons)
+  --output <dir>    Output directory (default: ./icons)
 
 Search Options:
   --prefix <name>   Filter by collection (e.g., mdi, lucide, tabler, ph)
@@ -75,6 +94,11 @@ search_icons() {
             *) shift ;;
         esac
     done
+    validate_options
+    if [[ -n "$prefix" && ! "$prefix" =~ ^[a-z0-9]+([_-][a-z0-9]+)*$ ]]; then
+        echo "ERROR: invalid --prefix '$prefix'" >&2
+        exit 1
+    fi
 
     local encoded_query
     encoded_query="$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$query")"
@@ -124,17 +148,21 @@ for k in popular:
 
 preview_icon() {
     local icon_id="$1"
+    validate_icon_id "$icon_id"
     local collection="${icon_id%%:*}"
     local name="${icon_id#*:}"
     local url="${API_BASE}/${collection}/${name}.svg?width=136&height=136&color=%23${COLOR}"
-    local outfile="/tmp/iconify_preview_${collection}_${name}.svg"
+    # Private directory: a predictable /tmp path could be pre-created as a symlink by another user.
+    local preview_dir
+    preview_dir="$(mktemp -d "${TMPDIR:-/tmp}/iconify-preview.XXXXXX")"
+    local outfile="${preview_dir}/${collection}_${name}.svg"
 
     curl "${CURL_OPTS[@]}" "$url" -o "$outfile" || { echo "ERROR: Icon '${icon_id}' not found"; exit 1; }
     echo "Preview SVG: ${outfile}"
     echo "URL: ${url}"
 
     # Also convert to PNG for visual check
-    local pngfile="/tmp/iconify_preview_${collection}_${name}.png"
+    local pngfile="${preview_dir}/${collection}_${name}.png"
     sips -s format png "$outfile" --out "$pngfile" >/dev/null 2>&1 || echo "WARNING: sips conversion failed; PNG may be incorrect"
     echo "Preview PNG: ${pngfile}"
 }
@@ -152,6 +180,9 @@ generate_icon() {
             *) shift ;;
         esac
     done
+    validate_icon_id "$icon_id"
+    validate_asset_name "$asset_name"
+    validate_options
 
     local collection="${icon_id%%:*}"
     local name="${icon_id#*:}"

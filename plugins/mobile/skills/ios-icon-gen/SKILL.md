@@ -58,13 +58,13 @@ sips -g pixelWidth -g pixelHeight path/to/existing@2x.png
 **Iconify API (recommended for wide selection):**
 ```bash
 # Search all collections
-$SKILL_DIR/scripts/iconify_gen.sh search "receipt"
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" search "receipt"
 
 # Search within a specific collection
-$SKILL_DIR/scripts/iconify_gen.sh search "business card" --prefix mdi
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" search "business card" --prefix mdi
 
 # List available collections
-$SKILL_DIR/scripts/iconify_gen.sh collections
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" collections
 ```
 
 **SF Symbols (for Apple-native style):**
@@ -83,7 +83,7 @@ Browse the SF Symbols app or reference common names:
 
 ```bash
 # Iconify preview
-$SKILL_DIR/scripts/iconify_gen.sh preview mdi:receipt-text-outline
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" preview mdi:receipt-text-outline
 ```
 
 ### Step 4: Generate
@@ -91,31 +91,31 @@ $SKILL_DIR/scripts/iconify_gen.sh preview mdi:receipt-text-outline
 **Iconify API:**
 ```bash
 # Basic generation
-$SKILL_DIR/scripts/iconify_gen.sh mdi:receipt-text-outline editTool_expenseReport
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" mdi:receipt-text-outline editTool_expenseReport
 
 # Custom color and output location
-$SKILL_DIR/scripts/iconify_gen.sh mdi:receipt-text-outline myIcon --color 007AFF --output ./Assets.xcassets/icons
+"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh" mdi:receipt-text-outline myIcon --color 007AFF --output ./Assets.xcassets/icons
 ```
 
-Options: `--size <pt>` (default: 68), `--color <hex>` (default: 8E8E93), `--output <dir>` (default: /tmp/icons)
+Options: `--size <pt>` (default: 68), `--color <hex>` (default: 8E8E93), `--output <dir>` (default: ./icons)
 
 **SF Symbols:**
 ```bash
 # Basic generation
-swift $SKILL_DIR/scripts/generate_icons.swift doc.text.below.ecg editTool_expenseReport
+swift "${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/generate_icons.swift" doc.text.below.ecg editTool_expenseReport
 
 # Custom color, weight, and output
-swift $SKILL_DIR/scripts/generate_icons.swift person.crop.rectangle myIcon --color 007AFF --weight regular --output ./Assets.xcassets/icons
+swift "${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/generate_icons.swift" person.crop.rectangle myIcon --color 007AFF --weight regular --output ./Assets.xcassets/icons
 ```
 
-Options: `--size <pt>` (default: 68), `--color <hex>` (default: 8E8E93), `--weight <name>` (default: thin), `--output <dir>` (default: /tmp/icons)
+Options: `--size <pt>` (default: 68), `--color <hex>` (default: 8E8E93), `--weight <name>` (default: thin), `--output <dir>` (default: ./icons)
 
 ### Step 5: Verify and Integrate
 
 1. Read the generated @2x PNG to verify visually
 2. Copy to asset catalog if not output there directly:
    ```bash
-   cp -r /tmp/icons/<name>.imageset path/to/Assets.xcassets/<group>/
+   cp -r ./icons/<name>.imageset path/to/Assets.xcassets/<group>/
    ```
 3. Build the project to verify Xcode picks up the new assets
 
@@ -138,8 +138,8 @@ Browse all: <https://icon-sets.iconify.design/>
 
 | Script | Source | Path |
 |--------|--------|------|
-| `iconify_gen.sh` | Iconify API (275k+ icons) | `$SKILL_DIR/scripts/iconify_gen.sh` |
-| `generate_icons.swift` | SF Symbols (5k+ icons) | `$SKILL_DIR/scripts/generate_icons.swift` |
+| `iconify_gen.sh` | Iconify API (275k+ icons) | `"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/iconify_gen.sh"` |
+| `generate_icons.swift` | SF Symbols (5k+ icons) | `"${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/scripts/generate_icons.swift"` |
 
 ## Best Practices
 

@@ -27,6 +27,7 @@ ECC 내재화 W3: Tier A 62개 + 네트워크 클러스터 Tier B 3개.
 - `angular-developer`는 Angular 공식 저장소(MIT, Google LLC) 출처라 web-frontend THIRD_PARTY_NOTICES에 Angular 라이선스를 추가했다.
 - 디커플링: `tdd-workflow`·`verification-loop` → act 이름, ECC 규칙 파일(`rules/dart/`) 안내 삭제, "Related ECC Skills"·"wider ECC video stack" 표현 정리, 다음 웨이브 스킬(`mle-workflow`·`context-budget`)과 제외 스킬(`prompt-optimizer`·`content-engine`·Continuous Learning v2) 참조 정리, motion-* 등의 비표준 최상위 키를 `metadata`로. 스킬별 변경은 각 플러그인 `ATTRIBUTION.md`(sdlc는 새로 추가).
 - 동봉 스크립트 중 네트워크를 쓰는 것: ios-icon-gen(`api.iconify.design`), frontend-slides PDF 내보내기(임시 폴더에 playwright 설치). 각 ATTRIBUTION에 적었다.
+- ios-icon-gen 보안 수정: 미리보기 파일을 예측 가능한 `/tmp` 경로 대신 `mktemp -d` 개인 폴더에 쓰고(심볼릭 링크 공격 방지), 기본 출력을 `./icons`로, 경로·URL에 들어가는 입력(아이콘 ID·에셋 이름·색·크기)을 검증한다.
 
 ## [2.0.1] - 2026-11-27
 

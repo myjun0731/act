@@ -180,7 +180,7 @@ if args.count < 3 || args.contains("--help") || args.contains("-h") {
       --size <pt>       Base size in points (default: 68)
       --color <hex>     Color hex code (default: 8E8E93)
       --weight <name>   Font weight: ultralight|thin|light|regular|medium|semibold|bold|heavy|black (default: thin)
-      --output <dir>    Output directory (default: /tmp/icons)
+      --output <dir>    Output directory (default: ./icons)
 
     Examples:
       generate_icons.swift doc.text.below.ecg editTool_expenseReport
@@ -198,7 +198,7 @@ let assetName = args[2]
 var baseSize: CGFloat = 68
 var colorHex = "8E8E93"
 var weightName = "thin"
-var outputDir = "/tmp/icons"
+var outputDir = "./icons"
 
 var i = 3
 while i < args.count {

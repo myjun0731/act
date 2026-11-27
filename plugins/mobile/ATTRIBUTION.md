@@ -17,3 +17,8 @@
 
 ### 변경한 내용
 - dart-flutter-patterns: ECC 규칙 파일(`rules/dart/`) 안내 삭제.
+- ios-icon-gen (보안 수정):
+  - `iconify_gen.sh preview`가 예측 가능한 `/tmp/iconify_preview_*` 경로에 쓰던 것을 `mktemp -d` 개인 폴더로 바꿨다(공용 머신에서 심볼릭 링크 공격 방지).
+  - 기본 출력 폴더 `/tmp/icons` → `./icons`(iconify_gen.sh·generate_icons.swift 모두).
+  - 아이콘 ID·에셋 이름·`--color`·`--size`·`--limit`·`--prefix`를 허용 문자로 검증한다. 경로(`../`)와 URL에 그대로 들어가던 값이다.
+  - SKILL.md의 `$SKILL_DIR/` 경로를 `${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/`로.
