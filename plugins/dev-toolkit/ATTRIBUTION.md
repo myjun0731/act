@@ -23,6 +23,13 @@ codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC,
 스킬: living-docs-governance, documentation-lookup (출처 ECC, MIT)
 에이전트: doc-updater (출처 ECC, MIT)
 
+## 6차 추가 (ECC 내재화 W2, 0.11.0)
+스킬: coding-standards, error-handling, content-hash-cache-pattern, latency-critical-systems, code-tour, terminal-opener (출처 ECC@`4adeee6`, MIT)
+- terminal-opener: ECC 기여자 haelyra (원본에 origin 없음 → `community`로 기록)
+- 변경: coding-standards — ECC 규칙 파일 안내 삭제, `frontend-patterns`를 web-frontend 플러그인 조건부 안내로, "narrower ECC skill" → "narrower skill".
+  code-tour — 관련 목록에서 `council`(act 미보유) 삭제. latency-critical-systems — 스킬 frontmatter에 무의미한 `tools:` 삭제.
+  terminal-opener — Codex 메타(`agents/openai.yaml`) 삭제, 스크립트 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 환경변수 `ECC_TERMINAL` → `TERMINAL_OPENER`, description의 "Codex" → "you".
+
 ---
 
 아래 항목은 wshobson/agents(https://github.com/wshobson/agents, MIT License, © 2024 Seth Hobson)에서 선별 내재화했다.

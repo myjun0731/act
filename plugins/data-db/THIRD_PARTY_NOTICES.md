@@ -5,6 +5,10 @@
 - 가져온 커밋: `4adeee6732a12d1540f49a4d50a38ce8c97f9a53`
 - 라이선스: MIT (아래 원문)
 
+### 가져온 파일
+- 스킬: `skills/clickhouse-io`, `skills/redis-patterns`
+- 변경 내용은 ATTRIBUTION.md
+
 ### 원본 라이선스
 
 ```

@@ -31,7 +31,7 @@ def main():
         "agents": sorted(p.stem for p in (ecc / "agents").glob("*.md")),
         "commands": sorted(p.stem for p in (ecc / "commands").glob("*.md")),
     }
-    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
     print(f"{OUT.relative_to(ROOT)}: sha {sha[:7]}, skills {len(data['skills'])}, agents {len(data['agents'])}, commands {len(data['commands'])}")
 
 

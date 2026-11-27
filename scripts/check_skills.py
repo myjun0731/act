@@ -300,7 +300,7 @@ def main():
             sys.exit("--update-baseline 은 --plugin 과 함께 쓸 수 없음")
         errs = sorted({_bkey(f) for f in raw if f["severity"] == "ERROR"})
         BASELINE.write_text(json.dumps({"note": "check_skills.py 도입 시점의 기존 ERROR. 줄이기만 할 것.", "errors": errs},
-                                       ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+                                       ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
         print(f"[skillcheck] 베이스라인 {len(errs)}건 기록: {BASELINE.relative_to(ROOT).as_posix()}")
         return
     findings = raw if a.no_baseline else apply_baseline(raw, load_baseline(), a.plugin)

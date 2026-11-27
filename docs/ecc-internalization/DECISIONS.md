@@ -35,7 +35,7 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 | 웨이브 | 내용 | 개수 | 상태 |
 |---|---|---|---|
 | W2-0 | `check_skills.py` 게이트 + 신규 플러그인 9개 스캐폴드 | — | 완료 |
-| W2 | A: lang-toolkit 40 · security 5 · dev-toolkit 6 · data-db 2 | 53 | |
+| W2 | A: lang-toolkit 40 · security 5 · dev-toolkit 6 · data-db 2 | 53 | 완료 |
 | W3 | A: web-frontend 15 · mobile 12 · infra-devops 11 · web3 5 · ml 4 · media-docs 4 · sdlc 2 · agentic 10 | 63 | |
 | W4 | B: agentic 21 · sdlc 15 (orch-* 포함) · web-frontend 8 · lang-toolkit 3 · infra-devops 4 · ml 1 | 52 | |
 | W5 | B: MCP/API 의존 — dev-toolkit 8 (deep-research 리네임) · media-docs 6 · security 1 | 15 | |
@@ -54,4 +54,4 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 
 ## 기존 스킬의 ECC 참조 부채
 
-`check_skills.py`를 처음 돌렸을 때 기존 act 스킬 73개에서 ERROR 55건이 나왔다(`scripts/skillcheck_baseline.json`). 대부분 이전 내재화 때 따라 들어온 ECC 스킬 참조다. 일부는 웨이브가 진행되면 저절로 풀린다(`security-review`·`frontend-patterns`·`coding-standards`·`eval-harness`·`autonomous-loops` 등). C·X를 가리키는 나머지(`configure-ecc`·`nanoclaw`·`workspace-surface-audit`·`continuous-learning` 등)와 `pypict`의 name/디렉터리 불일치는 따로 고쳐야 한다.
+`check_skills.py`를 처음 돌렸을 때 기존 act 스킬 73개에서 ERROR 55건이 나왔다(W2 후 42건)(`scripts/skillcheck_baseline.json`). 대부분 이전 내재화 때 따라 들어온 ECC 스킬 참조다. 일부는 웨이브가 진행되면 저절로 풀린다(`security-review`·`frontend-patterns`·`coding-standards`·`eval-harness`·`autonomous-loops` 등). C·X를 가리키는 나머지(`configure-ecc`·`nanoclaw`·`workspace-surface-audit`·`continuous-learning` 등)와 `pypict`의 name/디렉터리 불일치는 따로 고쳐야 한다.

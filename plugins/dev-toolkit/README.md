@@ -12,6 +12,7 @@ Spring Boot·Java 백엔드와 DB 작업에 쓰는 범용 스킬·에이전트 �
 | 스킬: 도구 (3) | pypict(PICT 페어와이즈 테스트 설계), mcp-builder(MCP 서버 개발), web-artifacts-builder(React 단일 HTML 아티팩트) |
 | 스킬: DB 심화·배포 | postgresql-table-design, sql-optimization-patterns, database-migration, docker-patterns, deployment-patterns, canary-watch, hexagonal-architecture, contract-first, backend-patterns, data-throughput-accelerator |
 | 스킬: QA·분석·문서 | browser-qa, ai-regression-testing, test-collaboration, windows-desktop-e2e, codebase-onboarding, dashboard-builder, benchmark, config-health, living-docs-governance, documentation-lookup |
+| 스킬: 코드 품질·도구 (6) | coding-standards, error-handling, content-hash-cache-pattern, latency-critical-systems, code-tour(CodeTour 작성), terminal-opener(셸 없이 새 터미널 창 열기) — ECC 내재화 W2 |
 | 커맨드 (1) | `/dev-toolkit:test-coverage` — 커버리지 공백 분석과 테스트 생성 (JaCoCo·Jest·pytest 등) |
 | 에이전트 (16) | 리뷰어: java·security·typescript·react·vue-reviewer, database-reviewer / 전문: java-pro·sql-pro·database-architect·database-optimizer·legacy-modernizer·test-automator / 빌드·설계·문서: java-build-resolver·build-error-resolver·architect·doc-updater |
 | 규칙 원본 | `rules-payload/` (java 4종 + common/security). 플러그인으로는 배포되지 않아 `core:setup`이 복사한다 |

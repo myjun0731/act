@@ -72,6 +72,21 @@
       "name": "sdlc",
       "source": "./plugins/sdlc",
       "description": "SDLC 파이프라인: 분석→설계(사용자 지정 품질까지 반복)→구현→테스트→리뷰→보고서 동적 워크플로 연계"
+    },
+    {
+      "name": "lang-toolkit",
+      "source": "./plugins/lang-toolkit",
+      "description": "언어·백엔드 프레임워크 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "security",
+      "source": "./plugins/security",
+      "description": "보안 리뷰·진단 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "data-db",
+      "source": "./plugins/data-db",
+      "description": "ClickHouse·Redis 스킬 (ECC/MIT 내재화, opt-in)"
     }
   ],
   "allowCrossMarketplaceDependenciesOn": [

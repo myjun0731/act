@@ -11,6 +11,12 @@ ECC 내재화 W2-0: 독립 동작 게이트와 신규 플러그인 뼈대. 기�
 - `scripts/gen_ecc_refs.py`·`scripts/ecc_refs.json`: ECC 고정 커밋(`4adeee6`)의 스킬·에이전트·커맨드 이름 목록. 분기별 업스트림 재대조 때 다시 생성한다.
 - 신규 플러그인 9개 뼈대(`lang-toolkit`·`web-frontend`·`mobile`·`infra-devops`·`data-db`·`web3`·`ml`·`security`·`media-docs`, 각 0.1.0, MIT, ECC NOTICE 포함). 스킬이 없어 **마켓플레이스에는 아직 등록하지 않았다** — 스킬이 들어오는 웨이브에 등록한다. 모두 opt-in이며 allinone에 넣지 않는다.
 
+ECC 내재화 W2: Tier A 53개 스킬.
+- **신규 플러그인 3개를 마켓플레이스에 등록**(opt-in, allinone 미포함): `lang-toolkit` 0.1.0(언어·백엔드 프레임워크 스킬 40), `security` 0.1.0(스킬 5), `data-db` 0.1.0(스킬 2). 설치: `claude plugin install <이름>@act`.
+- `dev-toolkit` 0.10.6 → 0.11.0: coding-standards, error-handling, content-hash-cache-pattern, latency-critical-systems, code-tour, terminal-opener 추가(스킬 48 → 54).
+- 디커플링: ECC 규칙 파일(`rules/ecc/...`) 안내 삭제, `tdd-workflow` → `test-driven-development`, 다음 웨이브 스킬(`frontend-patterns`)은 web-frontend 플러그인 조건부 안내로, act에 없는 `council` 참조 삭제, 최상위 `origin:` → `metadata.origin`. terminal-opener는 Codex 메타 파일을 빼고 스크립트 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 환경변수 `ECC_TERMINAL` → `TERMINAL_OPENER`로 바꿨다. 스킬별 변경은 각 플러그인 `ATTRIBUTION.md`.
+- 기존 스킬의 ECC 참조 부채 55 → 42건: 새로 들어온 `security-review`·`coding-standards`·`python-patterns`·`cpp-*`·`clickhouse-io`·`terminal-opener`가 core·dev-toolkit·agentic 스킬의 참조를 풀었다. 단, 이 스킬들은 opt-in 플러그인에 있어 설치하지 않으면 참조는 건너뛴다.
+
 ## [2.0.1] - 2026-11-27
 
 문서 정리만 했다. 플러그인 버전은 그대로다.
