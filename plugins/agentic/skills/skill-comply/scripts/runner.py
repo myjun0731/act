@@ -60,6 +60,15 @@ NPM_INSTALL_OPTIONS = frozenset({"-D", "--save-dev", "-E", "--save-exact", "--no
 # project .npmrc, and settings such as git= or node-options= run other programs
 # even with --ignore-scripts, so installs are refused while one is present.
 NPM_PROJECT_CONFIG_FILES = (".npmrc", ".yarnrc", ".yarnrc.yml", ".pnpmrc")
+# npm also installs whatever package.json and the lockfile name. A planted manifest
+# could point at git/URL/file sources (fetching and running other code), so only
+# plain registry version ranges and registry-resolved lock entries are accepted.
+NPM_DEPENDENCY_FIELDS = (
+    "dependencies", "devDependencies", "optionalDependencies", "peerDependencies", "overrides",
+)
+NPM_REGISTRY_RANGE = re.compile(r"[\w.*^~<>=|\s-]*", re.ASCII)
+NPM_LOCKFILES = ("package-lock.json", "npm-shrinkwrap.json")
+NPM_REGISTRY_PREFIX = "https://registry.npmjs.org/"
 PIP_INSTALL_OPTIONS = frozenset({"-q", "--quiet", "-U", "--upgrade"})
 # Registry package names with an optional version; no URLs, paths or git specs.
 PACKAGE_SPEC = re.compile(
@@ -233,7 +242,7 @@ def _setup_sandbox(
         try:
             subprocess.run(
                 argv, cwd=sandbox_dir, capture_output=True, stdin=subprocess.DEVNULL,
-                env=_fixture_git_env() if argv[0] == "git" else None,
+                env=_fixture_git_env() if argv[0] == "git" else _npm_env() if argv[0] == "npm" else None,
             )
         except FileNotFoundError:
             continue
@@ -523,6 +532,55 @@ def _archive_operands(tool: str, args: list[str]) -> list[str]:
     return found
 
 
+def _npm_specs_safe(specs: object) -> bool:
+    if not isinstance(specs, dict):
+        return False
+    for value in specs.values():
+        if isinstance(value, dict):  # nested overrides
+            if not _npm_specs_safe(value):
+                return False
+        elif not isinstance(value, str) or not NPM_REGISTRY_RANGE.fullmatch(value):
+            return False
+    return True
+
+
+def _npm_project_safe(sandbox_dir: Path) -> bool:
+    """Only registry dependencies may be installed from the sandbox's manifest and lockfile."""
+    if any((sandbox_dir / name).exists() for name in NPM_PROJECT_CONFIG_FILES):
+        return False
+    manifest = sandbox_dir / "package.json"
+    if manifest.exists():
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if not isinstance(data, dict) or "workspaces" in data:
+            return False
+        if not all(_npm_specs_safe(data[field]) for field in NPM_DEPENDENCY_FIELDS if field in data):
+            return False
+    for name in NPM_LOCKFILES:
+        lock = sandbox_dir / name
+        if not lock.exists():
+            continue
+        try:
+            data = json.loads(lock.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        entries = list((data.get("packages") or {}).values()) if isinstance(data, dict) else []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                return False
+            if entry.get("link") or (entry.get("resolved") and not str(entry["resolved"]).startswith(NPM_REGISTRY_PREFIX)):
+                return False
+    return True
+
+
+def _npm_env() -> dict[str, str]:
+    """No host npm/git configuration, and npm cannot run git at all."""
+    env = {key: value for key, value in _fixture_git_env().items() if not key.lower().startswith("npm_config_")}
+    return {**env, "npm_config_git": os.devnull}
+
+
 def _packages_allowed(args: list[str], options: frozenset[str]) -> bool:
     return all(
         arg in options or (not arg.startswith("-") and PACKAGE_SPEC.fullmatch(arg))
@@ -588,7 +646,7 @@ def _sandboxed_setup_command(parts: list[str], sandbox_dir: Path) -> list[str] |
         if args in (["init", "-y"], ["init", "--yes"]):
             return parts
         if args and args[0] in NPM_INSTALL_SUBCOMMANDS and _packages_allowed(args[1:], NPM_INSTALL_OPTIONS):
-            if any((sandbox_dir / name).exists() for name in NPM_PROJECT_CONFIG_FILES):
+            if not _npm_project_safe(sandbox_dir):
                 return None
             # Host user/global npmrc are not read either: the install sees npm defaults only.
             return [*parts, "--ignore-scripts", f"--userconfig={os.devnull}", f"--globalconfig={os.devnull}"]

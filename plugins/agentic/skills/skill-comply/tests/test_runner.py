@@ -452,6 +452,26 @@ class TestSetupCommandConfinement:
         (sandbox / ".npmrc").write_text("git=./evil.sh" + chr(10))
         assert _sandboxed_setup_command(["npm", "install", "jest@29"], sandbox) is None
 
+    @pytest.mark.parametrize("manifest", [
+        {"devDependencies": {"evil": "git+https://example.com/evil.git"}},
+        {"dependencies": {"evil": "github:someone/evil"}},
+        {"dependencies": {"evil": "file:../outside"}},
+        {"dependencies": {"evil": "https://example.com/evil.tgz"}},
+        {"dependencies": {"evil": "someone/evil"}},
+        {"workspaces": ["packages/*"]},
+    ])
+    def test_npm_install_refused_with_non_registry_manifest(self, tmp_path: Path, manifest: dict) -> None:
+        sandbox = tmp_path / "sandbox"
+        sandbox.mkdir()
+        (sandbox / "package.json").write_text(json.dumps(manifest))
+        assert _sandboxed_setup_command(["npm", "install", "jest@29"], sandbox) is None
+
+    def test_npm_install_allowed_with_registry_manifest(self, tmp_path: Path) -> None:
+        sandbox = tmp_path / "sandbox"
+        sandbox.mkdir()
+        (sandbox / "package.json").write_text(json.dumps({"name": "x", "devDependencies": {"jest": "^29.0.0"}}))
+        assert _sandboxed_setup_command(["npm", "install", "jest@29"], sandbox) is not None
+
     def test_pip_install_is_wheel_only_and_stays_in_sandbox(self, tmp_path: Path) -> None:
         sandbox = tmp_path / "sandbox"
         assert _run_setup(sandbox, "pip install pytest 'requests>=2'") == [[
