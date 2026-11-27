@@ -2,7 +2,9 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
-## [Unreleased]
+## [2.1.0] - 2026-11-27
+
+**ECC 스킬 내재화.** ECC(`affaan-m/ECC@4adeee6`, MIT)의 IT/SW 스킬 179개를 ECC 하네스 없이 동작하도록 고쳐 넣었다. 신규 플러그인 9개(`lang-toolkit`·`web-frontend`·`mobile`·`infra-devops`·`data-db`·`web3`·`ml`·`security`·`media-docs`)는 모두 opt-in이라 allinone에 들어가지 않는다 — `claude plugin install <이름>@act`로 따로 설치한다. 기존 `dev-toolkit`·`agentic`·`sdlc`에도 스킬이 추가돼 allinone 설치 규모가 커진다. 계획·결정·제외 목록은 `docs/ecc-internalization/DECISIONS.md`.
 
 ECC 내재화 W2-0: 독립 동작 게이트와 신규 플러그인 뼈대. 기존 플러그인의 동작은 바뀌지 않는다. 계획·결정은 `docs/ecc-internalization/DECISIONS.md`.
 - `scripts/check_skills.py`(skillcheck) 추가: SKILL.md 프론트매터 규칙(name=디렉터리명·kebab-case, description 필수, 알 수 없는 키 경고)과, SKILL.md 본문·동봉 파일에 남은 **ECC 전용 참조**(act에 없는 ECC 스킬·에이전트·커맨드, `~/.dsh`·hermes·nanoclaw·`/ck`·gateguard 같은 런타임)를 검사한다. `check_refs.py`는 워크플로 `.js`만 보므로 이 참조는 지금까지 검사되지 않았다. 공식 플러그인(feature-dev·pr-review-toolkit·hookify)에만 있는 이름은 WARN.
