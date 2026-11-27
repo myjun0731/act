@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""claude-pro 채널 승격 — 한 채널에서 다음 채널로 올린다(브랜치 머지 + 접미사 재설정).
+"""act 채널 승격 — 한 채널에서 다음 채널로 올린다(브랜치 머지 + 접미사 재설정).
 
 흐름:  dev ──dev-to-beta──> beta ──beta-to-rc──> rc ──rc-to-ga──> main
 

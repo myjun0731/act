@@ -1,11 +1,11 @@
 {
-  "name": "claude-pro",
+  "name": "act",
   "owner": {
     "name": "Kim Myoung-jun"
   },
   "metadata": {
-    "description": "개인용 Claude Code 올인원 마켓플레이스",
-    "version": "1.12.1"
+    "description": "ACT (Agentic Claude Toolkit) — Claude Code 올인원 플러그인 마켓플레이스",
+    "version": "2.0.0-rc.1"
   },
   "plugins": [
     {
