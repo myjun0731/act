@@ -1,0 +1,18 @@
+{
+  "name": "web3",
+  "version": "0.1.0",
+  "description": "웹3 스킬: DeFi AMM 보안, EVM 토큰 소수점, keccak256 해시 함정, 예측시장 오라클·리스크 검토. ECC(MIT) 내재화.",
+  "author": {
+    "name": "Kim Myoung-jun"
+  },
+  "license": "MIT",
+  "keywords": [
+    "web3",
+    "ethereum",
+    "evm",
+    "solidity",
+    "defi",
+    "security",
+    "ecc"
+  ]
+}

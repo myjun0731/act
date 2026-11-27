@@ -1,0 +1,17 @@
+{
+  "name": "data-db",
+  "version": "0.1.0",
+  "description": "데이터·DB 스킬: ClickHouse·Redis 패턴. 관계형 DB(PostgreSQL·MySQL·MyBatis·JPA)는 dev-toolkit에 있다. ECC(MIT) 내재화.",
+  "author": {
+    "name": "Kim Myoung-jun"
+  },
+  "license": "MIT",
+  "keywords": [
+    "database",
+    "clickhouse",
+    "redis",
+    "analytics",
+    "cache",
+    "ecc"
+  ]
+}

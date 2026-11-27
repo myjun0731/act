@@ -2,6 +2,15 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [Unreleased]
+
+ECC 내재화 W2-0: 독립 동작 게이트와 신규 플러그인 뼈대. 기존 플러그인의 동작은 바뀌지 않는다. 계획·결정은 `docs/ecc-internalization/DECISIONS.md`.
+- `scripts/check_skills.py`(skillcheck) 추가: SKILL.md 프론트매터 규칙(name=디렉터리명·kebab-case, description 필수, 알 수 없는 키 경고)과, SKILL.md 본문·동봉 파일에 남은 **ECC 전용 참조**(act에 없는 ECC 스킬·에이전트·커맨드, `~/.dsh`·hermes·nanoclaw·`/ck`·gateguard 같은 런타임)를 검사한다. `check_refs.py`는 워크플로 `.js`만 보므로 이 참조는 지금까지 검사되지 않았다. 공식 플러그인(feature-dev·pr-review-toolkit·hookify)에만 있는 이름은 WARN.
+- 처음 돌렸을 때 기존 스킬 73개에서 ERROR 55건이 나왔다. 이 부채는 `scripts/skillcheck_baseline.json`에 기록하고 WARN으로 낮춰, 새로 생기는 ERROR만 막는다. 해소된 항목은 INFO로 알린다.
+- `scripts/release.py`: 모든 단계에서 skillcheck를 실행한다. 베이스라인 밖 ERROR는 릴리스를 막고, WARN과 베이스라인 부채 건수는 경고로만 출력한다.
+- `scripts/gen_ecc_refs.py`·`scripts/ecc_refs.json`: ECC 고정 커밋(`4adeee6`)의 스킬·에이전트·커맨드 이름 목록. 분기별 업스트림 재대조 때 다시 생성한다.
+- 신규 플러그인 9개 뼈대(`lang-toolkit`·`web-frontend`·`mobile`·`infra-devops`·`data-db`·`web3`·`ml`·`security`·`media-docs`, 각 0.1.0, MIT, ECC NOTICE 포함). 스킬이 없어 **마켓플레이스에는 아직 등록하지 않았다** — 스킬이 들어오는 웨이브에 등록한다. 모두 opt-in이며 allinone에 넣지 않는다.
+
 ## [2.0.1] - 2026-11-27
 
 문서 정리만 했다. 플러그인 버전은 그대로다.

@@ -1,0 +1,17 @@
+{
+  "name": "security",
+  "version": "0.1.0",
+  "description": "보안 스킬: 보안 리뷰 체크리스트, OWASP Top 10:2025 외곽 진단, 버그바운티 헌팅, 리버스 엔지니어링, 트레이딩 에이전트 보안, 설정 보안 스캔. ECC(MIT) 내재화.",
+  "author": {
+    "name": "Kim Myoung-jun"
+  },
+  "license": "MIT",
+  "keywords": [
+    "security",
+    "owasp",
+    "appsec",
+    "bug-bounty",
+    "reverse-engineering",
+    "ecc"
+  ]
+}

@@ -56,6 +56,15 @@ python scripts/release.py --stage ga --push            # main 에서 (정식)
 `ga` 에서만 플러그인 버전 미증가를 막고 바뀐 플러그인에 `<플러그인>--v<버전>` 태그를 만든다.
 `--push` 없이 실행하면 **미리보기**(아무것도 바꾸지 않음), `--tag` 는 로컬 커밋·태그까지만.
 
+검증 게이트(모든 단계): `claude plugin validate`, `scripts/check_refs.py`(워크플로 참조 — WARN 은 rc/ga 에서 차단),
+`scripts/check_skills.py`(스킬 프론트매터·SKILL.md 본문의 ECC 전용 참조 — `skillcheck_baseline.json` 밖 ERROR 차단).
+릴리스 전에 직접 돌려 볼 수 있다:
+
+```
+python scripts/check_refs.py
+python scripts/check_skills.py
+```
+
 ### 채널 승격
 ```
 python scripts/promote.py dev-to-beta --run     # dev → beta (시드 beta.1 로 리셋)

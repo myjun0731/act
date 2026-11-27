@@ -201,6 +201,22 @@ def main():
     except Exception as e:
         warns.append(f"refcheck 를 건너뜀: {e}")
 
+    # 4.6) 스킬 린트(skillcheck): 프론트매터 + SKILL.md 본문의 ECC 런타임 결합. 베이스라인 밖 ERROR 는 항상 차단.
+    #      WARN(베이스라인 항목 포함)은 경고로만 출력한다 — 도입 시점 부채가 rc/ga 를 막지 않게.
+    try:
+        import check_skills
+        sfs = check_skills.check_with_baseline(ROOT)
+        for sf in sfs:
+            if sf["severity"] == "ERROR":
+                errors.append(f"skillcheck {sf['file']}: {sf['detail']}")
+            elif sf["severity"] == "WARN" and not sf["kind"].endswith(":baseline"):
+                warns.append(f"skillcheck {sf['file']}: {sf['detail']}")
+        n_base = sum(1 for sf in sfs if sf["kind"].endswith(":baseline"))
+        if n_base:
+            warns.append(f"skillcheck 베이스라인 부채 {n_base}건 (python scripts/check_skills.py 로 확인)")
+    except Exception as e:
+        warns.append(f"skillcheck 를 건너뜀: {e}")
+
     # 5) 출력
     print(f"[release] stage={a.stage}  branch={branch}  HEAD {head[:7]}")
     print(f"          {cur}  ->  {newv}   (tag {mtag}, prerelease={cfg['prerelease']}, latest={cfg['latest']})")

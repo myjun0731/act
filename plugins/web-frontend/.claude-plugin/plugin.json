@@ -1,0 +1,21 @@
+{
+  "name": "web-frontend",
+  "version": "0.1.0",
+  "description": "웹 프론트엔드 스킬: React·Vue·Angular·Nuxt·Next.js·Vite 패턴, 접근성(WCAG)·i18n·모션·디자인 시스템·SEO. ECC(MIT) 내재화.",
+  "author": {
+    "name": "Kim Myoung-jun"
+  },
+  "license": "MIT",
+  "keywords": [
+    "frontend",
+    "react",
+    "vue",
+    "angular",
+    "nextjs",
+    "vite",
+    "accessibility",
+    "i18n",
+    "motion",
+    "ecc"
+  ]
+}

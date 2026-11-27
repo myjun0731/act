@@ -1,0 +1,20 @@
+{
+  "name": "infra-devops",
+  "version": "0.1.0",
+  "description": "인프라·네트워크 스킬: Kubernetes·Terraform·Flox·Uncloud, 홈랩 네트워크(VLAN·DNS·WireGuard), 네트워크 진단·설정 검증. ECC(MIT) 내재화.",
+  "author": {
+    "name": "Kim Myoung-jun"
+  },
+  "license": "MIT",
+  "keywords": [
+    "infrastructure",
+    "devops",
+    "kubernetes",
+    "terraform",
+    "network",
+    "homelab",
+    "vlan",
+    "wireguard",
+    "ecc"
+  ]
+}
