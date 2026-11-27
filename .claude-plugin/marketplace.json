@@ -26,17 +26,7 @@
     {
       "name": "design-eng",
       "source": "./plugins/design-eng",
-      "description": "디자인 엔지니어링·애니메이션 스킬 7종 + design-for-ai"
-    },
-    {
-      "name": "design-for-ai",
-      "source": {
-        "source": "github",
-        "repo": "ryanthedev/design-for-ai",
-        "ref": "main",
-        "sha": "37d7ae63d1afa45eb57ec90bc246cef6dd60c033"
-      },
-      "description": "디자인 조사·계획·목업·리뷰 (ryanthedev/design-for-ai, 외부 원본)"
+      "description": "디자인 엔지니어링·애니메이션 스킬 7종"
     },
     {
       "name": "obsidian",
@@ -45,23 +35,13 @@
     },
     {
       "name": "overkill",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/santiago-vargas-de-kruijf/claude-overkill.git",
-        "path": "plugins/overkill",
-        "sha": "60c7bbbab99669e3fc39e60cdf4f05d473ab194c"
-      },
-      "description": "더 고급·극대화된 대안을 복잡도 점수와 함께 제시 (외부 원본, MIT)"
+      "source": "./plugins/overkill",
+      "description": "더 고급·극대화된 대안을 복잡도 점수와 함께 제시 (santiago-vargas-de-kruijf/claude-overkill 사본, MIT)"
     },
     {
       "name": "recursive-research",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/Anjos2/recursive-research.git",
-        "path": "plugins/recursive-research",
-        "sha": "15ed326ae7162c674d7a1e477724148fa4435528"
-      },
-      "description": "출처 등급·체크포인트를 갖춘 재귀 심층 조사 (외부 원본, MIT)"
+      "source": "./plugins/recursive-research",
+      "description": "출처 등급·체크포인트를 갖춘 재귀 심층 조사 (Anjos2/recursive-research 사본, MIT)"
     },
     {
       "name": "agentic",

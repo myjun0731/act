@@ -18,7 +18,7 @@
 | pick-ui-library | 작업에 맞는 프런트엔드 라이브러리 선택 | `/design-eng:pick-ui-library` |
 
 ## 의존성
-- **design-for-ai** (`ryanthedev/design-for-ai`): 디자인 조사·계획·목업(prototype)·리뷰. 복사하지 않고 원본 저장소를 가리킨다. 마켓플레이스에서 커밋을 고정해 두었다.
+없음. 0.2.0부터 design-for-ai(`ryanthedev/design-for-ai`)에 의존하지 않는다. 디자인 조사·목업 도구가 필요하면 원 저장소에서 따로 설치한다(`NOTICE.md` 참고).
 
 ## 출처
 `NOTICE.md` 참고.

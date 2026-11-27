@@ -6,6 +6,12 @@
 
 **ECC 스킬 내재화.** ECC(`affaan-m/ECC@4adeee6`, MIT)의 IT/SW 스킬 179개를 ECC 하네스 없이 동작하도록 고쳐 넣었다. 신규 플러그인 9개(`lang-toolkit`·`web-frontend`·`mobile`·`infra-devops`·`data-db`·`web3`·`ml`·`security`·`media-docs`)는 모두 opt-in이라 allinone에 들어가지 않는다 — `claude plugin install <이름>@act`로 따로 설치한다. 기존 `dev-toolkit`·`agentic`·`sdlc`에도 스킬이 추가돼 allinone 설치 규모가 커진다. 계획·결정·제외 목록은 `docs/ecc-internalization/DECISIONS.md`.
 
+**act 단독 동작.** 다른 개인 저장소를 가리키던 플러그인을 정리했다. 공식 마켓(claude-plugins-official) 의존은 그대로 둔다.
+- `overkill`(santiago-vargas-de-kruijf/claude-overkill `60c7bbb`)·`recursive-research`(Anjos2/recursive-research `15ed326`): 외부 git 소스 대신 act 안의 사본(`plugins/overkill`·`plugins/recursive-research`, MIT, LICENSE·NOTICE 포함)을 배포한다. 업스트림 변경은 자동으로 들어오지 않는다. recursive-research는 SKILL.md 최상위 `version`·`author`·`repository` 키를 `metadata`로 옮겼다.
+- `design-for-ai`(ryanthedev/design-for-ai): 마켓에서 뺐다. 원 저장소에 라이선스가 없어 사본을 넣을 수 없다. `design-eng` 0.1.2 → 0.2.0은 이 의존을 없앴다(스킬 7종은 그대로).
+- `allinone` 0.5.1 → 0.5.2: 설명만 바뀌었다(의존 목록은 같은 이름의 act 로컬 플러그인으로 이어진다).
+- **기존 설치 환경**: 이미 design-for-ai를 설치했다면 그대로 남는다. 마켓 업데이트 후 더 이상 갱신되지 않으니 필요 없으면 `claude plugin uninstall design-for-ai@act`.
+
 ECC 내재화 W2-0: 독립 동작 게이트와 신규 플러그인 뼈대. 기존 플러그인의 동작은 바뀌지 않는다. 계획·결정은 `docs/ecc-internalization/DECISIONS.md`.
 - `scripts/check_skills.py`(skillcheck) 추가: SKILL.md 프론트매터 규칙(name=디렉터리명·kebab-case, description 필수, 알 수 없는 키 경고)과, SKILL.md 본문·동봉 파일에 남은 **ECC 전용 참조**(act에 없는 ECC 스킬·에이전트·커맨드, `~/.dsh`·hermes·nanoclaw·`/ck`·gateguard 같은 런타임)를 검사한다. `check_refs.py`는 워크플로 `.js`만 보므로 이 참조는 지금까지 검사되지 않았다. 공식 플러그인(feature-dev·pr-review-toolkit·hookify)에만 있는 이름은 WARN.
 - 처음 돌렸을 때 기존 스킬 73개에서 ERROR 55건이 나왔다. 이 부채는 `scripts/skillcheck_baseline.json`에 기록하고 WARN으로 낮춰, 새로 생기는 ERROR만 막는다. 해소된 항목은 INFO로 알린다.

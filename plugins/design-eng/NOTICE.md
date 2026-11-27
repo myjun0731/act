@@ -6,6 +6,7 @@
 - 상위 출처와 라이선스는 확인하지 못했다. 저장소에 라이선스 파일이 없고, 본문은 Emil Kowalski의 공개 글과 강의(animations.dev)를 근거로 든다.
 - 그래서 이 저장소는 **비공개로만** 둔다. 공개하거나 남에게 배포하기 전에 원 저작자와 라이선스를 먼저 확인한다.
 
-## design-for-ai
-- 복사본이 아니라 `marketplace.json`의 github 소스로 원본(`ryanthedev/design-for-ai`)을 가리킨다.
-- 예전 zip에 있던 `prototype` 스킬은 이 플러그인의 옛 사본이라 넣지 않았다.
+## design-for-ai (0.2.0에서 의존 제거)
+- 예전에는 `marketplace.json`의 github 소스로 원본(`ryanthedev/design-for-ai`)을 가리키고 design-eng가 의존했다.
+- 2.1.0에서 act가 다른 저장소에 의존하지 않도록 정리하면서 뺐다. 원 저장소에 라이선스가 없어 사본을 넣을 수도 없다.
+- 필요하면 원 저장소에서 직접 설치한다: `claude plugin marketplace add https://github.com/ryanthedev/design-for-ai.git`
