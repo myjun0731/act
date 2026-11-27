@@ -6,16 +6,18 @@ check_refs.py 는 workflows/*.js 의 참조만 본다. SKILL.md 본문(과 refer
 는 정적 검사를 통과한 뒤 설치한 사람의 환경에서 깨진다. 이 린트가 그 틈을 막는다.
 marketplace.json 의 로컬 플러그인만 스캔한다. 의존성 0(표준 라이브러리), 결정적.
 
-ECC 이름 목록은 scripts/ecc_refs.json(gen_ecc_refs.py 로 고정 커밋에서 생성)을 쓴다. 없으면 ECC 검사는 건너뛴다.
+ECC 이름 목록은 scripts/ecc_refs.json(gen_ecc_refs.py 로 고정 커밋에서 생성)을 쓴다. 없으면 ERROR 다.
 
 심각도
   ERROR  프론트매터 없음 · name 누락/디렉터리명 불일치/형식 위반 · description 누락
   ERROR  ECC 런타임 마커(~/.dsh, hermes, nanoclaw, /ck, cost-tracker, gateguard 등)
   ERROR  ECC 스킬·에이전트·커맨드 참조가 act 로컬 플러그인 어디에도 없음(설치 후 깨지는 참조)
+  ERROR  scripts/ecc_refs.json 이 없음(ECC 참조 검사 불가)
   WARN   알 수 없는 프론트매터 키 · description 1024자 초과
   WARN   참조가 act 가 아닌 공식 플러그인(feature-dev 등)에만 있음 — 그 플러그인을 의존성으로 두거나 "있으면 적용"으로 쓸 것
   WARN   metadata.origin 이 외부인데 플러그인에 ATTRIBUTION.md/THIRD_PARTY_NOTICES.md/NOTICE.md 가 없음
   INFO   같은 스킬명이 여러 로컬 플러그인에 있음
+  INFO   검사하지 않은 파일(심볼릭 링크, 2MB 이상)
 
 베이스라인
   이 린트를 도입할 때 이미 있던 ERROR 는 scripts/skillcheck_baseline.json 에 기록돼 있다. 기록된 ERROR 는
@@ -56,7 +58,7 @@ OWN_ORIGINS = {"", "act"}  # 이 값이면 외부 출처 아님
 RUNTIME = [
     ("ECC 설치·하네스 전제", r"~/\.claude/(?:ecc|skills/ecc)\b|\bconfigure-ecc\b|\bECC[- ]native\b|\bfrom the ECC repository\b|\bin the ECC repository\b"),
     ("DeepSeek Harness 루트", r"~/\.dsh\b|\bDeepSeek Harness\b"),
-    ("hermes 런타임", r"\bhermes\b"),
+    ("hermes 런타임", r"\bhermes-imports\b|~/\.hermes\b|\bHermes (?:operator|runtime|workflows?|imports?)\b"),
     ("nanoclaw 런타임", r"\bnanoclaw\b"),
     ("ck 메모리 커맨드", r"(?<![\w/-])/ck\b|\bContext Keeper\b"),
     ("ECC cost-tracker", r"\bcost-tracker\b"),
@@ -125,11 +127,13 @@ def parse_frontmatter(text):
 def _ref_re(name):
     if name in GENERIC or "-" not in name:
         return re.compile(r"(?:`|skills/|agents/)" + re.escape(name) + r"(?:`|/|\.md\b)")
-    return re.compile(r"(?<![\w/.-])" + re.escape(name) + r"(?![\w-])")
+    # '/' 앞은 허용: ../name/SKILL.md, skills/name/ 같은 경로·링크 안의 참조도 잡는다.
+    return re.compile(r"(?<![\w.-])" + re.escape(name) + r"(?![\w-])")
 
 
 def _cmd_re(name):
-    return re.compile(r"(?:^|[\s`(\"'])/" + re.escape(name) + r"(?![\w/.-])", re.M)
+    # 문장 끝 마침표('/plan-prd.')는 잡고, 파일 확장자('/plan.md')는 제외한다.
+    return re.compile(r"(?:^|[\s`(\"'])/" + re.escape(name) + r"(?![\w/-]|\.\w)", re.M)
 
 
 def build_inventory(root):
@@ -166,14 +170,26 @@ def load_ecc(root):
     }
 
 
-def _skill_texts(sdir):
-    for f in sorted(sdir.rglob("*")):
-        if f.is_file() and f.suffix.lower() in TEXT_EXT and f.stat().st_size < MAX_TEXT_BYTES:
-            yield f, _read(f)
+def _skill_texts(sdir, skipped):
+    """스킬 디렉터리 안의 텍스트 파일. 심볼릭 링크는 따라가지 않고, 너무 큰 파일은 skipped 에 기록한다."""
+    stack = [sdir]
+    while stack:
+        cur = stack.pop()
+        for f in sorted(cur.iterdir(), reverse=True):
+            if f.is_symlink():
+                skipped.append((f, "심볼릭 링크"))
+            elif f.is_dir():
+                stack.append(f)
+            elif f.is_file() and f.suffix.lower() in TEXT_EXT:
+                size = f.stat().st_size
+                if size >= MAX_TEXT_BYTES:
+                    skipped.append((f, f"{size // 1_000_000}MB — 크기 제한 초과"))
+                else:
+                    yield f, _read(f)
 
 
 def check(root=ROOT, only=None):
-    root = Path(root)
+    root = Path(root).resolve()
     plugins = build_inventory(root)
     ecc = load_ecc(root)
     act_skills = {d.name for p in plugins.values() for d in p["skills"]}
@@ -183,6 +199,11 @@ def check(root=ROOT, only=None):
 
     def add(sev, kind, ref, file, detail):
         findings.append({"severity": sev, "kind": kind, "ref": ref, "file": file, "detail": detail})
+
+    if ecc is None:
+        # 목록이 없으면 ECC 참조 검사가 통째로 꺼진다 — 조용히 통과시키지 않는다.
+        add("ERROR", "ecc-refs-missing", "ecc_refs.json", "scripts/ecc_refs.json",
+            "ECC 이름 목록이 없어 ECC 참조 검사를 할 수 없음 — python scripts/gen_ecc_refs.py <ECC 체크아웃> 으로 생성")
 
     owners = {}
     for pname, p in plugins.items():
@@ -224,12 +245,14 @@ def check(root=ROOT, only=None):
 
             if ecc is None:
                 continue
-            for f, txt in _skill_texts(sdir):
+            skipped = []
+            for f, txt in _skill_texts(sdir, skipped):
                 frel = f.relative_to(root).as_posix()
                 for label, rx in RUNTIME:
                     m = rx.search(txt)
                     if m:
-                        add("ERROR", "ecc-runtime", m.group(0), frel, f"ECC 런타임 참조 '{m.group(0)}' ({label}) — act 에서 동작하지 않음")
+                        # ref 는 마커 종류(label): 문구·대소문자가 바뀌어도 베이스라인 키가 유지된다.
+                        add("ERROR", "ecc-runtime", label, frel, f"ECC 런타임 참조 '{m.group(0)}' ({label}) — act 에서 동작하지 않음")
                 for kind, act_set, ext in (("skills", act_skills, {}), ("agents", act_agents, EXTERNAL["agents"]),
                                            ("commands", act_cmds, EXTERNAL["commands"])):
                     for n, rx in ecc[kind].items():
@@ -243,6 +266,8 @@ def check(root=ROOT, only=None):
                             add("WARN", f"ecc-{kind}-external", n, frel, f"{label} '{shown}'은 act 에 없고 {ext[n]}에만 있음")
                         else:
                             add("ERROR", f"ecc-{kind}", n, frel, f"ECC {label} '{shown}' 참조 — act 로컬 플러그인에 없음 (ECC@{ecc['sha']})")
+            for f, why in skipped:
+                add("INFO", "skipped-file", f.name, f.relative_to(root).as_posix(), f"검사하지 않음: {why}")
 
     seen, uniq = set(), []
     for fnd in findings:

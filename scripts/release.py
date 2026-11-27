@@ -189,8 +189,8 @@ def main():
         warns.append("claude CLI 가 없어 검증을 건너뜀")
 
     # 4.5) 이름 참조 무결성(refcheck). ERROR 는 항상 차단, WARN 은 rc/ga 에서만 차단.
+    sys.path.insert(0, str(ROOT / "scripts"))  # check_refs·check_skills 공용
     try:
-        sys.path.insert(0, str(ROOT / "scripts"))
         import check_refs
         strict = cfg["kind"] in ("rc", "ga")
         for rf in check_refs.check(ROOT):
@@ -203,6 +203,7 @@ def main():
 
     # 4.6) 스킬 린트(skillcheck): 프론트매터 + SKILL.md 본문의 ECC 런타임 결합. 베이스라인 밖 ERROR 는 항상 차단.
     #      WARN(베이스라인 항목 포함)은 경고로만 출력한다 — 도입 시점 부채가 rc/ga 를 막지 않게.
+    #      린트 자체가 실패하면(목록 파일 손상 등) 릴리스를 막는다.
     try:
         import check_skills
         sfs = check_skills.check_with_baseline(ROOT)
@@ -215,7 +216,8 @@ def main():
         if n_base:
             warns.append(f"skillcheck 베이스라인 부채 {n_base}건 (python scripts/check_skills.py 로 확인)")
     except Exception as e:
-        warns.append(f"skillcheck 를 건너뜀: {e}")
+        # 게이트가 돌지 못하면 통과가 아니라 실패다(fail closed).
+        errors.append(f"skillcheck 를 실행하지 못함: {type(e).__name__}: {e}")
 
     # 5) 출력
     print(f"[release] stage={a.stage}  branch={branch}  HEAD {head[:7]}")

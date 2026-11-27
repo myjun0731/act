@@ -1,6 +1,6 @@
 # Packager stage protocol
 
-> Stage protocol for the `opensource-pipeline` skill. Adapted from the ECC agent `agents/opensource-packager.md` (https://github.com/affaan-m/ECC @ 4adeee6, MIT). In act this runs as a `general-purpose` subagent that reads this file first; the original agent frontmatter (tools/model) is dropped.
+> Stage protocol for the `opensource-pipeline` skill. Adapted from ECC's open-source packager agent (https://github.com/affaan-m/ECC @ 4adeee6, MIT). In act this runs as a `general-purpose` subagent that reads this file first; the original agent frontmatter (tools/model) is dropped.
 
 
 ## Prompt Defense Baseline
