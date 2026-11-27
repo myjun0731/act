@@ -22,3 +22,9 @@
   - 기본 출력 폴더 `/tmp/icons` → `./icons`(iconify_gen.sh·generate_icons.swift 모두).
   - 아이콘 ID·에셋 이름·`--color`·`--size`·`--limit`·`--prefix`를 허용 문자로 검증한다. 경로(`../`)와 URL에 그대로 들어가던 값이다.
   - SKILL.md의 `$SKILL_DIR/` 경로를 `${CLAUDE_PLUGIN_ROOT}/skills/ios-icon-gen/`로.
+
+## 에이전트 (ECC 내재화, 0.2.0)
+flutter-reviewer, dart-build-resolver, swift-reviewer, swift-build-resolver — 출처 ECC@`4adeee6`(`agents/`), MIT
+- description의 "Use for all … code changes. MUST BE USED for … projects." → "Use when reviewing … code changes."로 바꿨다(모든 변경에 자동 위임되지 않게 — dev-toolkit java-reviewer와 같은 규칙).
+- 각 파일의 "Prompt Defense Baseline"(간접 프롬프트 주입 방어) 섹션은 그대로 둔다.
+- dev-toolkit `review-changes` 워크플로가 Dart·Swift 변경을 flutter-reviewer·swift-reviewer로 보낸다(미설치 시 제네릭 리뷰).

@@ -1,7 +1,7 @@
 export const meta = {
   name: 'review-changes',
   description: '변경 코드를 유형별로 분류해 전문 리뷰어 에이전트로 팬아웃 리뷰하고, 각 지적을 반박 검증한 뒤 심각도순 단일 리포트로 합친다',
-  whenToUse: 'PR·브랜치·작업트리의 변경을 Java·SQL/매퍼·프론트·이관/스키마 차원으로 한 번에 리뷰할 때. 입력(args)으로 PR 번호·브랜치·경로를 넘기면 그 범위, 없으면 현재 작업 트리.',
+  whenToUse: 'PR·브랜치·작업트리의 변경을 Java·SQL/매퍼·프론트·이관/스키마 차원(+ lang-toolkit·mobile 설치 시 Python·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift)으로 한 번에 리뷰할 때. 입력(args)으로 PR 번호·브랜치·경로를 넘기면 그 범위, 없으면 현재 작업 트리.',
   phases: [
     { title: '분류', detail: '변경 파일을 git으로 나열해 유형별 분류' },
     { title: '리뷰', detail: '유형별 전문 리뷰어 에이전트 팬아웃' },
@@ -13,6 +13,8 @@ export const meta = {
 // 이 워크플로는 dev-toolkit에 함께 설치되는 리뷰어 에이전트를 agentType으로 디스패치한다.
 // (java-reviewer, sql-pro, react/vue/typescript-reviewer, database-architect)
 // SQL/이관처럼 전용 에이전트로 다 담기 어려운 점검은 프롬프트에 스킬을 명시해 보강한다.
+// 그 밖의 언어(Python·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart/Flutter·Swift)는 opt-in 플러그인
+// lang-toolkit·mobile 의 리뷰어로 보낸다(optional). 설치되지 않았거나 실패하면 같은 지시로 제네릭 에이전트가 대신 리뷰한다.
 
 const CLASSIFY_SCHEMA = {
   type: 'object',
@@ -27,7 +29,9 @@ const CLASSIFY_SCHEMA = {
           path: { type: 'string' },
           type: {
             type: 'string',
-            enum: ['java', 'sql_mapper', 'frontend_react', 'frontend_vue', 'frontend_ts', 'migration', 'schema', 'config', 'other'],
+            enum: ['java', 'sql_mapper', 'frontend_react', 'frontend_vue', 'frontend_ts', 'migration', 'schema',
+              'python', 'python_django', 'python_fastapi', 'go', 'rust', 'kotlin', 'cpp', 'csharp', 'fsharp', 'php', 'ruby',
+              'gdscript', 'dart', 'swift', 'config', 'other'],
           },
         },
       },
@@ -80,7 +84,9 @@ const classified = await agent(
     '변경된 파일을 git으로 나열하고 각 파일을 유형으로 분류하라. ' +
     '유형: java(.java), sql_mapper(MyBatis 매퍼 XML·.sql), frontend_react(.tsx/.jsx), ' +
     'frontend_vue(.vue), frontend_ts(.ts/.js), migration(마이그레이션·DDL 변경 스크립트), ' +
-    'schema(스키마/엔티티 정의), config(설정), other. ' +
+    'schema(스키마/엔티티 정의), python_django(Django 프로젝트의 .py), python_fastapi(FastAPI 앱의 .py), python(그 밖의 .py), ' +
+    'go(.go), rust(.rs), kotlin(.kt/.kts), cpp(.c/.cc/.cpp/.h/.hpp), csharp(.cs), fsharp(.fs/.fsx), php(.php), ' +
+    'ruby(.rb), gdscript(.gd), dart(.dart), swift(.swift), config(설정), other. ' +
     '삭제된 파일·바이너리·생성물·락파일은 other로 두거나 제외하라.',
   { schema: CLASSIFY_SCHEMA, model: 'haiku', effort: 'low', label: '변경 분류' },
 )
@@ -115,10 +121,30 @@ function reviewerFor(type) {
           '스키마 설계와 이관 안전성을 리뷰하라. postgresql-table-design·database-migration 스킬 지침이 있으면 적용하고, ' +
           '무중단 적용·롤백 가능성·데이터 정합성을 점검하라',
       }
-    default:
-      return null // config/other 는 리뷰 생략
+    default: {
+      const lang = LANG_REVIEWERS[type]
+      return lang ? { agentType: lang.agentType, ask: lang.ask, optional: true } : null // config/other 는 리뷰 생략
+    }
   }
 }
+
+// opt-in 플러그인(lang-toolkit·mobile)의 언어 리뷰어. null-proto: type 이 toString 등이어도 상속값을 고르지 않는다.
+const LANG_REVIEWERS = Object.assign(Object.create(null), {
+  python: { agentType: 'lang-toolkit:python-reviewer', ask: 'PEP 8·Pythonic 관용구·타입 힌트·보안·성능을 리뷰하라' },
+  python_django: { agentType: 'lang-toolkit:django-reviewer', ask: 'ORM 정확성·DRF 패턴·마이그레이션 안전성·보안 설정을 리뷰하라' },
+  python_fastapi: { agentType: 'lang-toolkit:fastapi-reviewer', ask: 'async 정확성·의존성 주입·Pydantic 스키마·보안·OpenAPI 품질을 리뷰하라' },
+  go: { agentType: 'lang-toolkit:go-reviewer', ask: '관용적 Go·동시성·에러 처리·성능을 리뷰하라' },
+  rust: { agentType: 'lang-toolkit:rust-reviewer', ask: '소유권·수명·에러 처리·unsafe 사용·관용 패턴을 리뷰하라' },
+  kotlin: { agentType: 'lang-toolkit:kotlin-reviewer', ask: '관용 패턴·코루틴 안전성·Compose·Android/KMP 함정을 리뷰하라' },
+  cpp: { agentType: 'lang-toolkit:cpp-reviewer', ask: '메모리 안전·현대 C++ 관용구·동시성·성능을 리뷰하라' },
+  csharp: { agentType: 'lang-toolkit:csharp-reviewer', ask: '.NET 규약·async 패턴·nullable 참조형·보안·성능을 리뷰하라' },
+  fsharp: { agentType: 'lang-toolkit:fsharp-reviewer', ask: '함수형 관용구·타입 안전·패턴 매칭·계산 식·성능을 리뷰하라' },
+  php: { agentType: 'lang-toolkit:php-reviewer', ask: 'PSR-12·PHP 타입 시스템·Eloquent 패턴·보안·성능을 리뷰하라' },
+  ruby: { agentType: 'lang-toolkit:ruby-reviewer', ask: '관용 Ruby·Active Record 쿼리 안전·Rails 보안 기본값·테스트 품질을 리뷰하라' },
+  gdscript: { agentType: 'lang-toolkit:gdscript-reviewer', ask: '정적 타입·씬/노드 설계·시그널·수명주기 안전·성능을 리뷰하라' },
+  dart: { agentType: 'mobile:flutter-reviewer', ask: '위젯 모범 사례·상태 관리·Dart 관용구·성능·접근성·보안을 리뷰하라' },
+  swift: { agentType: 'mobile:swift-reviewer', ask: '프로토콜 지향 설계·값 의미론·ARC·Swift Concurrency·관용 패턴을 리뷰하라' },
+})
 
 // 2) 리뷰 → 3) 검증 (파이프라인: 단계 간 배리어 없음) --------------------
 const perFile = await pipeline(
@@ -127,11 +153,18 @@ const perFile = await pipeline(
   async (file) => {
     const r = reviewerFor(file.type)
     if (!r) return { file: file, findings: [] }
-    const out = await agent(
+    const prompt =
       `${scope}\n파일 ${file.path} 를 ${r.ask}. 위 검토 대상이 PR·브랜치면 그 변경(hunk)에 집중하고 범위 밖 기존 코드의 노이즈 지적은 피하라. ` +
-        '발견한 문제만 findings로 반환하고(각 항목에 file·line·severity·category·summary·detail), 문제가 없으면 빈 배열을 반환하라.',
-      { agentType: r.agentType, schema: FINDINGS_SCHEMA, phase: '리뷰', label: `리뷰:${file.path}` },
-    )
+      '발견한 문제만 findings로 반환하고(각 항목에 file·line·severity·category·summary·detail), 문제가 없으면 빈 배열을 반환하라.'
+    let out
+    try {
+      out = await agent(prompt, { agentType: r.agentType, schema: FINDINGS_SCHEMA, phase: '리뷰', label: `리뷰:${file.path}` })
+    } catch (e) {
+      if (!r.optional) throw e
+      // opt-in 리뷰어 미설치·오류 → 같은 지시로 제네릭 리뷰(리뷰 누락보다 깊이 저하가 낫다)
+      log(`${r.agentType} 사용 불가 — ${file.path} 는 제네릭 리뷰로 대체`)
+      out = await agent(prompt, { schema: FINDINGS_SCHEMA, phase: '리뷰', label: `리뷰(제네릭):${file.path}` })
+    }
     return { file: file, findings: (out && Array.isArray(out.findings)) ? out.findings : [] }
   },
   // 검증

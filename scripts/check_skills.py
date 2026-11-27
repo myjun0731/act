@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""스킬 린트 (skillcheck): 프론트매터 규칙 + ECC 런타임 결합 검사.
+"""스킬·에이전트 린트 (skillcheck): 프론트매터 규칙 + ECC 런타임 결합 검사.
+
+agents/*.md 도 같은 ECC 결합 검사와 프론트매터 검사(name=파일명, description 필수)를 받는다.
 
 check_refs.py 는 workflows/*.js 의 참조만 본다. SKILL.md 본문(과 references/·scripts/ 등 동봉 파일)에
 남은 ECC 전용 참조 — `/ck` 같은 커맨드, ECC 에이전트, act 에 없는 ECC 스킬, `~/.dsh`·hermes 같은 런타임 —
@@ -52,6 +54,8 @@ ALLOWED_KEYS = {
     "name", "description", "license", "metadata", "allowed-tools", "argument-hint", "disable-model-invocation",
     "user-invocable", "model", "when_to_use", "version", "compatibility",
 }
+AGENT_KEYS = {"name", "description", "tools", "model", "color", "metadata", "license", "disallowedTools", "permissionMode",
+              "skills", "effort", "maxTurns"}
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 OWN_ORIGINS = {"", "act"}  # 이 값이면 외부 출처 아님
 
@@ -153,6 +157,7 @@ def build_inventory(root):
             "dir": pdir,
             "skills": sorted(d for d in (pdir / "skills").iterdir() if (d / "SKILL.md").is_file()) if (pdir / "skills").is_dir() else [],
             "agents": {f.stem for f in (pdir / "agents").glob("*.md")} if (pdir / "agents").is_dir() else set(),
+            "agent_files": sorted((pdir / "agents").glob("*.md")) if (pdir / "agents").is_dir() else [],
             "commands": {f.stem for f in (pdir / "commands").glob("*.md")} if (pdir / "commands").is_dir() else set(),
         }
     return plugins
@@ -201,6 +206,28 @@ def check(root=ROOT, only=None):
     def add(sev, kind, ref, file, detail):
         findings.append({"severity": sev, "kind": kind, "ref": ref, "file": file, "detail": detail})
 
+    def scan(f, txt, own_kind, own_name):
+        """한 파일 본문의 ECC 런타임 마커와 act 에 없는 ECC 스킬·에이전트·커맨드 참조."""
+        frel = f.relative_to(root).as_posix()
+        for label, rx in RUNTIME:
+            m = rx.search(txt)
+            if m:
+                # ref 는 마커 종류(label): 문구·대소문자가 바뀌어도 베이스라인 키가 유지된다.
+                add("ERROR", "ecc-runtime", label, frel, f"ECC 런타임 참조 '{m.group(0)}' ({label}) — act 에서 동작하지 않음")
+        for kind, act_set, ext in (("skills", act_skills, {}), ("agents", act_agents, EXTERNAL["agents"]),
+                                   ("commands", act_cmds, EXTERNAL["commands"])):
+            for n, rx in ecc[kind].items():
+                if kind == own_kind and n == own_name:
+                    continue
+                if n in act_set or not rx.search(txt):
+                    continue
+                label = {"skills": "스킬", "agents": "에이전트", "commands": "커맨드"}[kind]
+                shown = "/" + n if kind == "commands" else n
+                if n in ext:
+                    add("WARN", f"ecc-{kind}-external", n, frel, f"{label} '{shown}'은 act 에 없고 {ext[n]}에만 있음")
+                else:
+                    add("ERROR", f"ecc-{kind}", n, frel, f"ECC {label} '{shown}' 참조 — act 로컬 플러그인에 없음 (ECC@{ecc['sha']})")
+
     if ecc is None:
         # 목록이 없으면 ECC 참조 검사가 통째로 꺼진다 — 조용히 통과시키지 않는다.
         add("ERROR", "ecc-refs-missing", "ecc_refs.json", "scripts/ecc_refs.json",
@@ -248,27 +275,34 @@ def check(root=ROOT, only=None):
                 continue
             skipped = []
             for f, txt in _skill_texts(sdir, skipped):
-                frel = f.relative_to(root).as_posix()
-                for label, rx in RUNTIME:
-                    m = rx.search(txt)
-                    if m:
-                        # ref 는 마커 종류(label): 문구·대소문자가 바뀌어도 베이스라인 키가 유지된다.
-                        add("ERROR", "ecc-runtime", label, frel, f"ECC 런타임 참조 '{m.group(0)}' ({label}) — act 에서 동작하지 않음")
-                for kind, act_set, ext in (("skills", act_skills, {}), ("agents", act_agents, EXTERNAL["agents"]),
-                                           ("commands", act_cmds, EXTERNAL["commands"])):
-                    for n, rx in ecc[kind].items():
-                        if kind == "skills" and n == sdir.name:
-                            continue
-                        if n in act_set or not rx.search(txt):
-                            continue
-                        label = {"skills": "스킬", "agents": "에이전트", "commands": "커맨드"}[kind]
-                        shown = "/" + n if kind == "commands" else n
-                        if n in ext:
-                            add("WARN", f"ecc-{kind}-external", n, frel, f"{label} '{shown}'은 act 에 없고 {ext[n]}에만 있음")
-                        else:
-                            add("ERROR", f"ecc-{kind}", n, frel, f"ECC {label} '{shown}' 참조 — act 로컬 플러그인에 없음 (ECC@{ecc['sha']})")
+                scan(f, txt, "skills", sdir.name)
             for f, why in skipped:
                 add("INFO", "skipped-file", f.name, f.relative_to(root).as_posix(), f"검사하지 않음: {why}")
+
+        # 에이전트: 프론트매터(name=파일명, description) + 본문의 ECC 결합
+        for af in p["agent_files"]:
+            arel = af.relative_to(root).as_posix()
+            if af.is_symlink():
+                add("INFO", "skipped-file", af.name, arel, "검사하지 않음: 심볼릭 링크")
+                continue
+            atxt = _read(af)
+            fm = parse_frontmatter(atxt)
+            if fm is None:
+                add("ERROR", "frontmatter", af.stem, arel, "에이전트 프론트매터(--- … ---)가 없음")
+                continue
+            keys, vals, _ = fm
+            aname = vals.get("name", "")
+            if not aname:
+                add("ERROR", "name", af.stem, arel, "에이전트 name 이 없음")
+            elif aname != af.stem:
+                add("ERROR", "name", aname, arel, f"에이전트 name '{aname}' ≠ 파일명 '{af.stem}'")
+            if not vals.get("description", ""):
+                add("ERROR", "description", af.stem, arel, "에이전트 description 이 없음")
+            for k in keys:
+                if k not in AGENT_KEYS:
+                    add("WARN", "frontmatter-key", k, arel, f"알 수 없는 에이전트 프론트매터 키 '{k}'")
+            if ecc is not None:
+                scan(af, atxt, "agents", af.stem)
 
     seen, uniq = set(), []
     for fnd in findings:

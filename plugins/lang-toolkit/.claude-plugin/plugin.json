@@ -1,6 +1,6 @@
 {
   "name": "lang-toolkit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "언어·백엔드 프레임워크 스킬: C++·C#/.NET·F#·Go·Kotlin·Perl·Python·Rust·TypeScript·Bun과 Django·FastAPI·Laravel·NestJS·Prisma·Quarkus·Rails·Ktor 패턴·테스트·보안. ECC(MIT) 내재화.",
   "author": {
     "name": "Kim Myoung-jun"
@@ -19,6 +19,8 @@
     "laravel",
     "quarkus",
     "rails",
-    "ecc"
+    "ecc",
+    "reviewer",
+    "build-resolver"
   ]
 }

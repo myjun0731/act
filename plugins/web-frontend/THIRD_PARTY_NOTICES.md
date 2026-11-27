@@ -8,6 +8,8 @@
 ### 가져온 파일
 - 스킬 목록과 변경 내용은 ATTRIBUTION.md
 
+- 에이전트(`agents/`, 0.2.0) — 목록과 변경 내용은 ATTRIBUTION.md
+
 ### 원본 라이선스
 
 ```

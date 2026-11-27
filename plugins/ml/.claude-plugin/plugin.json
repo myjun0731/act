@@ -1,6 +1,6 @@
 {
   "name": "ml",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "머신러닝 스킬: PyTorch 패턴, ML 도입 플레이북, 추천 파이프라인 설계, 벵골어 NLP, MLE 워크플로. ECC(MIT) 내재화.",
   "author": {
     "name": "Kim Myoung-jun"
@@ -12,6 +12,8 @@
     "mlops",
     "recommendation",
     "nlp",
-    "ecc"
+    "ecc",
+    "reviewer",
+    "build-resolver"
   ]
 }

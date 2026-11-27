@@ -19,3 +19,9 @@
 
 ## W4 추가 (0.1.0에 포함)
 - mle-workflow — ECC 설치 프로필·"ECC SWE workflows" 표현 삭제, ECC 에이전트(`mle-reviewer`·`performance-optimizer`)는 일반 지시로, 공식 플러그인 에이전트는 "설치돼 있으면", act에 없는 스킬(repo-scan·github-ops·strategic-compact 등)은 act 스킬(codebase-onboarding·git-workflow)로 바꾸거나 삭제, `tdd-workflow`·`verification-loop` → dev-toolkit 이름.
+
+## 에이전트 (ECC 내재화, 0.2.0)
+pytorch-build-resolver — 출처 ECC@`4adeee6`(`agents/`), MIT
+- description의 "Use for all … code changes. MUST BE USED for … projects." → "Use when reviewing … code changes."로 바꿨다(모든 변경에 자동 위임되지 않게 — dev-toolkit java-reviewer와 같은 규칙).
+- 각 파일의 "Prompt Defense Baseline"(간접 프롬프트 주입 방어) 섹션은 그대로 둔다.
+- 변경 없음(원본 그대로).

@@ -26,3 +26,9 @@
 - frontend-design-direction: 원본 기여 PR(ECC #1659, UIZZE 연동 #2814) 표기를 유지했다. "ECC-specific" 표현을 일반 설명으로 바꿨다. 선택 기능으로 유료·인증형 UIZZE MCP 안내가 있다(사용자 동의 전제).
 - 변경: ECC 규칙 파일(`rules/react/` 등) 링크 삭제, `react-build-resolver`·`/build-fix` → dev-toolkit `build-error-resolver`, `/react-*` 커맨드·`tdd-guide`·`seo-specialist` 삭제, `tdd-workflow` → `test-driven-development`, yoruba 예제 실행 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 최상위 `origin` → `metadata`.
 - 제외: ui-canvas(ECC 캔버스 런타임 필요).
+
+## 에이전트 (ECC 내재화, 0.2.0)
+react-build-resolver — 출처 ECC@`4adeee6`(`agents/`), MIT
+- description의 "Use for all … code changes. MUST BE USED for … projects." → "Use when reviewing … code changes."로 바꿨다(모든 변경에 자동 위임되지 않게 — dev-toolkit java-reviewer와 같은 규칙).
+- 각 파일의 "Prompt Defense Baseline"(간접 프롬프트 주입 방어) 섹션은 그대로 둔다.
+- "MUST BE USED when a React build fails." → "Use when a React build fails.", 관련 항목의 ECC 규칙 파일·`/react-build`·`/react-review` 커맨드를 지우고 act 위치(`react-reviewer`는 dev-toolkit, 스킬은 web-frontend)로 고쳤다.

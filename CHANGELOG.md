@@ -6,6 +6,13 @@
 
 **ECC 스킬 내재화.** ECC(`affaan-m/ECC@4adeee6`, MIT)의 IT/SW 스킬 179개를 ECC 하네스 없이 동작하도록 고쳐 넣었다. 신규 플러그인 9개(`lang-toolkit`·`web-frontend`·`mobile`·`infra-devops`·`data-db`·`web3`·`ml`·`security`·`media-docs`)는 모두 opt-in이라 allinone에 들어가지 않는다 — `claude plugin install <이름>@act`로 따로 설치한다. 기존 `dev-toolkit`·`agentic`·`sdlc`에도 스킬이 추가돼 allinone 설치 규모가 커진다. 계획·결정·제외 목록은 `docs/ecc-internalization/DECISIONS.md`.
 
+**언어별 리뷰어·빌드 해결 에이전트 23개(ECC 내재화).** 스킬만 있고 에이전트가 없던 언어를 채웠다.
+- `lang-toolkit` 0.2.0: python·django·fastapi·go·rust·kotlin·cpp·csharp·fsharp·php·ruby·gdscript 리뷰어, django·go·rust·kotlin·cpp 빌드 해결(17).
+- `mobile` 0.2.0: flutter·swift 리뷰어, dart·swift 빌드 해결(4). `web-frontend` 0.2.0: react-build-resolver. `ml` 0.2.0: pytorch-build-resolver.
+- description의 "MUST BE USED … / Use for all … changes"는 "Use when reviewing …"로 바꿨다(자동 위임 방지).
+- `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
+- skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
+
 **act 단독 동작.** 다른 개인 저장소를 가리키던 플러그인을 정리했다. 공식 마켓(claude-plugins-official) 의존은 그대로 둔다.
 - `overkill`(santiago-vargas-de-kruijf/claude-overkill `60c7bbb`)·`recursive-research`(Anjos2/recursive-research `15ed326`): 외부 git 소스 대신 act 안의 사본(`plugins/overkill`·`plugins/recursive-research`, MIT, LICENSE·NOTICE 포함)을 배포한다. 업스트림 변경은 자동으로 들어오지 않는다. recursive-research는 SKILL.md 최상위 `version`·`author`·`repository` 키를 `metadata`로 옮겼다.
 - `design-for-ai`(ryanthedev/design-for-ai): 마켓에서 뺐다. 원 저장소에 라이선스가 없어 사본을 넣을 수 없다. `design-eng` 0.1.2 → 0.2.0은 이 의존을 없앴다(스킬 7종은 그대로).

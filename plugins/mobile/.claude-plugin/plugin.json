@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "모바일 스킬: Android/KMP·Compose·Flutter/Dart·SwiftUI·Swift 동시성·iOS 온디바이스 모델. ECC(MIT) 내재화.",
   "author": {
     "name": "Kim Myoung-jun"
@@ -16,6 +16,8 @@
     "swift",
     "swiftui",
     "ios",
-    "ecc"
+    "ecc",
+    "reviewer",
+    "build-resolver"
   ]
 }

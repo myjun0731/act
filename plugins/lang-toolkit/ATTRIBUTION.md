@@ -29,3 +29,9 @@
 ## W4 추가 (0.1.0에 포함)
 - godot-patterns, godot-testing — origin `community`. ECC `gdscript-reviewer`·`tdd-guide` 에이전트 → 일반 리뷰 지시·`test-driven-development`, 최상위 `origin` → `metadata`.
 - laravel-plugin-discovery — **LaraPlugins MCP 서버가 필요**하다고 맨 위에 명시하고, MCP가 없을 때 Packagist/GitHub 조사로 대체하도록 했다.
+
+## 에이전트 (ECC 내재화, 0.2.0)
+python-reviewer, django-reviewer, django-build-resolver, fastapi-reviewer, go-reviewer, go-build-resolver, rust-reviewer, rust-build-resolver, kotlin-reviewer, kotlin-build-resolver, cpp-reviewer, cpp-build-resolver, csharp-reviewer, fsharp-reviewer, php-reviewer, ruby-reviewer, gdscript-reviewer — 출처 ECC@`4adeee6`(`agents/`), MIT
+- description의 "Use for all … code changes. MUST BE USED for … projects." → "Use when reviewing … code changes."로 바꿨다(모든 변경에 자동 위임되지 않게 — dev-toolkit java-reviewer와 같은 규칙).
+- 각 파일의 "Prompt Defense Baseline"(간접 프롬프트 주입 방어) 섹션은 그대로 둔다.
+- dev-toolkit `review-changes` 워크플로가 Python·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript 변경을 이 리뷰어로 보낸다(미설치 시 제네릭 리뷰).
