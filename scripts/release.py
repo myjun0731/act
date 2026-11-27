@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """act 릴리스 스크립트 (채널형) — 검증하고 버전을 올리고 태그를 만든다.
 
-애플 OS식 4단계 채널을 브랜치로 구현한다.
+4단계 릴리스 채널을 브랜치로 구현한다.
   dev-beta     개발자 베타   브랜치 dev    버전 1.x.y-dev.N    (prerelease)
   public-beta  공개 베타     브랜치 beta   버전 1.x.y-beta.N   (prerelease)
   rc           릴리스 후보   브랜치 rc     버전 1.x.y-rc.N     (prerelease)
