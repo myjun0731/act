@@ -56,6 +56,10 @@ SAFE_TAR_LONG_OPTIONS = frozenset({
 })
 NPM_INSTALL_SUBCOMMANDS = frozenset({"install", "i", "add", "ci"})
 NPM_INSTALL_OPTIONS = frozenset({"-D", "--save-dev", "-E", "--save-exact", "--no-save"})
+# Package-manager config files a scenario could plant in the sandbox. npm reads the
+# project .npmrc, and settings such as git= or node-options= run other programs
+# even with --ignore-scripts, so installs are refused while one is present.
+NPM_PROJECT_CONFIG_FILES = (".npmrc", ".yarnrc", ".yarnrc.yml", ".pnpmrc")
 PIP_INSTALL_OPTIONS = frozenset({"-q", "--quiet", "-U", "--upgrade"})
 # Registry package names with an optional version; no URLs, paths or git specs.
 PACKAGE_SPEC = re.compile(
@@ -529,8 +533,11 @@ def _packages_allowed(args: list[str], options: frozenset[str]) -> bool:
 def _tar_args_allowed(args: list[str]) -> bool:
     for index, arg in enumerate(args):
         if arg.startswith("--"):
-            if arg.split("=", 1)[0] not in SAFE_TAR_LONG_OPTIONS:
+            name, _, value = arg.partition("=")
+            if name not in SAFE_TAR_LONG_OPTIONS:
                 return False
+            if ":" in value:
+                return False  # --file=host:archive also runs a remote shell
         elif arg.startswith("-") or index == 0:
             # tar also reads a bare first argument as bundled flags ("tar xzf").
             if not set(arg.removeprefix("-")) <= SAFE_TAR_SHORT_FLAGS:
@@ -581,7 +588,10 @@ def _sandboxed_setup_command(parts: list[str], sandbox_dir: Path) -> list[str] |
         if args in (["init", "-y"], ["init", "--yes"]):
             return parts
         if args and args[0] in NPM_INSTALL_SUBCOMMANDS and _packages_allowed(args[1:], NPM_INSTALL_OPTIONS):
-            return [*parts, "--ignore-scripts"]
+            if any((sandbox_dir / name).exists() for name in NPM_PROJECT_CONFIG_FILES):
+                return None
+            # Host user/global npmrc are not read either: the install sees npm defaults only.
+            return [*parts, "--ignore-scripts", f"--userconfig={os.devnull}", f"--globalconfig={os.devnull}"]
         return None
     if tool in {"pip", "pip3"}:
         if args and args[0] == "install" and _packages_allowed(args[1:], PIP_INSTALL_OPTIONS):

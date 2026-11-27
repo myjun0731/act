@@ -439,11 +439,18 @@ class TestSetupCommandConfinement:
         ("npm init -y", ["npm", "init", "-y"]),
         (
             "npm install --save-dev jest@29 @types/node",
-            ["npm", "install", "--save-dev", "jest@29", "@types/node", "--ignore-scripts"],
+            ["npm", "install", "--save-dev", "jest@29", "@types/node", "--ignore-scripts",
+             f"--userconfig={os.devnull}", f"--globalconfig={os.devnull}"],
         ),
     ])
     def test_normal_setup_still_runs(self, tmp_path: Path, command: str, expected: list[str]) -> None:
         assert _run_setup(tmp_path / "sandbox", command) == [expected]
+
+    def test_npm_install_refused_with_planted_npmrc(self, tmp_path: Path) -> None:
+        sandbox = tmp_path / "sandbox"
+        sandbox.mkdir()
+        (sandbox / ".npmrc").write_text("git=./evil.sh" + chr(10))
+        assert _sandboxed_setup_command(["npm", "install", "jest@29"], sandbox) is None
 
     def test_pip_install_is_wheel_only_and_stays_in_sandbox(self, tmp_path: Path) -> None:
         sandbox = tmp_path / "sandbox"
@@ -521,6 +528,8 @@ class TestArchiveMembers:
         # members under .git or outside the sandbox stay refused
         assert _sandboxed_setup_command(["tar", "-xf", "fixtures.tar", ".git/hooks/pre-commit"], sandbox) is None
         assert _sandboxed_setup_command(["tar", "-xf", "fixtures.tar", "../x"], sandbox) is None
+        # a remote host in an attached long-option value is refused like a separate operand
+        assert _sandboxed_setup_command(["tar", "-x", "--file=evil:fixtures.tar"], sandbox) is None
         # the archive operand is still checked even when members are selected
         (sandbox / "bad.tar").write_bytes(b"not an archive")
         assert _sandboxed_setup_command(["tar", "-xf", "bad.tar", "README.md"], sandbox) is None
