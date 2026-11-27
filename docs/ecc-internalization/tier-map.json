@@ -5050,10 +5050,10 @@
   }
  },
  "remotion-video-creation": {
-  "tier": "A",
-  "plugin": "media-docs",
+  "tier": "D",
+  "plugin": "-",
   "domain": "media",
-  "note": "",
+  "note": "dropped by decision 2026-11-27: upstream remotion-dev/skills has no license",
   "description": "Best practices for Remotion - Video creation in React. 29 domain-specific rules covering 3D, animations, audio, captions, charts, transitions, and more. Use when building video in React with Remotion ",
   "origin": null,
   "license": null,

@@ -17,15 +17,16 @@ ECC(`affaan-m/ECC`, MIT)의 IT/SW 스킬 중 act에 없는 것을, ECC 하네스
 | 6 | orch-* 6개 | **포팅** (sdlc). ECC 에이전트·커맨드 참조는 act sdlc 워크플로로 다시 쓴다 |
 | 7 | deep-research | **리네임 후 포팅**(W5, 후보 `web-research-mcp`). firecrawl·exa MCP는 선택 기능으로 격리 |
 | 8 | 프론트매터 정규화 기준 | **act 자체 린트** `scripts/check_skills.py`. skill-host-compat은 일반 B 스킬로 취급 |
+| 9 | remotion-video-creation | **제외 확정** (tier `D`). 원 저장소 remotion-dev/skills에 라이선스가 없어 재배포 근거 없음 |
 
 ## 수치
 
 | Tier | 뜻 | 개수 |
 |---|---|---|
-| A | 거의 그대로 포팅 | 116 |
+| A | 거의 그대로 포팅 | 115 |
 | B | ECC 에이전트·커맨드·MCP 참조를 고쳐 포팅 | 67 |
 | C | ECC 런타임 종속 — 제외 | 41 |
-| D | 결정으로 제외 | 5 |
+| D | 결정으로 제외 | 6 |
 | X / EQ | 비-IT / act에 동등 스킬 있음 | 43 / 3 |
 
 EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification-before-completion, `mcp-server-patterns`→mcp-builder. 포팅하는 스킬 안의 이 이름 참조는 act 이름으로 바꾼다.
@@ -36,7 +37,7 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 |---|---|---|---|
 | W2-0 | `check_skills.py` 게이트 + 신규 플러그인 9개 스캐폴드 | — | 완료 |
 | W2 | A: lang-toolkit 40 · security 5 · dev-toolkit 6 · data-db 2 | 53 | 완료 |
-| W3 | A: web-frontend 15 · mobile 12 · infra-devops 11 · web3 5 · ml 4 · media-docs 3 · sdlc 2 · agentic 10 + B 네트워크 3(앞당김) | 65 | 완료 (remotion-video-creation 보류) |
+| W3 | A: web-frontend 15 · mobile 12 · infra-devops 11 · web3 5 · ml 4 · media-docs 3 · sdlc 2 · agentic 10 + B 네트워크 3(앞당김) | 65 | 완료 (remotion-video-creation 제외) |
 | W4 | B: agentic 21 · sdlc 15 (orch-* 포함) · web-frontend 8 · lang-toolkit 3 · infra-devops 1 · ml 1 | 49 | |
 | W5 | B: MCP/API 의존 — dev-toolkit 8 (deep-research 리네임) · media-docs 6 · security 1 | 15 | |
 
@@ -59,6 +60,6 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 ## 진행 중 바뀐 것
 
 - **W3 — 네트워크 클러스터 앞당김**: `cisco-ios-patterns`·`network-config-validation`·`network-interface-health`(B)를 W3에 함께 넣었다. homelab-*·netmiko·bgp가 이 셋을 참조한다. B로 분류된 이유였던 ECC 에이전트 참조만 지웠다. W4 infra-devops는 `platform-factory` 하나 남는다.
-- **W3 — remotion-video-creation 보류**: ECC가 remotion-dev/skills에서 "port"한 스킬인데 원 저장소에 LICENSE가 없다(GitHub API 확인, 2026-11-27). ECC의 MIT가 이 파일에 적용된다는 근거가 없어 재배포하지 않는다.
+- **W3 — remotion-video-creation 제외 확정**(결정 9): ECC가 remotion-dev/skills에서 "port"한 스킬인데 원 저장소에 LICENSE가 없다(GitHub API 확인, 2026-11-27). ECC의 MIT가 이 파일에 적용된다는 근거가 없어 재배포하지 않는다.
 - **allinone 영향**: 결정 2에 따라 agentic·sdlc·dev-toolkit을 확장하면 allinone 설치에도 들어간다(W2·W3 누적 18개). 결정 3(opt-in)은 신규 플러그인에만 적용된다.
 

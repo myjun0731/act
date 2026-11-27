@@ -12,7 +12,7 @@
 
 - manim-video(+ assets), ui-demo, frontend-slides(+ scripts, references)
 - **frontend-slides 스크립트는 네트워크를 쓴다**: `scripts/export-pdf.sh`가 임시 폴더(`mktemp -d`)에 `npm install playwright`와 `npx playwright install chromium`을 실행한다. `extract-pptx.py`는 `python-pptx`가 필요하다.
-- **remotion-video-creation은 넣지 않았다**: ECC가 remotion-dev/skills에서 가져온 스킬인데 원 저장소에 라이선스가 없어(기본 저작권 보호) 재배포 근거가 확인되지 않는다.
+- **remotion-video-creation은 제외했다**(확정): ECC가 remotion-dev/skills에서 가져온 스킬인데 원 저장소에 라이선스가 없어(기본 저작권 보호) 재배포 근거가 확인되지 않는다.
 
 ### 변경한 내용
 - manim-video: description의 "wider ECC video stack" → "a video editor or compositing tool". 관련 스킬 `video-editing`·`remotion-video-creation`·`content-engine`(act 미보유) 대신 일반 안내와 `ui-demo`.
