@@ -1,4 +1,4 @@
-# ACT — Agentic Claude Toolkit
+# ACT : Agentic Claude Toolkit
 
 개인이 만들어 쓰는 Claude Code 플러그인 마켓플레이스(공개). 마켓 이름은 `act`.
 

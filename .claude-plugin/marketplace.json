@@ -4,7 +4,7 @@
     "name": "Kim Myoung-jun"
   },
   "metadata": {
-    "description": "ACT (Agentic Claude Toolkit) — Claude Code 올인원 플러그인 마켓플레이스",
+    "description": "ACT : Agentic Claude Toolkit. Claude Code 올인원 플러그인 마켓플레이스",
     "version": "2.0.0-dev.1"
   },
   "plugins": [

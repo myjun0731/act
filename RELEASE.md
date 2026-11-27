@@ -1,16 +1,16 @@
-# 릴리스 채널 (애플 OS식 4단계)
+# 릴리스 채널 (4단계)
 
-act 는 애플 OS 출시 단계를 **브랜치 채널**로 흉내 낸다. Claude Code 에는 채널 개념이 없어,
+act 는 릴리스 단계를 **브랜치 채널**로 운영한다. Claude Code 에는 채널 개념이 없어,
 채널 격리는 전적으로 **git 브랜치**가 담당한다. 단계 접미사와 `v<버전>` 태그는 사람이 읽고
 특정 시드/정식에 **고정(pin)** 하기 위한 라벨이다.
 
-| 애플 단계 | 채널 | 브랜치 | 마켓 버전 | GitHub Release |
-|---|---|---|---|---|
-| Developer Beta | 개발자 베타(인사이더) | `dev` | `1.x.y-dev.N` | prerelease |
-| Public Beta | 공개 베타 | `beta` | `1.x.y-beta.N` | prerelease |
-| Release Candidate | 릴리스 후보 | `rc` | `1.x.y-rc.N` | prerelease |
-| GA(정식) | 안정 | `main` | `1.x.y` | latest |
-| RSR(긴급 보안) | 보안 핫픽스 | `main` | `1.x.y+rsr.a` | latest |
+| 채널 | 브랜치 | 마켓 버전 | GitHub Release |
+|---|---|---|---|
+| 개발자 베타 | `dev` | `1.x.y-dev.N` | prerelease |
+| 공개 베타 | `beta` | `1.x.y-beta.N` | prerelease |
+| 릴리스 후보(RC) | `rc` | `1.x.y-rc.N` | prerelease |
+| 정식(GA) | `main` | `1.x.y` | latest |
+| 긴급 보안 핫픽스(RSR) | `main` | `1.x.y+rsr.a` | latest |
 
 - 단계 접미사는 **마켓플레이스 버전**(`marketplace.json` 의 `metadata.version`)에만 붙는다.
   **플러그인 버전**(`plugin.json`)은 평범한 semver 로 둔다 — Claude Code 는 설치/업데이트에
