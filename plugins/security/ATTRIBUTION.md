@@ -16,3 +16,6 @@
 ### 변경한 내용
 - leanrea: 최상위 `origin:` → `metadata.origin`.
 - 그 외 원본 그대로. `security-review`는 act의 다른 플러그인(core·dev-toolkit·agentic 스킬)이 참조하는 허브 스킬이다 — security를 설치하지 않으면 그 참조는 건너뛴다.
+
+## W5 추가 (0.1.0에 포함)
+- security-scan — AgentShield CLI(`ecc-agentshield`, https://github.com/affaan-m/agentshield)로 `.claude/` 설정을 감사한다. ECC 하네스가 아니라 독립 npm 도구라서 남겼고, `npx`가 내려받아 실행한다는 점과 버전 고정 방법을 `> **Requires:**` 줄에 적었다.

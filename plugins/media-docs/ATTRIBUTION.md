@@ -17,3 +17,9 @@
 ### 변경한 내용
 - manim-video: description의 "wider ECC video stack" → "a video editor or compositing tool". 관련 스킬 `video-editing`·`remotion-video-creation`·`content-engine`(act 미보유) 대신 일반 안내와 `ui-demo`.
 - frontend-slides: "Related ECC Skills" → "Related Skills", 각 스킬이 있는 act 플러그인 표기.
+
+## W5 추가 (0.1.0에 포함 — 외부 서비스 필요)
+- fal-ai-media(fal.ai MCP·`FAL_KEY`, 과금), videodb(+ scripts/ws_listener.py, VideoDB API 키), video-editing(+ references), nutrient-document-processing(Nutrient DWS API — 문서가 외부로 업로드됨), google-workspace-ops(Google 연동), blender-motion-state-inspection(로컬 Blender)
+- 각 스킬 제목 아래 `> **Requires:**` 줄로 필요 조건을 적었다.
+- 변경: fal-ai-media·video-editing — 제외된 `content-engine`·`tasteforge-video`·`taste-*` 참조 삭제/일반화. videodb — Codex 경로 안내 삭제(`${CLAUDE_SKILL_DIR}`는 그대로). blender — 무의미한 `tools:` 키 삭제.
+- videodb `ws_listener.py` 검토: 출력 폴더 `0o700`, 기본 위치는 XDG 상태 디렉터리, 셸 실행 없음 — 변경 없음.

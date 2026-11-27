@@ -30,6 +30,13 @@ codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC,
   code-tour — 관련 목록에서 `council`(act 미보유) 삭제. latency-critical-systems — 스킬 frontmatter에 무의미한 `tools:` 삭제.
   terminal-opener — Codex 메타(`agents/openai.yaml`) 삭제, 스크립트 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 환경변수 `ECC_TERMINAL` → `TERMINAL_OPENER`, description의 "Codex" → "you".
 
+## 7차 추가 (ECC 내재화 W5 — 외부 MCP·API 필요, 0.11.0에 포함)
+스킬: api-connector-builder, codehealth-mcp, web-research-mcp, exa-search, jira-integration, knowledge-ops, mailtrap-email-integration, plankton-code-quality (출처 ECC@`4adeee6`, MIT)
+- 원 기여자: codehealth-mcp·plankton-code-quality — origin `community`(Plankton 원작 @alxfazio 표기 유지). api-connector-builder — `ECC direct-port adaptation`.
+- **web-research-mcp**: ECC `deep-research`를 이름만 바꿔 넣었다(다른 `deep-research` 스킬과 충돌 방지).
+- 외부 의존이 있는 스킬은 제목 아래에 `> **Requires:**` 줄로 필요한 MCP·API 키·도구를 적었다.
+- 변경: codehealth-mcp — ECC MCP 템플릿·`ECC_DISABLED_MCPS`·"Pairing with ECC" 표를 일반 안내로, `verification-loop`·`tdd-workflow`·`/quality-gate` → dev-toolkit 이름. plankton-code-quality — "Pairing with ECC"·"ECC v1.8 Additions"(`ECC_HOOK_PROFILE` 등)를 걷어내고, act `core`의 Prettier 훅과 충돌할 수 있다는 안내로. exa-search — 관련 스킬을 `web-research-mcp`로, `market-research`(제외) 삭제. api-connector-builder — `mcp-server-patterns` → `mcp-builder`, `github-ops` 삭제. mailtrap — 최상위 `origin` → `metadata`.
+
 ---
 
 아래 항목은 wshobson/agents(https://github.com/wshobson/agents, MIT License, © 2024 Seth Hobson)에서 선별 내재화했다.

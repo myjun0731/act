@@ -11,6 +11,7 @@
 - 스킬 (0.3.0에 추가, 같은 커밋): `skills/intent-driven-development`, `skills/conventional-commit-review`
 - 커맨드 (0.3.0에 추가): `commands/test-coverage.md`
 - 스킬 (0.11.0에 추가, 같은 커밋): `skills/coding-standards`, `skills/error-handling`, `skills/content-hash-cache-pattern`, `skills/latency-critical-systems`, `skills/code-tour`, `skills/terminal-opener` — 변경 내용은 ATTRIBUTION.md 6차 추가
+- 스킬 (W5, 같은 커밋): `skills/api-connector-builder`, `skills/codehealth-mcp`, `skills/web-research-mcp`(원본 `deep-research`), `skills/exa-search`, `skills/jira-integration`, `skills/knowledge-ops`, `skills/mailtrap-email-integration`, `skills/plankton-code-quality` — ATTRIBUTION.md 7차 추가
 - 에이전트: `agents/java-reviewer.md`, `agents/java-build-resolver.md`, `agents/database-reviewer.md`
 - 규칙: `rules/java/coding-style.md`, `rules/java/patterns.md`, `rules/java/security.md`, `rules/java/testing.md`, `rules/common/security.md` → `rules-payload/`에 보관
 

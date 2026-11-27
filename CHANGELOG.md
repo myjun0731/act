@@ -33,10 +33,17 @@ ECC 내재화 W4: Tier B 45개(ECC 에이전트·커맨드·런타임 참조를 
 - `agentic` +19 (스킬 41), `sdlc` +15 (스킬 18), `web-frontend` +7 (22), `lang-toolkit` +3 (43), `infra-devops` +1 (15), `ml` +1 (5). 플러그인 버전은 W3에서 올린 값(미릴리스)을 유지한다.
 - **orch-* 6개**를 act sdlc 파이프라인 위에 다시 썼다: 조사→`sdlc:analyze`, 계획→`sdlc:design`, TDD 구현→`sdlc:implement`+`sdlc:test`, 리뷰→`sdlc:review`, 커밋→`sdlc:report`+게이트(act는 자동 커밋하지 않음).
 - **opensource-pipeline**: 공개 전 비밀값·개인정보 정리 절차가 ECC 에이전트 3개에 있어, 그 본문(MIT)을 `references/*-protocol.md`로 가져와 각 단계 서브에이전트가 먼저 읽게 했다.
-- **보안 수정**: skill-comply 러너가 시나리오 에이전트에 호스트 환경변수 전체와 무제한 Bash를 넘기던 것을 허용목록 환경변수·범위 제한 Bash·네트워크 도구 차단으로 바꿨다. 셋업 명령 검사에서 `tar --file=host:…`(원격 셸)와 sandbox에 심은 `.npmrc`로 `npm install`이 다른 프로그램을 실행하는 경로도 막았다. docs-governance 감사 스크립트는 대상 저장소의 git 설정이 헬퍼를 실행하지 못하게 했다.
+- **보안 수정**: skill-comply 러너가 시나리오 에이전트에 호스트 환경변수 전체와 무제한 Bash를 넘기던 것을 허용목록 환경변수·범위 제한 Bash·네트워크 도구 차단으로 바꿨다. 셋업 명령 검사에서 `tar --file=host:…`(원격 셸)와 sandbox에 심은 `.npmrc`·`package.json`(git·URL·file 의존성)·lockfile로 `npm install`이 다른 코드를 가져오거나 실행하는 경로도 막았다. docs-governance 감사 스크립트는 대상 저장소의 git 설정이 헬퍼를 실행하지 못하게 했다.
 - **C로 재분류해 제외**: `plan-canvas`·`ui-canvas`(ECC 저장소의 캔버스 서버 스크립트가 있어야 동작).
 - **보류**: `roundhouse-x402`(외부 서비스로 실제 자금(Base 메인넷 USDC) 결제를 안내하는 업체 작성 스킬).
 - 디커플링 세부는 각 플러그인 `ATTRIBUTION.md`.
+
+ECC 내재화 W5: 외부 MCP·API가 필요한 Tier B 15개.
+- `dev-toolkit` +8 (스킬 62): api-connector-builder, codehealth-mcp, web-research-mcp(ECC `deep-research` 리네임), exa-search, jira-integration, knowledge-ops, mailtrap-email-integration, plankton-code-quality.
+- `media-docs` +6 (9): fal-ai-media, videodb, video-editing, nutrient-document-processing, google-workspace-ops, blender-motion-state-inspection.
+- `security` +1 (6): security-scan(AgentShield CLI).
+- 외부 의존 스킬은 제목 아래 `> **Requires:**` 줄에 필요한 MCP·API 키·도구와, 데이터가 외부 서비스로 나가는지를 적었다.
+- dev-toolkit은 allinone에 포함되므로 allinone 설치에 스킬 8개가 더 늘어난다(누적 26개). 이 스킬들은 MCP·키가 없으면 동작하지 않고 그 사실을 알리도록 썼다.
 
 ## [2.0.1] - 2026-11-27
 

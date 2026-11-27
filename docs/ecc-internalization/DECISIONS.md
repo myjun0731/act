@@ -15,7 +15,7 @@ ECC(`affaan-m/ECC`, MIT)의 IT/SW 스킬 중 act에 없는 것을, ECC 하네스
 | 4 | 업스트림 | **`4adeee6` 고정 포크 + 분기별 수동 재대조.** `scripts/gen_ecc_refs.py`로 새 커밋의 이름 목록을 만들고 `check_skills.py`로 다시 본다. NOTICE에는 40자 전체 SHA로 적는다 |
 | 5 | healthcare 4개 + hipaa-compliance | **제외** (tier `D`) |
 | 6 | orch-* 6개 | **포팅** (sdlc). ECC 에이전트·커맨드 참조는 act sdlc 워크플로로 다시 쓴다 |
-| 7 | deep-research | **리네임 후 포팅**(W5, 후보 `web-research-mcp`). firecrawl·exa MCP는 선택 기능으로 격리 |
+| 7 | deep-research | **리네임 후 포팅**(W5, `web-research-mcp`로 확정). firecrawl·exa MCP는 선택 기능으로 격리 |
 | 8 | 프론트매터 정규화 기준 | **act 자체 린트** `scripts/check_skills.py`. skill-host-compat은 일반 B 스킬로 취급 |
 | 9 | remotion-video-creation | **제외 확정** (tier `D`). 원 저장소 remotion-dev/skills에 라이선스가 없어 재배포 근거 없음 |
 
@@ -39,7 +39,7 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 | W2 | A: lang-toolkit 40 · security 5 · dev-toolkit 6 · data-db 2 | 53 | 완료 |
 | W3 | A: web-frontend 15 · mobile 12 · infra-devops 11 · web3 5 · ml 4 · media-docs 3 · sdlc 2 · agentic 10 + B 네트워크 3(앞당김) | 65 | 완료 (remotion-video-creation 제외) |
 | W4 | B: agentic 19 · sdlc 15 (orch-* 포함) · web-frontend 7 · lang-toolkit 3 · infra-devops 1 · ml 1 | 46 | 완료 (roundhouse-x402 보류) |
-| W5 | B: MCP/API 의존 — dev-toolkit 8 (deep-research 리네임) · media-docs 6 · security 1 | 15 | |
+| W5 | B: MCP/API 의존 — dev-toolkit 8 (deep-research → web-research-mcp) · media-docs 6 · security 1 | 15 | 완료 |
 
 허브 스킬은 웨이브 초기에 먼저 넣는다: `security-review`(W2, A/B 13개가 참조), `frontend-patterns`(W3, 14개).
 
