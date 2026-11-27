@@ -29,6 +29,15 @@ ECC 내재화 W3: Tier A 62개 + 네트워크 클러스터 Tier B 3개.
 - 동봉 스크립트 중 네트워크를 쓰는 것: ios-icon-gen(`api.iconify.design`), frontend-slides PDF 내보내기(임시 폴더에 playwright 설치). 각 ATTRIBUTION에 적었다.
 - ios-icon-gen 보안 수정: 미리보기 파일을 예측 가능한 `/tmp` 경로 대신 `mktemp -d` 개인 폴더에 쓰고(심볼릭 링크 공격 방지), 기본 출력을 `./icons`로, 경로·URL에 들어가는 입력(아이콘 ID·에셋 이름·색·크기)을 검증한다.
 
+ECC 내재화 W4: Tier B 45개(ECC 에이전트·커맨드·런타임 참조를 고쳐 포팅).
+- `agentic` +19 (스킬 41), `sdlc` +15 (스킬 18), `web-frontend` +7 (22), `lang-toolkit` +3 (43), `infra-devops` +1 (15), `ml` +1 (5). 플러그인 버전은 W3에서 올린 값(미릴리스)을 유지한다.
+- **orch-* 6개**를 act sdlc 파이프라인 위에 다시 썼다: 조사→`sdlc:analyze`, 계획→`sdlc:design`, TDD 구현→`sdlc:implement`+`sdlc:test`, 리뷰→`sdlc:review`, 커밋→`sdlc:report`+게이트(act는 자동 커밋하지 않음).
+- **opensource-pipeline**: 공개 전 비밀값·개인정보 정리 절차가 ECC 에이전트 3개에 있어, 그 본문(MIT)을 `references/*-protocol.md`로 가져와 각 단계 서브에이전트가 먼저 읽게 했다.
+- **보안 수정**: skill-comply 러너가 시나리오 에이전트에 호스트 환경변수 전체와 무제한 Bash를 넘기던 것을 허용목록 환경변수·범위 제한 Bash·네트워크 도구 차단으로 바꿨다. docs-governance 감사 스크립트는 대상 저장소의 git 설정이 헬퍼를 실행하지 못하게 했다.
+- **C로 재분류해 제외**: `plan-canvas`·`ui-canvas`(ECC 저장소의 캔버스 서버 스크립트가 있어야 동작).
+- **보류**: `roundhouse-x402`(외부 서비스로 실제 자금(Base 메인넷 USDC) 결제를 안내하는 업체 작성 스킬).
+- 디커플링 세부는 각 플러그인 `ATTRIBUTION.md`.
+
 ## [2.0.1] - 2026-11-27
 
 문서 정리만 했다. 플러그인 버전은 그대로다.

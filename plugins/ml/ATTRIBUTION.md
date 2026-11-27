@@ -16,3 +16,6 @@
 ### 변경한 내용
 - ml-adoption-playbook: `mle-workflow`(W4 예정) 참조를 일반 지시("Production ML workflow")로, 최상위 `origin:` → `metadata.origin`.
 - bengali-nlp: 관련 목록에서 `prompt-optimizer`(ECC 종속, 제외) 삭제.
+
+## W4 추가 (0.1.0에 포함)
+- mle-workflow — ECC 설치 프로필·"ECC SWE workflows" 표현 삭제, ECC 에이전트(`mle-reviewer`·`performance-optimizer`)는 일반 지시로, 공식 플러그인 에이전트는 "설치돼 있으면", act에 없는 스킬(repo-scan·github-ops·strategic-compact 등)은 act 스킬(codebase-onboarding·git-workflow)로 바꾸거나 삭제, `tdd-workflow`·`verification-loop` → dev-toolkit 이름.

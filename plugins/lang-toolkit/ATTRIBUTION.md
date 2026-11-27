@@ -25,3 +25,7 @@
 - rails-patterns, rails-security: 최상위 `origin:` → `metadata.origin`.
 - generating-python-installer: `metadata.origin` 추가.
 - 그 외 본문은 원본 그대로.
+
+## W4 추가 (0.1.0에 포함)
+- godot-patterns, godot-testing — origin `community`. ECC `gdscript-reviewer`·`tdd-guide` 에이전트 → 일반 리뷰 지시·`test-driven-development`, 최상위 `origin` → `metadata`.
+- laravel-plugin-discovery — **LaraPlugins MCP 서버가 필요**하다고 맨 위에 명시하고, MCP가 없을 때 Packagist/GitHub 조사로 대체하도록 했다.

@@ -18,3 +18,6 @@
 
 ### 변경한 내용
 - cisco-ios-patterns, network-config-validation, network-interface-health: "See Also"의 ECC 에이전트(`network-config-reviewer`·`network-troubleshooter`) 줄 삭제.
+
+## W4 추가 (0.1.0에 포함)
+- platform-factory — origin `community`. 서드파티 `pf` CLI와 그 선택 훅 플러그인(`platform-factory-guard`)을 쓴다(ECC 아님). "ECC 훅과 함께" 표현만 일반화했다.

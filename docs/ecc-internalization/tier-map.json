@@ -4232,10 +4232,10 @@
   }
  },
  "plan-canvas": {
-  "tier": "B",
-  "plugin": "agentic",
+  "tier": "C",
+  "plugin": "-",
   "domain": "agentic",
-  "note": "ECC agents/commands/hermes; hookify-rules needs hookify plugin; roundhouse needs MCP",
+  "note": "reclassified B->C in W4: needs ECC repo-level scripts/plan-canvas.js / ui-canvas.js runtime",
   "description": "Open plans and HTML artifacts in a local browser canvas where the human annotates elements, chats, and approves or requests changes without leaving the page. Use when presenting a plan for review, or ",
   "origin": "ECC",
   "license": null,
@@ -6226,10 +6226,10 @@
   }
  },
  "ui-canvas": {
-  "tier": "B",
-  "plugin": "web-frontend",
+  "tier": "C",
+  "plugin": "-",
   "domain": "frontend",
-  "note": "ECC react-* commands/agents, seo-specialist agent; frontend-design-direction overlaps design-eng",
+  "note": "reclassified B->C in W4: needs ECC repo-level scripts/plan-canvas.js / ui-canvas.js runtime",
   "description": "Preview a UI component mockup in a local browser canvas where the human directly edits it (move, resize, edit text, delete, restyle), switches mobile/desktop/custom viewports, tests it, chats with you",
   "origin": "ECC",
   "license": null,
