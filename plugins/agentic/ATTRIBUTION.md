@@ -34,4 +34,4 @@ ralphinho-rfc-pipeline, rules-distill, skill-comply, skill-host-compat, team-age
 - **skill-comply 보안 수정**: 시나리오 에이전트(`claude -p`)에 호스트 환경변수 전체와 무제한 Bash를 넘기던 것을, 허용목록 환경변수와 범위를 좁힌 Bash 규칙(+ curl·wget·ssh·WebFetch 등 차단)으로 바꿨다. 원본에 있던 셋업 명령 검사의 빈틈 2개도 막았다 — `tar --file=host:archive`(원격 셸 실행) 형태를 거부하고, `npm install`은 sandbox에 `.npmrc`·`.yarnrc` 등이 있거나, `package.json`에 레지스트리 버전이 아닌 의존성(git·URL·file·`user/repo`·workspaces)이 있거나, lockfile의 `resolved`가 공식 레지스트리가 아니면 거부한다. npm은 호스트의 `GIT_*`·`npm_config_*` 없이, git을 실행할 수 없는 환경으로 돌린다. SKILL.md에 보안 주의를 추가하고 테스트 데이터의 `tdd-workflow`를 `test-driven-development`로, 테스트 환경변수 `ECC_*`를 `SKILL_COMPLY_*`로 바꿨다.
 - council-multi-model: 스크립트 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 임시 폴더 접두어 `ecc-council-review-` → `council-review-`. 이 스크립트는 명시적 동의가 있을 때만 OpenAI Codex로 내용을 보낸다(원본 그대로).
 - 그 외 공통: `verification-loop`·`tdd-workflow` → dev-toolkit 이름, ECC 에이전트·커맨드 참조를 act 에이전트나 일반 지시로, 최상위 `origin`·`tools:` 키 정리.
-- 제외: plan-canvas(ECC 캔버스 런타임 필요). roundhouse-x402는 보류(실제 자금 결제 안내 — 사용자 결정 대기).
+- 제외: plan-canvas(ECC 캔버스 런타임 필요). roundhouse-x402는 제외 확정(실제 자금 결제 안내 — 사용자 결정 대기).

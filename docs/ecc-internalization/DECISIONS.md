@@ -18,15 +18,16 @@ ECC(`affaan-m/ECC`, MIT)의 IT/SW 스킬 중 act에 없는 것을, ECC 하네스
 | 7 | deep-research | **리네임 후 포팅**(W5, `web-research-mcp`로 확정). firecrawl·exa MCP는 선택 기능으로 격리 |
 | 8 | 프론트매터 정규화 기준 | **act 자체 린트** `scripts/check_skills.py`. skill-host-compat은 일반 B 스킬로 취급 |
 | 9 | remotion-video-creation | **제외 확정** (tier `D`). 원 저장소 remotion-dev/skills에 라이선스가 없어 재배포 근거 없음 |
+| 10 | roundhouse-x402 | **제외 확정** (tier `D`). 외부 서비스를 통한 Base 메인넷 실제 USDC 결제를 안내하는 업체 작성 스킬 |
 
 ## 수치
 
 | Tier | 뜻 | 개수 |
 |---|---|---|
 | A | 거의 그대로 포팅 | 115 |
-| B | ECC 에이전트·커맨드·MCP 참조를 고쳐 포팅 | 65 |
+| B | ECC 에이전트·커맨드·MCP 참조를 고쳐 포팅 | 64 |
 | C | ECC 런타임 종속 — 제외 | 43 |
-| D | 결정으로 제외 | 6 |
+| D | 결정으로 제외 | 7 |
 | X / EQ | 비-IT / act에 동등 스킬 있음 | 43 / 3 |
 
 EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification-before-completion, `mcp-server-patterns`→mcp-builder. 포팅하는 스킬 안의 이 이름 참조는 act 이름으로 바꾼다.
@@ -38,7 +39,7 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 | W2-0 | `check_skills.py` 게이트 + 신규 플러그인 9개 스캐폴드 | — | 완료 |
 | W2 | A: lang-toolkit 40 · security 5 · dev-toolkit 6 · data-db 2 | 53 | 완료 |
 | W3 | A: web-frontend 15 · mobile 12 · infra-devops 11 · web3 5 · ml 4 · media-docs 3 · sdlc 2 · agentic 10 + B 네트워크 3(앞당김) | 65 | 완료 (remotion-video-creation 제외) |
-| W4 | B: agentic 19 · sdlc 15 (orch-* 포함) · web-frontend 7 · lang-toolkit 3 · infra-devops 1 · ml 1 | 46 | 완료 (roundhouse-x402 보류) |
+| W4 | B: agentic 19 · sdlc 15 (orch-* 포함) · web-frontend 7 · lang-toolkit 3 · infra-devops 1 · ml 1 | 46 | 완료 (roundhouse-x402 제외) |
 | W5 | B: MCP/API 의존 — dev-toolkit 8 (deep-research → web-research-mcp) · media-docs 6 · security 1 | 15 | 완료 |
 
 허브 스킬은 웨이브 초기에 먼저 넣는다: `security-review`(W2, A/B 13개가 참조), `frontend-patterns`(W3, 14개).
@@ -64,5 +65,5 @@ EQ: `tdd-workflow`→test-driven-development, `verification-loop`→verification
 - **allinone 영향**: 결정 2에 따라 agentic·sdlc·dev-toolkit을 확장하면 allinone 설치에도 들어간다(W2·W3 누적 18개). 결정 3(opt-in)은 신규 플러그인에만 적용된다.
 - **W4 — plan-canvas·ui-canvas를 C로 재분류**: 두 스킬은 ECC 저장소 루트의 `scripts/plan-canvas.js`·`ui-canvas.js`(로컬 브라우저 캔버스 서버)를 실행해야 동작한다. 스킬 디렉터리 밖의 ECC 런타임이라 독립 동작이 안 된다.
 - **W4 — opensource-pipeline 프로토콜 동봉**: act에 ECC opensource-* 에이전트가 없어 각 단계를 general-purpose 서브에이전트로 돌린다. 공개 전 정리 품질을 유지하려고 세 에이전트 본문을 `references/*-protocol.md`로 가져왔다(ECC MIT).
-- **W4 — roundhouse-x402 보류**: 업체가 작성한 스킬로, 외부 서비스를 통해 Base 메인넷 실제 USDC 결제를 안내한다. 넣을지 사용자 결정 대기.
+- **W4 — roundhouse-x402 제외 확정**(결정 10): 업체가 작성한 스킬로, 외부 서비스를 통해 Base 메인넷 실제 USDC 결제를 안내한다. 넣을지 사용자 결정 대기.
 

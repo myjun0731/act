@@ -5139,10 +5139,10 @@
   }
  },
  "roundhouse-x402": {
-  "tier": "B",
-  "plugin": "agentic",
+  "tier": "D",
+  "plugin": "-",
   "domain": "agentic",
-  "note": "ECC agents/commands/hermes; hookify-rules needs hookify plugin; roundhouse needs MCP",
+  "note": "dropped by decision 2026-11-27: vendor skill directing real-money (Base mainnet USDC) payments via a third-party service",
   "description": "Discover x402-paid services and ERC-8004 agent identity via Roundhouse (open catalog, paid SQL, MCP server, rh-x402 CLI), and optionally settle through Roundhouse's Base mainnet facilitator. Use when ",
   "origin": "community",
   "license": null,
