@@ -17,6 +17,17 @@ ECC 내재화 W2: Tier A 53개 스킬.
 - 디커플링: ECC 규칙 파일(`rules/ecc/...`) 안내 삭제, `tdd-workflow` → `test-driven-development`, 다음 웨이브 스킬(`frontend-patterns`)은 web-frontend 플러그인 조건부 안내로, act에 없는 `council` 참조 삭제, 최상위 `origin:` → `metadata.origin`. terminal-opener는 Codex 메타 파일을 빼고 스크립트 경로를 `${CLAUDE_PLUGIN_ROOT}` 기준으로, 환경변수 `ECC_TERMINAL` → `TERMINAL_OPENER`로 바꿨다. 스킬별 변경은 각 플러그인 `ATTRIBUTION.md`.
 - 기존 스킬의 ECC 참조 부채 55 → 42건: 새로 들어온 `security-review`·`coding-standards`·`python-patterns`·`cpp-*`·`clickhouse-io`·`terminal-opener`가 core·dev-toolkit·agentic 스킬의 참조를 풀었다. 단, 이 스킬들은 opt-in 플러그인에 있어 설치하지 않으면 참조는 건너뛴다.
 
+ECC 내재화 W3: Tier A 62개 + 네트워크 클러스터 Tier B 3개.
+- **신규 플러그인 6개를 마켓플레이스에 등록**(opt-in, allinone 미포함): `web-frontend`(스킬 15), `mobile`(12), `infra-devops`(14), `web3`(5), `ml`(4), `media-docs`(3), 각 0.1.0.
+- `agentic` 0.3.0 → 0.4.0: agentic-engineering, ai-first-engineering, agent-eval, eval-harness, recursive-decision-ledger, regex-vs-llm-structured-text, token-budget-advisor, data-scraper-agent, agent-payment-x402, santa-method(스킬 12 → 22).
+- `sdlc` 0.4.1 → 0.5.0: production-audit, search-first.
+- agentic·sdlc는 allinone에 포함되므로 allinone 설치에 스킬 12개가 늘어난다(W2의 dev-toolkit 6개 포함 누적 18개).
+- infra-devops: Tier B로 분류했던 `cisco-ios-patterns`·`network-config-validation`·`network-interface-health`를 W3로 당겼다. 네트워크 스킬들이 서로 참조해 따로 두면 참조를 지웠다 되살려야 했다. ECC 에이전트 참조만 지웠다.
+- **`remotion-video-creation`은 넣지 않았다**: ECC가 remotion-dev/skills에서 가져왔는데 원 저장소에 라이선스가 없다. 재배포 근거가 확인될 때까지 보류.
+- `angular-developer`는 Angular 공식 저장소(MIT, Google LLC) 출처라 web-frontend THIRD_PARTY_NOTICES에 Angular 라이선스를 추가했다.
+- 디커플링: `tdd-workflow`·`verification-loop` → act 이름, ECC 규칙 파일(`rules/dart/`) 안내 삭제, "Related ECC Skills"·"wider ECC video stack" 표현 정리, 다음 웨이브 스킬(`mle-workflow`·`context-budget`)과 제외 스킬(`prompt-optimizer`·`content-engine`·Continuous Learning v2) 참조 정리, motion-* 등의 비표준 최상위 키를 `metadata`로. 스킬별 변경은 각 플러그인 `ATTRIBUTION.md`(sdlc는 새로 추가).
+- 동봉 스크립트 중 네트워크를 쓰는 것: ios-icon-gen(`api.iconify.design`), frontend-slides PDF 내보내기(임시 폴더에 playwright 설치). 각 ATTRIBUTION에 적었다.
+
 ## [2.0.1] - 2026-11-27
 
 문서 정리만 했다. 플러그인 버전은 그대로다.

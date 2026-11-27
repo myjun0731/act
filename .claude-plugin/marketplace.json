@@ -87,6 +87,36 @@
       "name": "data-db",
       "source": "./plugins/data-db",
       "description": "ClickHouse·Redis 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "web-frontend",
+      "source": "./plugins/web-frontend",
+      "description": "웹 프론트엔드 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "mobile",
+      "source": "./plugins/mobile",
+      "description": "모바일 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "infra-devops",
+      "source": "./plugins/infra-devops",
+      "description": "인프라·네트워크 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "web3",
+      "source": "./plugins/web3",
+      "description": "웹3 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "ml",
+      "source": "./plugins/ml",
+      "description": "머신러닝 스킬 (ECC/MIT 내재화, opt-in)"
+    },
+    {
+      "name": "media-docs",
+      "source": "./plugins/media-docs",
+      "description": "미디어·문서 스킬 (ECC/MIT 내재화, opt-in)"
     }
   ],
   "allowCrossMarketplaceDependenciesOn": [

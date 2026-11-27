@@ -8,6 +8,12 @@
 - ECC 하네스 전용 참조(커맨드·에이전트·훅·메모리·런타임)를 걷어내거나 "있으면 적용"으로 바꾼 내용은 스킬별로 적는다.
 - 재배포 시 본 표기를 유지할 것.
 
-## 가져온 스킬
+## 가져온 스킬 (W3, 0.1.0)
 
-(아직 없음)
+- android-clean-architecture, compose-multiplatform-patterns, kotlin-coroutines-flows, dart-flutter-patterns, flutter-dart-code-review,
+  swiftui-patterns, swift-actor-persistence, swift-concurrency-6-2, swift-protocol-di-testing, liquid-glass-design, foundation-models-on-device, ios-icon-gen(+ scripts)
+- 원 기여자: ios-icon-gen — origin `community`.
+- **ios-icon-gen 스크립트는 네트워크를 쓴다**: `scripts/iconify_gen.sh`가 https://api.iconify.design 에서 SVG를 내려받는다(macOS `sips` 변환). `generate_icons.swift`는 로컬 SF Symbols만 쓴다.
+
+### 변경한 내용
+- dart-flutter-patterns: ECC 규칙 파일(`rules/dart/`) 안내 삭제.

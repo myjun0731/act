@@ -15,3 +15,12 @@
 
 ## 4차 추가 (에이전트 하네스·디버깅)
 agent-harness-construction, agent-introspection-debugging — 출처 ECC, MIT
+
+## 5차 추가 (ECC 내재화 W3, 0.4.0)
+agentic-engineering, ai-first-engineering, agent-eval, eval-harness, recursive-decision-ledger, regex-vs-llm-structured-text,
+token-budget-advisor, data-scraper-agent, agent-payment-x402, santa-method — 출처 ECC@`4adeee6`, MIT
+- 원 기여자: santa-method — Ronald Skelton (RapportScore.ai). token-budget-advisor·data-scraper-agent·agent-payment-x402 — origin `community`.
+- 변경: agent-eval·eval-harness·recursive-decision-ledger — 스킬 frontmatter의 무의미한 `tools:` 삭제.
+  santa-method — 연동 표의 `Verification Loop` → `verification-before-completion`(dev-toolkit), ECC 전용 `Continuous Learning v2` 행 삭제, `Strategic Compact` → 일반 "Context compaction".
+  token-budget-advisor — `context-budget`(W4 예정) 링크를 빼고 그 스킬이 쓰던 추정식만 남김.
+

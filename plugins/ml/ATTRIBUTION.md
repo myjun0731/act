@@ -8,6 +8,11 @@
 - ECC 하네스 전용 참조(커맨드·에이전트·훅·메모리·런타임)를 걷어내거나 "있으면 적용"으로 바꾼 내용은 스킬별로 적는다.
 - 재배포 시 본 표기를 유지할 것.
 
-## 가져온 스킬
+## 가져온 스킬 (W3, 0.1.0)
 
-(아직 없음)
+- pytorch-patterns, ml-adoption-playbook, recsys-pipeline-architect, bengali-nlp
+- 원 기여자: recsys-pipeline-architect — origin `community`, 원본 https://github.com/mturac/recsys-pipeline-architect. xAI For You 알고리즘(Apache-2.0)의 패턴을 독립 재구현한 것으로 원 코드를 포함하지 않는다고 스킬에 명시돼 있다.
+
+### 변경한 내용
+- ml-adoption-playbook: `mle-workflow`(W4 예정) 참조를 일반 지시("Production ML workflow")로, 최상위 `origin:` → `metadata.origin`.
+- bengali-nlp: 관련 목록에서 `prompt-optimizer`(ECC 종속, 제외) 삭제.
