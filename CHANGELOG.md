@@ -2,6 +2,20 @@
 
 릴리스마다 `## [마켓플레이스 버전] - 날짜` 섹션을 하나씩 추가한다. `scripts/release.py`는 이 섹션이 없으면 태그를 만들지 않는다.
 
+## [1.12.1] - 2026-11-27
+
+긴급 포인트 릴리스. `sdlc` 0.4.0 설계 단계가 항상 실패하던 결함을 고친다(결함 리포트 `docs/defects/sdlc-0.4.0-design-writer-readonly.md`).
+
+`sdlc` 0.4.0 → 0.4.1
+- **[high] design 작성 에이전트가 설계서를 쓰지 못함**: `design.js` 작성 단계가 `dev-toolkit:architect`(tools: Read·Grep·Glob)를 지정해 `02-design.rN.md`를 한 번도 쓰지 못했다. 그런데도 실패 문장이 반환되면 성공으로 처리돼, 심사 패널이 없는 파일에 0~5점을 주고 `maxRounds`/`patience`까지 비용만 썼다. 이제 작성은 `agentType`을 지정하지 않는다(general-purpose, 쓰기 도구 있음). architect는 읽기 전용인 **접근안** 단계로 옮겼다. 미설치나 오류가 나면 제네릭 에이전트로 이어서 실행한다.
+- **작성 결과 검증**(analyze·design): 작성 에이전트는 파일을 쓴 뒤 다시 읽어 확인하고 schema `{ written, path, bytes, reason }`로 반환한다. `written=true`가 아니면 심사 없이 즉시 `stopReason:"error"`로 멈추고, 원인을 새 `error` 필드에 담아 반환한다.
+- **심사 전 차단**(analyze·design): 심사자가 과반수로 `targetMissing`(대상 파일 없음/빈 파일)을 보고하면 0점으로 루프를 계속 돌지 않고 `error`로 끝낸다.
+- `/sdlc:pipeline`: `stopReason:"error"`이면 재시도 전에 `error`를 사용자에게 보여 준다.
+
+`scripts/check_refs.py`: **쓰기 능력 검사**(ERROR)를 추가했다. 프롬프트가 파일 쓰기(`에 쓰고`·`저장하라`·`덮어쓰기` 등)를 요구하는 `agent()` 호출에 `agentType`이 지정돼 있고, 그 에이전트 frontmatter `tools`에 쓰기 도구(Write·Edit·Bash 등)가 없으면 실패한다. `release.py`가 모든 단계에서 실행하므로 릴리스가 막힌다. 0.4.0 `design.js`는 이 검사에서 ERROR로 잡힌다.
+
+검증: 모의 런타임으로 analyze·design 각 4개 시나리오(정상 통과, `written=false`, 0.4.0식 실패 문자열 반환, 심사 `targetMissing`)를 돌려 8/8 통과. 실패 시나리오에서는 심사 호출 0회(대상 없음 시나리오는 1회 심사 후 중단). 워크플로 7종 구문 검사 통과.
+
 ## [1.12.0] - 2026-11-25
 
 `dev-toolkit` 0.10.2 → 0.10.3: 새 동적 워크플로 `db-diff` 추가(동적 워크플로 10 → 11).

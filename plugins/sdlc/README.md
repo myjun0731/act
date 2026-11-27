@@ -36,7 +36,8 @@ sdlc는 제네릭 뼈대를 "항상 도는 기본층"으로 두고, dev-toolkit 
 | review — 보안 상시 | `security-reviewer` (유형 무관, 전 변경 1회) | — |
 | test — 작성 | `test-automator` | `test-driven-development` · `springboot-tdd` |
 | implement — 빌드 수정 | `build-error-resolver` | `test-driven-development` · `systematic-debugging` |
-| design — 작성 | `architect` | `api-design` · `hexagonal-architecture` · `contract-first` · `architecture-decision-records` |
+| design — 접근안(읽기 전용) | `architect` (미설치·오류 시 제네릭) | — |
+| design — 작성 | 제네릭(general-purpose, 쓰기 도구 필요 — 읽기 전용 에이전트 지정 금지) | `api-design` · `hexagonal-architecture` · `contract-first` · `architecture-decision-records` |
 | analyze — 작성 | — | `codebase-onboarding` |
 
 **review 2계층** — `5차원 × 변경 파일 전체`(제네릭)와 `파일 유형별 특화`(dev-toolkit)의 축 불일치를 억지로 맞추지 않고 역할을 나눈다.
