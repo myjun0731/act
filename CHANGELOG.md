@@ -13,6 +13,12 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**정밀 검증 3차.** 고친 것들이 실제 흐름에서 동작하는지 다시 돌려 봤다.
+- review-changes 수정본을 실제 저장소(Swift·Python·Go 변경)에서 실행: 지난 실행에서 검증 단계가 버리던 `worker.go` high 4건이 모두 반박 검증을 통과해 리포트에 남음(확정 16건, 미검증 0).
+- 격리 설정(`CLAUDE_CONFIG_DIR`)에 로컬 저장소를 디렉터리 마켓으로 붙여 설치: 로더가 센 스킬·에이전트 수가 18개 플러그인 모두 저장소와 일치(skills = 스킬 폴더 + commands). allinone 은 공식 마켓 의존(`pr-review-toolkit`)이라 공식 마켓이 없는 격리 환경에서 로드 실패 — 의도된 동작.
+- 일회용 클론(push 차단)에서 `release.py --stage dev-beta --tag` → `promote.py dev-to-beta --run` 을 끝까지 실행: 새 skillcheck 게이트 통과(WARN 14, 공식 플러그인 조건부 언급), 버전 2.1.0-dev.4 → 2.1.0-beta.1 머지·커밋 정상, push 실패 시 종료 코드 1.
+- **[low] orch-pipeline 에이전트 맵**: Review 행이 dev-toolkit 리뷰어 5개만 적고 있어, `sdlc:review`가 자동 라우팅하는 lang-toolkit·mobile 언어 리뷰어 14개를 추가했다.
+
 **정밀 검증 2차.** 나머지 에이전트 16개(리뷰어 8·빌드 해결 8)를 결함을 심은 샘플·실제 형식의 빌드 오류 로그로 호출했다(23개 모두 검출·진단 정확, 쓰기 권한 있는 빌드 해결 에이전트도 '수정 금지' 지시 준수). sdlc `review`를 로컬 수정본으로 실제 저장소에서 실행해 Python·Go 변경이 `lang-toolkit:python-reviewer`·`go-reviewer`로 라우팅되는 것을 확인했다.
 - **[high] sdlc review 중복 폭증**: 제네릭 4차원·전문 리뷰어·보안 레인이 같은 결함을 다른 제목·언어로 보고해, 30줄 변경에 확정 지적 51건(critical 10·high 22, 같은 SQL 인젝션 5회)이 나왔다. 키 dedup(`파일:줄:제목`) 뒤에 **의미 중복 병합** 단계를 추가했다 — 에이전트가 같은 근본 결함을 번호로 묶고, 묶음이 모든 번호를 정확히 한 번씩 포함하지 않거나 실패하면 병합하지 않는다. 대표는 최고 severity·검증 통과 항목, `mergedCount`·`alsoReportedAs`로 출처 보존. 같은 실행에서 51 → 20건(critical 4·high 7), 심은 결함 9종 모두 유지.
 - **[high] config-health 스킬이 act 에서 동작하지 않음**(기존 부채): 실행 스크립트 4개가 동봉되지 않았고 설치가 ECC 설치기 전제였다. ECC 원본 스크립트(MIT, 표준 라이브러리만, 읽기 전용)를 스킬에 동봉하고 안내를 고쳤다. `--check`·`--pretool`·`--startup` 모두 이 PC에서 실행 확인.

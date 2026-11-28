@@ -125,7 +125,7 @@ only when a failure points to a design defect.
 | Research | `sdlc:analyze` + `search-first` skill | — |
 | Plan | `sdlc:design` (uses `architect`) | `architect` agent directly for a light plan |
 | Implement | `sdlc:implement` + `sdlc:test`, `test-driven-development` skill | `build-error-resolver` (Node/TS) or `java-build-resolver` on build breaks |
-| Review | `sdlc:review` | language reviewer agent (`java-reviewer`, `typescript-reviewer`, `react-reviewer`, `vue-reviewer`, `database-reviewer`); a language-focused review pass where none exists |
+| Review | `sdlc:review` (routes changed files to the matching language reviewer automatically) | language reviewer agent: dev-toolkit (`java-reviewer`, `typescript-reviewer`, `react-reviewer`, `vue-reviewer`, `database-reviewer`); lang-toolkit, if installed (`python-reviewer`, `django-reviewer`, `fastapi-reviewer`, `go-reviewer`, `rust-reviewer`, `kotlin-reviewer`, `cpp-reviewer`, `csharp-reviewer`, `fsharp-reviewer`, `php-reviewer`, `ruby-reviewer`, `gdscript-reviewer`); mobile, if installed (`swift-reviewer`, `flutter-reviewer`); a language-focused review pass where none exists |
 | Security | `security-reviewer` (always on in `sdlc:review`) | — |
 | Commit gate | `sdlc:report` | `conventional-commit-review` skill for the proposed messages |
 | MVP inner loop | generator–evaluator loop of the `gan-style-harness` skill (agentic, if installed; otherwise the same loop inline) | tune max iterations / pass threshold |
