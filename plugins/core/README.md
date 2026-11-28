@@ -5,7 +5,7 @@
 ## 들어 있는 것
 | 종류 | 이름 | 하는 일 |
 |---|---|---|
-| 훅 | guard_secrets (PreToolUse) | `.pem`·`.key`·`credentials`·`secrets.json` 같은 비밀/키 파일 쓰기를 막는다 |
+| 훅 | guard_secrets (PreToolUse) | `.pem`·`.key`·SSH 개인키·`credentials`(AWS)·`*-credentials.json`·`secrets.json`·`.env`(`.env.local` 등, 예시본 `.env.example` 제외)·`.netrc`·`.npmrc` 같은 비밀/키 파일 쓰기를 막는다. 판정은 파일 이름만 본다 — `CredentialService.java` 같은 코드 파일은 통과 |
 | 훅 | format_on_edit (PostToolUse) | 프로젝트에 prettier 설정이 있을 때만 편집한 파일을 포맷한다 |
 | 훅 | session_check (SessionStart) | 초기 설정이 안 됐거나 core가 새 버전이면 `/core:setup`을 권하게 한다. 같은 이름의 플러그인이 여러 마켓플레이스에서 켜져 있으면 알린다. 상태줄 스크립트를 최신본으로 맞춘다 |
 | 스킬 | `/core:setup` | 권한 허용목록·상태줄·env·규칙 파일과 같은 마켓플레이스 플러그인의 `settings-payload/*.json`을 `~/.claude`에 병합하고 자동 업데이트를 켠다 |

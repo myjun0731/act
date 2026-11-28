@@ -128,6 +128,15 @@ For PowerPoint conversion:
 
 Keep conversion cross-platform. Do not rely on macOS-only tools when Python can do the job.
 
+## Bundled Scripts
+
+- `scripts/extract-pptx.py <input.pptx> [output_dir]` — extracts each slide's title, text, images and notes
+  to JSON with `python-pptx`. It stops at import if `python-pptx` is missing, so check or ask first.
+- `scripts/export-pdf.sh <deck.html> [output.pdf] [--compact]` — renders the deck to PDF with headless
+  Chromium. Each run installs Playwright into a temp folder and, the first time, downloads Chromium
+  (well over 100 MB) into the Playwright cache. Tell the user about the download and get their OK before
+  the first run.
+
 ## Implementation Requirements
 
 ### HTML / CSS

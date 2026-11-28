@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """PostToolUse: 편집한 파일을, 프로젝트가 prettier를 쓰도록 설정돼 있을 때만 자동 포맷.
-- prettier 설정 파일이 있고(.prettierrc* / prettier in package.json 아님, 설정파일만 체크)
-- npx로 prettier가 설치돼 있을 때(--no-install)만 실행 → 아니면 조용히 no-op.
+- prettier 설정(.prettierrc* · prettier.config.* · package.json 의 "prettier" 키)이 있고
+- 그 프로젝트에 prettier 가 설치돼 있을 때(npx --no-install)만 실행 → 아니면 조용히 no-op.
+- npx 는 현재 디렉터리의 node_modules 에서 prettier 를 찾으므로, 설정을 찾은 프로젝트 루트에서 실행한다
+  (세션 폴더와 다른 하위 패키지·모노레포에서 편집해도 동작 — 이전에는 조용히 아무것도 안 했다).
 안전: 설정 안 한 프로젝트는 절대 건드리지 않음."""
 import sys, json, os, subprocess, shutil
 
@@ -12,20 +14,43 @@ except Exception:
     pass
 
 EXTS = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".json", ".css", ".scss", ".md", ".html", ".vue"}
-CFG_NAMES = [".prettierrc", ".prettierrc.json", ".prettierrc.js", ".prettierrc.cjs",
-             ".prettierrc.yaml", ".prettierrc.yml", "prettier.config.js", "prettier.config.cjs"]
+CFG_NAMES = [".prettierrc", ".prettierrc.json", ".prettierrc.json5", ".prettierrc.yaml", ".prettierrc.yml",
+             ".prettierrc.toml", ".prettierrc.js", ".prettierrc.cjs", ".prettierrc.mjs",
+             ".prettierrc.ts", ".prettierrc.cts", ".prettierrc.mts",
+             "prettier.config.js", "prettier.config.cjs", "prettier.config.mjs",
+             "prettier.config.ts", "prettier.config.cts", "prettier.config.mts"]
 
-def has_prettier_config(start):
+def _pkg_has_prettier(d):
+    try:
+        with open(os.path.join(d, "package.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+        return isinstance(pkg, dict) and "prettier" in pkg
+    except Exception:
+        return False
+
+def find_prettier_root(start):
+    """설정을 가진 가장 가까운 상위 디렉터리를 돌려준다(없으면 None)."""
     d = os.path.dirname(os.path.abspath(start))
     for _ in range(25):
-        for n in CFG_NAMES:
-            if os.path.exists(os.path.join(d, n)):
-                return True
+        if any(os.path.exists(os.path.join(d, n)) for n in CFG_NAMES) or _pkg_has_prettier(d):
+            return d
         parent = os.path.dirname(d)
         if parent == d:
             break
         d = parent
-    return False
+    return None
+
+def install_root(start, fallback):
+    """prettier 가 설치된(node_modules/prettier) 가장 가까운 상위 디렉터리. 없으면 설정 루트."""
+    d = os.path.dirname(os.path.abspath(start))
+    for _ in range(25):
+        if os.path.isdir(os.path.join(d, "node_modules", "prettier")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            break
+        d = parent
+    return fallback
 
 def main():
     try:
@@ -38,14 +63,15 @@ def main():
         sys.exit(0)
     if os.path.splitext(path)[1].lower() not in EXTS:
         sys.exit(0)
-    if not has_prettier_config(path):
+    root = find_prettier_root(path)
+    if not root:
         sys.exit(0)
     npx = shutil.which("npx") or shutil.which("npx.cmd")
     if not npx:
         sys.exit(0)
     try:
-        subprocess.run([npx, "--no-install", "prettier", "--write", path],
-                       capture_output=True, timeout=30)
+        subprocess.run([npx, "--no-install", "prettier", "--write", os.path.abspath(path)],
+                       cwd=install_root(path, root), capture_output=True, timeout=30)
     except Exception:
         pass
     sys.exit(0)

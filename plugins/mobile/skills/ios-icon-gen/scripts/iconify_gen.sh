@@ -51,6 +51,18 @@ require_value() {
     fi
 }
 
+# python3 이 없는 환경(Windows 등)에서는 python 으로 대체한다
+PY="$(command -v python3 || command -v python || true)"
+require_python() {
+    [[ -n "$PY" ]] || { echo "ERROR: python3 (or python) is required for this command" >&2; exit 1; }
+}
+
+# sips 는 macOS 전용이다. 없으면 다운로드 전에 멈춘다 — 전에는 변환 실패를 경고만 하고 SVG 를 지운 뒤
+# 존재하지 않는 PNG 를 가리키는 Contents.json 을 쓰고 성공(exit 0)으로 끝났다.
+require_sips() {
+    command -v sips >/dev/null 2>&1 || { echo "ERROR: sips (built into macOS) is required to convert SVG to PNG; run this on macOS" >&2; exit 1; }
+}
+
 usage() {
     cat <<'EOF'
 Usage:
@@ -100,8 +112,9 @@ search_icons() {
         exit 1
     fi
 
+    require_python
     local encoded_query
-    encoded_query="$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$query")"
+    encoded_query="$("$PY" -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$query")"
     local url="${API_BASE}/search?query=${encoded_query}&limit=${LIMIT}"
     if [[ -n "$prefix" ]]; then
         url="${url}&prefix=${prefix}"
@@ -111,11 +124,11 @@ search_icons() {
     response=$(curl "${CURL_OPTS[@]}" "$url") || { echo "ERROR: Search request failed"; exit 1; }
 
     local total
-    total=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('total',0))")
+    total=$(echo "$response" | "$PY" -c "import sys,json; print(json.load(sys.stdin).get('total',0))")
 
     echo "Found ${total} icons for '${query}':"
     echo ""
-    echo "$response" | python3 -c "
+    echo "$response" | "$PY" -c "
 import sys, json
 data = json.load(sys.stdin)
 for icon in data.get('icons', []):
@@ -131,7 +144,7 @@ list_collections() {
     echo ""
     local resp
     resp=$(curl "${CURL_OPTS[@]}" "${API_BASE}/collections") || { echo "ERROR: Failed to fetch collections list"; exit 1; }
-    echo "$resp" | python3 -c "
+    echo "$resp" | "$PY" -c "
 import sys, json
 data = json.load(sys.stdin)
 popular = ['mdi','lucide','tabler','ph','ri','carbon','solar','heroicons','bi','octicon','ion','fe','charm','ci','iconoir','basil','uil','mingcute','flowbite','mynaui']
@@ -149,6 +162,7 @@ for k in popular:
 preview_icon() {
     local icon_id="$1"
     validate_icon_id "$icon_id"
+    require_sips
     local collection="${icon_id%%:*}"
     local name="${icon_id#*:}"
     local url="${API_BASE}/${collection}/${name}.svg?width=136&height=136&color=%23${COLOR}"
@@ -163,7 +177,10 @@ preview_icon() {
 
     # Also convert to PNG for visual check
     local pngfile="${preview_dir}/${collection}_${name}.png"
-    sips -s format png "$outfile" --out "$pngfile" >/dev/null 2>&1 || echo "WARNING: sips conversion failed; PNG may be incorrect"
+    if ! sips -s format png "$outfile" --out "$pngfile" >/dev/null 2>&1 || [[ ! -s "$pngfile" ]]; then
+        echo "ERROR: sips could not convert ${outfile} to PNG (SVG kept for inspection)" >&2
+        exit 1
+    fi
     echo "Preview PNG: ${pngfile}"
 }
 
@@ -183,6 +200,7 @@ generate_icon() {
     validate_icon_id "$icon_id"
     validate_asset_name "$asset_name"
     validate_options
+    require_sips
 
     local collection="${icon_id%%:*}"
     local name="${icon_id#*:}"
@@ -205,7 +223,10 @@ generate_icon() {
         local png_file="${imageset_dir}/${asset_name}${suffix}.png"
 
         curl "${CURL_OPTS[@]}" "$svg_url" -o "$svg_file" || { echo "ERROR: Failed to download icon '${icon_id}'"; exit 1; }
-        sips -s format png "$svg_file" --out "$png_file" >/dev/null 2>&1 || echo "WARNING: sips conversion may have failed for ${svg_file}"
+        if ! sips -s format png "$svg_file" --out "$png_file" >/dev/null 2>&1 || [[ ! -s "$png_file" ]]; then
+            echo "ERROR: sips could not convert ${svg_file} to PNG; Contents.json not written (SVG kept for inspection)" >&2
+            exit 1
+        fi
         rm "$svg_file"
 
         echo "  ${asset_name}${suffix}.png (${px}x${px})"

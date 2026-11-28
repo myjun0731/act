@@ -13,6 +13,15 @@
 
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  echo "skill-stocktake: jq is required (https://jqlang.org/download/). Install it and rerun." >&2
+  exit 2
+fi
+if ! command -v node >/dev/null 2>&1; then
+  echo "skill-stocktake: node is required. Install it and rerun." >&2
+  exit 2
+fi
+
 sort_nul_file() {
   local input_file="$1"
   local sorted_file="${input_file}.sorted"

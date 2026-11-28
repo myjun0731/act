@@ -14,8 +14,8 @@ function usage() {
   return `Open an executable and its argument array in a visible terminal.
 
 Usage:
-  node ${CLAUDE_PLUGIN_ROOT}/skills/terminal-opener/scripts/open-terminal.js [options] -- <executable> [args...]
-  node ${CLAUDE_PLUGIN_ROOT}/skills/terminal-opener/scripts/open-terminal.js --detect [--terminal <name>] [--json]
+  node \${CLAUDE_PLUGIN_ROOT}/skills/terminal-opener/scripts/open-terminal.js [options] -- <executable> [args...]
+  node \${CLAUDE_PLUGIN_ROOT}/skills/terminal-opener/scripts/open-terminal.js --detect [--terminal <name>] [--json]
 
 Options:
   --terminal <name>  Terminal adapter (default: TERMINAL_OPENER or wezterm).

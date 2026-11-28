@@ -141,11 +141,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--force-statusline", action="store_true")
-    ap.add_argument("--home", default=str(Path.home()))
+    ap.add_argument("--home", default=None, help="이 폴더의 .claude 를 대상으로 (테스트용). 생략하면 CLAUDE_CONFIG_DIR, 그것도 없으면 ~/.claude")
     a = ap.parse_args()
 
     global PLUGINS_DIR
-    claude = Path(a.home) / ".claude"
+    # Claude 가 실제로 읽는 설정 폴더에 써야 한다 — CLAUDE_CONFIG_DIR 을 쓰는 환경에서 ~/.claude 에 쓰면 적용되지 않는다
+    if a.home:
+        claude = Path(a.home) / ".claude"
+    elif os.environ.get("CLAUDE_CONFIG_DIR"):
+        claude = Path(os.environ["CLAUDE_CONFIG_DIR"]).expanduser()
+    else:
+        claude = Path.home() / ".claude"
     plugins_dir = claude / "plugins"
     PLUGINS_DIR = plugins_dir
     settings_p = claude / "settings.json"

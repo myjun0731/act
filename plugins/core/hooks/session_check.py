@@ -12,9 +12,15 @@ except Exception:
     pass
 
 
+def config_dir():
+    """Claude 가 실제로 읽는 설정 폴더: CLAUDE_CONFIG_DIR 이 있으면 그곳, 없으면 ~/.claude."""
+    v = os.environ.get("CLAUDE_CONFIG_DIR")
+    return Path(v).expanduser() if v else Path.home() / ".claude"
+
+
 def enabled_plugins(cwd):
     """user → project → local 순으로 enabledPlugins 를 합쳐 켜진 '<이름>@<마켓>' 목록을 돌려준다."""
-    files = [Path.home() / ".claude" / "settings.json"]
+    files = [config_dir() / "settings.json"]
     if cwd:
         files += [Path(cwd) / ".claude" / "settings.json", Path(cwd) / ".claude" / "settings.local.json"]
     state = {}
@@ -45,7 +51,7 @@ def main():
         print(f"[core] 같은 이름의 플러그인이 여러 마켓플레이스에서 켜져 있습니다: {items}. "
               "스킬·커맨드가 중복되니 사용자에게 한쪽을 끄도록(claude plugin disable <이름>@<마켓>) 알려 주세요.")
     root = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
-    managed = Path.home() / ".claude" / "managed" / "core"
+    managed = config_dir() / "managed" / "core"
     try:
         version = json.loads((root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")).get("version")
     except Exception:

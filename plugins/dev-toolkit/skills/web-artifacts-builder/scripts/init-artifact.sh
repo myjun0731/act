@@ -30,15 +30,17 @@ else
   SED_INPLACE="sed -i"
 fi
 
-# Check if pnpm is installed
-if ! command -v pnpm &> /dev/null; then
-  echo "📦 pnpm not found. Installing pnpm..."
-  npm install -g pnpm
+# Check if project name is provided (before anything that touches the system)
+if [ -z "$1" ]; then
+  echo "❌ Usage: bash scripts/init-artifact.sh <project-name>"
+  exit 1
 fi
 
-# Check if project name is provided
-if [ -z "$1" ]; then
-  echo "❌ Usage: ./create-react-shadcn-complete.sh <project-name>"
+# Check if pnpm is installed. Do not install it globally on the user's behalf —
+# a global install is a system change the user should choose.
+if ! command -v pnpm &> /dev/null; then
+  echo "❌ Error: pnpm is required but not on PATH."
+  echo "   Install it yourself, e.g. 'corepack enable pnpm' (Node 16.13+) or 'npm install -g pnpm', then rerun."
   exit 1
 fi
 

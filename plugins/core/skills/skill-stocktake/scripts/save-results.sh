@@ -12,6 +12,11 @@
 
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  echo "skill-stocktake: jq is required (https://jqlang.org/download/). Install it and rerun." >&2
+  exit 2
+fi
+
 RESULTS_JSON="${1:-}"
 SAVE_MODE="${2:-}"
 
