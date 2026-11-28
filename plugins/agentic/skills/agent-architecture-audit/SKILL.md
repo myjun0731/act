@@ -3,7 +3,6 @@ name: agent-architecture-audit
 description: Full-stack diagnostic for agent and LLM applications. Audits the 12-layer agent stack for wrapper regression, memory pollution, tool discipline failures, hidden repair loops, and rendering corruption. Produces severity-ranked findings with code-first fixes. Essential for developers building agent applications, autonomous loops, or any LLM-powered feature. Use when an agent or LLM feature misbehaves and the failing layer is unknown, or before shipping an agent stack.
 metadata:
   origin: oh-my-agent-check
-tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 # Agent Architecture Audit
@@ -253,5 +252,4 @@ Audits should produce structured reports following this shape:
 - `agent-introspection-debugging` — Debug agent runtime failures (loops, timeouts, state errors)
 - `agent-eval` — Benchmark agent performance head-to-head
 - `security-review` — Security audit for code and configuration
-- `autonomous-agent-harness` — Set up autonomous agent operations
 - `agent-harness-construction` — Build agent harnesses from scratch

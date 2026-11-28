@@ -11,7 +11,7 @@
     {
       "name": "allinone",
       "source": "./plugins/allinone",
-      "description": "개인용 올인원 (core·dev-toolkit + 공식 플러그인 7종)"
+      "description": "개인용 올인원 (core·dev-toolkit·sdlc·design-eng·agentic·overkill·recursive-research + 공식 플러그인 8종)"
     },
     {
       "name": "core",
@@ -21,7 +21,7 @@
     {
       "name": "dev-toolkit",
       "source": "./plugins/dev-toolkit",
-      "description": "Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP 스킬 28개, 테스트 커버리지 커맨드, 리뷰 에이전트"
+      "description": "Java·Spring·DB·레거시·설계·디버깅·TDD·PICT·MCP·코드 품질·외부 연동 스킬 62개, 동적 워크플로 11개, 리뷰·구현 에이전트 16개, 테스트 커버리지 커맨드"
     },
     {
       "name": "design-eng",
@@ -56,7 +56,7 @@
     {
       "name": "lang-toolkit",
       "source": "./plugins/lang-toolkit",
-      "description": "언어·백엔드 프레임워크 스킬 (ECC/MIT 내재화, opt-in)"
+      "description": "언어·백엔드 프레임워크 스킬 43개 + 언어별 리뷰어·빌드 해결 에이전트 17개 (ECC/MIT 내재화, opt-in)"
     },
     {
       "name": "security",
@@ -71,12 +71,12 @@
     {
       "name": "web-frontend",
       "source": "./plugins/web-frontend",
-      "description": "웹 프론트엔드 스킬 (ECC/MIT 내재화, opt-in)"
+      "description": "웹 프론트엔드 스킬 22개 + react-build-resolver 에이전트 (ECC/MIT 내재화, opt-in)"
     },
     {
       "name": "mobile",
       "source": "./plugins/mobile",
-      "description": "모바일 스킬 (ECC/MIT 내재화, opt-in)"
+      "description": "모바일 스킬 12개 + Flutter·Swift 리뷰어·빌드 해결 에이전트 4개 (ECC/MIT 내재화, opt-in)"
     },
     {
       "name": "infra-devops",
@@ -91,7 +91,7 @@
     {
       "name": "ml",
       "source": "./plugins/ml",
-      "description": "머신러닝 스킬 (ECC/MIT 내재화, opt-in)"
+      "description": "머신러닝 스킬 5개 + pytorch-build-resolver 에이전트 (ECC/MIT 내재화, opt-in)"
     },
     {
       "name": "media-docs",

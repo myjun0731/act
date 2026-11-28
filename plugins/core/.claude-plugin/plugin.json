@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "공통 기반: 비밀파일 쓰기 차단·prettier 훅, 상태줄, 메모리 커맨드, 설정 병합용 /core:setup, Claude 설정 정리·스킬 점검 스킬",
   "author": {
     "name": "Kim Myoung-jun"

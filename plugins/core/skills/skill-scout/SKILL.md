@@ -112,8 +112,8 @@ finds no close match.
 ```markdown
 | # | Skill | Source | Why it matches | Gap |
 | --- | --- | --- | --- | --- |
-| 1 | article-writing | Local ECC | Drafts articles and guides | Not focused on release notes |
-| 2 | content-engine | Local ECC | Multi-format content workflow | Heavier than needed |
+| 1 | technical-writing | Local | Drafts articles and guides | Not focused on release notes |
+| 2 | content-workflow | Local | Multi-format content workflow | Heavier than needed |
 | 3 | blog-writer | GitHub | Blog writing skill with recent commits | Needs security review |
 ```
 
@@ -121,7 +121,7 @@ finds no close match.
 
 ```markdown
 I found two close local matches and one external candidate. The closest fit is
-`article-writing`; it covers drafting and revision, but it does not include the
+`technical-writing`; it covers drafting and revision, but it does not include the
 release-note checklist you asked for. I can either use it as-is, fork it into a
 release-note variant, or create a fresh skill.
 ```
@@ -138,4 +138,3 @@ release-note variant, or create a fresh skill.
 
 - `search-first` - General search-before-building workflow.
 - `skill-stocktake` - Audit installed skills for health, duplicates, and gaps.
-- `agent-sort` - Categorize and organize existing agents and skills.

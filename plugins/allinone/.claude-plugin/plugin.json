@@ -1,7 +1,7 @@
 {
   "name": "allinone",
-  "version": "0.5.2",
-  "description": "개인용 올인원: 이 플러그인 하나를 설치하면 core·dev-toolkit·sdlc·design-eng·overkill·recursive-research와 공식 플러그인 8종이 함께 설치된다",
+  "version": "0.5.3",
+  "description": "개인용 올인원: 이 플러그인 하나를 설치하면 core·dev-toolkit·sdlc·design-eng·agentic·overkill·recursive-research와 공식 플러그인 8종이 함께 설치된다",
   "author": {
     "name": "Kim Myoung-jun"
   },

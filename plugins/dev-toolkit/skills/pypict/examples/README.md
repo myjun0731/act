@@ -40,7 +40,7 @@ A comprehensive example demonstrating how to use PICT methodology to test a comp
 
 3. **Try it yourself**: Ask Claude to analyze the specification:
    ```
-   Using the pict-test-designer skill, analyze the ATM specification 
+   Using the pypict skill, analyze the ATM specification 
    and generate test cases for the security requirements
    ```
 
@@ -96,7 +96,7 @@ A sophisticated example demonstrating PICT methodology for testing a semi-automa
 
 3. **Try it yourself**: Ask Claude to analyze specific scenarios:
    ```
-   Using the pict-test-designer skill, analyze the gearbox specification
+   Using the pypict skill, analyze the gearbox specification
    and generate test cases for the safety features section
    ```
 

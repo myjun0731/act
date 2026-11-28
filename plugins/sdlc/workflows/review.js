@@ -100,15 +100,35 @@ function reviewerFor(type) {
     case 'frontend_vue': return { agentType: 'dev-toolkit:vue-reviewer', ask: 'Composition API 정확성·반응성·컴포넌트 구조·템플릿 보안을 심화 리뷰하라' }
     case 'frontend_ts': return { agentType: 'dev-toolkit:typescript-reviewer', ask: '타입 안전성·async 정확성·Node/웹 보안을 심화 리뷰하라' }
     case 'migration': case 'schema': return { agentType: 'dev-toolkit:database-architect', ask: '스키마 설계·제약·인덱스·이관 안전성(무중단·롤백·데이터 정합성)을 심화 리뷰하라' }
-    default: return null
+    default: return LANG_REVIEWERS[type] || null
   }
 }
-const CLS_SCHEMA = { type: 'object', required: ['files'], properties: { files: { type: 'array', items: { type: 'object', required: ['path', 'type'], properties: { path: { type: 'string' }, type: { type: 'string', enum: ['java', 'sql_mapper', 'frontend_react', 'frontend_vue', 'frontend_ts', 'migration', 'schema', 'config', 'other'] } } } } } }
+// opt-in 플러그인(lang-toolkit·mobile)의 언어 리뷰어. 미설치면 아래 try/catch 가 흡수하고 1계층 제네릭 5차원이 커버한다.
+// null-proto: 에이전트가 돌려준 type 이 toString 등이어도 상속값을 고르지 않는다.
+const LANG_REVIEWERS = Object.assign(Object.create(null), {
+  python: { agentType: 'lang-toolkit:python-reviewer', ask: 'PEP 8·Pythonic 관용구·타입 힌트·보안·성능을 심화 리뷰하라' },
+  python_django: { agentType: 'lang-toolkit:django-reviewer', ask: 'ORM 정확성·DRF 패턴·마이그레이션 안전성·보안 설정을 심화 리뷰하라' },
+  python_fastapi: { agentType: 'lang-toolkit:fastapi-reviewer', ask: 'async 정확성·의존성 주입·Pydantic 스키마·보안·OpenAPI 품질을 심화 리뷰하라' },
+  go: { agentType: 'lang-toolkit:go-reviewer', ask: '관용적 Go·동시성·에러 처리·성능을 심화 리뷰하라' },
+  rust: { agentType: 'lang-toolkit:rust-reviewer', ask: '소유권·수명·에러 처리·unsafe 사용·관용 패턴을 심화 리뷰하라' },
+  kotlin: { agentType: 'lang-toolkit:kotlin-reviewer', ask: '관용 패턴·코루틴 안전성·Compose·Android/KMP 함정을 심화 리뷰하라' },
+  cpp: { agentType: 'lang-toolkit:cpp-reviewer', ask: '메모리 안전·현대 C++ 관용구·동시성·성능을 심화 리뷰하라' },
+  csharp: { agentType: 'lang-toolkit:csharp-reviewer', ask: '.NET 규약·async 패턴·nullable 참조형·보안·성능을 심화 리뷰하라' },
+  fsharp: { agentType: 'lang-toolkit:fsharp-reviewer', ask: '함수형 관용구·타입 안전·패턴 매칭·계산 식·성능을 심화 리뷰하라' },
+  php: { agentType: 'lang-toolkit:php-reviewer', ask: 'PSR-12·PHP 타입 시스템·Eloquent 패턴·보안·성능을 심화 리뷰하라' },
+  ruby: { agentType: 'lang-toolkit:ruby-reviewer', ask: '관용 Ruby·Active Record 쿼리 안전·Rails 보안 기본값·테스트 품질을 심화 리뷰하라' },
+  gdscript: { agentType: 'lang-toolkit:gdscript-reviewer', ask: '정적 타입·씬/노드 설계·시그널·수명주기 안전·성능을 심화 리뷰하라' },
+  dart: { agentType: 'mobile:flutter-reviewer', ask: '위젯 모범 사례·상태 관리·Dart 관용구·성능·접근성·보안을 심화 리뷰하라' },
+  swift: { agentType: 'mobile:swift-reviewer', ask: '프로토콜 지향 설계·값 의미론·ARC·Swift Concurrency·관용 패턴을 심화 리뷰하라' },
+})
+const CLS_SCHEMA = { type: 'object', required: ['files'], properties: { files: { type: 'array', items: { type: 'object', required: ['path', 'type'], properties: { path: { type: 'string' }, type: { type: 'string', enum: ['java', 'sql_mapper', 'frontend_react', 'frontend_vue', 'frontend_ts', 'migration', 'schema', 'python', 'python_django', 'python_fastapi', 'go', 'rust', 'kotlin', 'cpp', 'csharp', 'fsharp', 'php', 'ruby', 'gdscript', 'dart', 'swift', 'config', 'other'] } } } } } }
 let typed = []
 try {
   const cls = await agent(
     `다음 변경 파일을 유형으로 분류해 반환하라(경로 그대로): ${files.join(', ')}\n` +
-      '유형: java(.java)·sql_mapper(MyBatis 매퍼 XML·.sql)·frontend_react(.tsx/.jsx)·frontend_vue(.vue)·frontend_ts(.ts/.js)·migration(마이그레이션·DDL)·schema(스키마/엔티티)·config·other.',
+      '유형: java(.java)·sql_mapper(MyBatis 매퍼 XML·.sql)·frontend_react(.tsx/.jsx)·frontend_vue(.vue)·frontend_ts(.ts/.js)·migration(마이그레이션·DDL)·schema(스키마/엔티티)·' +
+      'python_django(Django 프로젝트 .py)·python_fastapi(FastAPI 앱 .py)·python(그 밖의 .py)·go(.go)·rust(.rs)·kotlin(.kt/.kts)·cpp(.c/.cc/.cpp/.h/.hpp)·' +
+      'csharp(.cs)·fsharp(.fs/.fsx)·php(.php)·ruby(.rb)·gdscript(.gd)·dart(.dart)·swift(.swift)·config·other.',
     { schema: CLS_SCHEMA, model: 'haiku', effort: 'low', phase: '리뷰', label: '유형 분류' },
   )
   if (!cls || !Array.isArray(cls.files)) log('유형 분류 결과 없음(null) — 전문(2계층) 리뷰 생략, 제네릭 5차원으로 계속')

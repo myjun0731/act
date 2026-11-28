@@ -4,7 +4,6 @@ description: Diagnose and accelerate large data movement — ingestion, backfill
 license: MIT
 metadata:
   origin: ECC
-tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 # Data Throughput Accelerator

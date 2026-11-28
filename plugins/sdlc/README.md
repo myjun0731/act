@@ -3,6 +3,10 @@
 분석 → 설계 → 구현 → 테스트 → 리뷰 → 완료 보고서를 **동적 워크플로 단위로 연계**하는 파이프라인. 각 단계는 제네릭(스택 중립)으로 동작하되, 같은 마켓의 **`dev-toolkit` 전문 에이전트·스킬을 재사용**해 리뷰·구현·테스트 깊이를 끌어올린다(없으면 제네릭으로 완주).
 
 ```
+claude plugin install sdlc@act
+```
+
+```
 /sdlc:pipeline 주문 취소 API 추가 — 품질 high
 ```
 
@@ -91,3 +95,30 @@ args.quality = {
   `/config`의 Dynamic workflow size 를 `medium` 이상(`deliver`는 `large`)으로 둔다.
 - 실행 승인은 권한 규칙 `Workflow` 또는 `Workflow(sdlc:*)`로 허용할 수 있다.
 - 자체 저작물.
+
+## 스킬·에이전트 목록
+
+<!-- inventory:begin -->
+### 스킬 (18)
+
+| 스킬 | 설명 |
+|---|---|
+| `brownfield-retrospective` | Run a structured engineering process retroactively against an existing project slice. |
+| `context-and-decisions` | Govern stable domain context with a narrowly scoped CONTEXT.md when needed, and route hard-to-reverse decisions to the existing architecture-decision… |
+| `docs-governance` | Route broad documentation-governance requests to existing act skills and run an opt-in, read-only audit of mapped documentation roles, links, ADR ind… |
+| `growth-log` | Write growth log entries that extract reusable patterns from completed work — root cause, transferable rule, and a recognizable signal — instead of d… |
+| `issue-review` | Review a GitHub issue the way a code review checks a PR. |
+| `module-governance` | Establish or maintain a business module's local agent instructions, domain-context links, and interface ownership when implementing a new module or c… |
+| `opensource-pipeline` | Open-source pipeline: fork, sanitize, and package private projects for safe public release. |
+| `orch-add-feature` | Orchestrate building a brand-new feature end to end — research, plan, TDD implementation, review, and gated commit — by delegating each phase to the … |
+| `orch-build-mvp` | Orchestrate bootstrapping a working MVP from a design or spec document — ingest the SDD/PRD, plan thin vertical slices, scaffold the first end-to-end… |
+| `orch-change-feature` | Orchestrate altering an existing, working feature to new desired behavior — update its tests to the new spec, change the implementation to match, rev… |
+| `orch-fix-defect` | Orchestrate fixing a bug — reproduce it as a failing regression test, fix to green, review, and gated commit — by delegating each phase to the matchi… |
+| `orch-pipeline` | Shared orchestration engine behind the orch-* skill family — the gated Research-Plan-TDD-Review-Commit pipeline mapped onto act's sdlc stages (analyz… |
+| `orch-refine-code` | Orchestrate a behavior-preserving refactor — confirm tests are green, restructure without changing behavior, keep tests green, review, and gated comm… |
+| `pipeline` | 분석 → 설계 → 구현 → 테스트 → 리뷰 → 완료 보고서를 sdlc 동적 워크플로 단위로 연계해 실행하는 SDLC 파이프라인 진행 규약. |
+| `product-capability` | Translate PRD intent, roadmap asks, or product discussions into an implementation-ready capability plan that exposes constraints, invariants, interfa… |
+| `production-audit` | Local-evidence production readiness audit for shipped apps, pre-launch reviews, post-merge checks, and "what breaks in prod?" questions without sendi… |
+| `search-first` | Research-before-coding workflow: search npm/PyPI, MCP servers, skills, and GitHub for existing tools before writing custom code, then adopt, extend, … |
+| `story-lifecycle` | Manage a file-based epic → story → sprint development loop without requiring an external project management tool. |
+<!-- inventory:end -->

@@ -1,7 +1,7 @@
 {
   "name": "overkill",
   "displayName": "Overkill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Surfaces advanced data structures, distributed-systems algorithms, niche frameworks, design patterns, and frontier tooling that go beyond the pragmatic answer. Each option is scored on a calibrated complexity scale with the concrete scenario in which it pays off.",
   "author": {
     "name": "Santiago Vargas de Kruijf",
@@ -10,5 +10,11 @@
   "homepage": "https://github.com/santiago-vargas-de-kruijf/claude-overkill",
   "repository": "https://github.com/santiago-vargas-de-kruijf/claude-overkill",
   "license": "MIT",
-  "keywords": ["architecture", "learning", "design", "advanced", "exploration"]
+  "keywords": [
+    "architecture",
+    "learning",
+    "design",
+    "advanced",
+    "exploration"
+  ]
 }

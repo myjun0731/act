@@ -4,7 +4,6 @@ description: Speed up a task by turning it into a dependency graph of parallel l
 license: MIT
 metadata:
   origin: ECC
-tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 # Parallel Execution Optimizer

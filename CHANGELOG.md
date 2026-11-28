@@ -13,6 +13,15 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**전체 점검 후 정비(부채 해소).** dev 2.1.0-dev.3 기준 전수 점검에서 나온 결함과 기존 부채를 정리했다.
+- **기존 ECC 참조 부채 36건 → 0**(`skillcheck_baseline.json` 비움): core(config-gc·mcp-dependency-review·skill-scout·skill-stocktake), dev-toolkit(config-health의 delivery-gate 전제 → 일반 Stop 훅 게이트, contract-first, dashboard-builder, build-error-resolver·doc-updater·react·typescript·vue-reviewer의 ECC 커맨드·규칙 경로), agentic(agent-introspection-debugging, agent-architecture-audit, benchmark-optimization-loop, blueprint의 ECC 설치 안내, continuous-agent-loop의 NanoClaw·`/quality-gate`·`/harness-audit`, iterative-retrieval).
+- `pypict` 스킬 name을 디렉터리와 같은 `pypict`로 바꿨다(이전 `pict-test-designer`). 호출 이름이 `/dev-toolkit:pypict`가 된다.
+- **깨진 상대 링크 정리**: web-frontend i18n-sync(ECC `hooks/README.md`), pypict 3곳(`CONTRIBUTING.md`), dev-toolkit rules-payload java 3곳(없는 `common/*.md`), agentic benchmark-optimization-loop(다른 플러그인 스킬). skillcheck에 **상대 링크 검사**를 추가했다(코드 블록·인라인 코드 제외, 대상이 없으면 ERROR).
+- **sdlc 0.6.0**: `review` 단계 2계층 전문 리뷰가 13개 언어 유형을 lang-toolkit·mobile 리뷰어로 보낸다(dev-toolkit `review-changes`와 같은 라우팅). 미설치면 기존처럼 1계층 제네릭 5차원이 커버한다.
+- **문서**: 신규 플러그인 9개 README에 설치 명령과 스킬·에이전트 표(프론트매터에서 생성, `<!-- inventory -->` 블록), agentic README 신설, sdlc·dev-toolkit README에 추가 스킬 반영, overkill·recursive-research README 설치 줄. 루트·allinone README와 마켓 설명의 옛 수치(core 스킬 4→5, dev-toolkit 워크플로 10→11·스킬 48→62, agentic 12→41, 공식 플러그인 7→8종) 정정, allinone 설명에 agentic 추가.
+- 프론트매터: 스킬 3개의 무의미한 `tools:` 키 삭제, overkill description을 1,024자 이하로 줄임(플래그 설명은 본문에 남김).
+- 버전: core 0.5.1, dev-toolkit 0.12.1, agentic 0.4.1, sdlc 0.6.0, web-frontend 0.2.1, overkill 0.1.1, allinone 0.5.3.
+
 **act 단독 동작.** 다른 개인 저장소를 가리키던 플러그인을 정리했다. 공식 마켓(claude-plugins-official) 의존은 그대로 둔다.
 - `overkill`(santiago-vargas-de-kruijf/claude-overkill `60c7bbb`)·`recursive-research`(Anjos2/recursive-research `15ed326`): 외부 git 소스 대신 act 안의 사본(`plugins/overkill`·`plugins/recursive-research`, MIT, LICENSE·NOTICE 포함)을 배포한다. 업스트림 변경은 자동으로 들어오지 않는다. recursive-research는 SKILL.md 최상위 `version`·`author`·`repository` 키를 `metadata`로 옮겼다.
 - `design-for-ai`(ryanthedev/design-for-ai): 마켓에서 뺐다. 원 저장소에 라이선스가 없어 사본을 넣을 수 없다. `design-eng` 0.1.2 → 0.2.0은 이 의존을 없앴다(스킬 7종은 그대로).

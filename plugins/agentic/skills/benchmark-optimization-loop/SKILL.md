@@ -147,12 +147,10 @@ install a scheduler or grant release authority.
 Reuse related skills when available in the host's installed profile; optional
 references below link to ECC's canonical sources.
 
-- [benchmark](../benchmark/SKILL.md) collects browser/API/build performance
+- `benchmark` (dev-toolkit) collects browser/API/build performance
   baselines; reuse it when those measurements serve the chosen goal.
-- [eval-harness](https://github.com/affaan-m/ECC/blob/main/skills/eval-harness/SKILL.md) provides agent capability/regression
+- `eval-harness` provides agent capability/regression
   evals and grader methods; reuse an appropriate existing evaluator.
-- [loop-design-check](https://github.com/affaan-m/ECC/blob/main/skills/loop-design-check/SKILL.md) designs or reviews feedback
+- `loop-design-check` designs or reviews feedback
   loops and runaway prevention; this skill conducts the measured search.
-- [benchmark-methodology](https://github.com/affaan-m/ECC/blob/main/skills/benchmark-methodology/SKILL.md) scores competitors
-  for competitive analysis, rather than implementation variants.
 - [Sources and scope](references/sources.md) records this extension's provenance.

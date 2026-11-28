@@ -89,7 +89,7 @@ Have an example to share? We'd love to include it!
    - Learning points
 3. Submit a pull request
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
+See the upstream pypict skill repository's contributing guide.
 
 ## External Resources
 

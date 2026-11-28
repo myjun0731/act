@@ -1,17 +1,17 @@
 ---
 name: config-health
-description: Runtime configuration integrity monitoring for Claude Code. Detects config drift, rule staleness, and hook wiring gaps at startup, with an optional per-tool mode. Complements delivery-gate with startup soft monitoring.
+description: Runtime configuration integrity monitoring for Claude Code. Detects config drift, rule staleness, and hook wiring gaps at startup, with an optional per-tool mode. Complements a session-end (Stop hook) quality gate, if you have one, with startup soft monitoring.
 metadata:
   origin: ECC
 ---
 
 # Config Health
 
-A real-time monitoring layer. delivery-gate blocks at session end; config-health catches problems during the session — when cheap to fix.
+A real-time monitoring layer. A session-end gate (Stop hook), if you have one, blocks at session end; config-health catches problems during the session — when cheap to fix.
 
 ## When to Activate
 
-- After installing delivery-gate and wanting defense in depth
+- After installing a session-end gate hook and wanting defense in depth
 - When hooks silently stop firing
 - When config rules accumulate but you're unsure which still work
 - At session startup for config integrity scan
@@ -21,9 +21,9 @@ A real-time monitoring layer. delivery-gate blocks at session end; config-health
 
 Session Start → config-health scans rules/hooks (soft warnings, never blocks)
 Session Work → optional PreToolUse guard, only if you wire it yourself
-Session End → delivery-gate verifies (hard block, exit 2)
+Session End → your Stop-hook gate, if any, verifies (hard block, exit 2)
 
-Boundary: "Can this be fixed retroactively?" Config drift → config-health warns. Missing growth-log → delivery-gate blocks (hard exit 2).
+Boundary: "Can this be fixed retroactively?" Config drift → config-health warns. Missing session deliverables → the Stop-hook gate blocks (hard exit 2).
 
 ## What It Monitors
 
@@ -218,7 +218,7 @@ before enabling. The helpers must sit in the same directory as the entry point.
 If your launcher sets `CLAUDE_CONFIG_DIR`, use that path in the hook command;
 `~/.claude` is not the file Claude loads in that setup.
 
-**Important:** Merge these hook entries into your existing `hooks` object — do not replace it, or you will lose hooks like delivery-gate.
+**Important:** Merge these hook entries into your existing `hooks` object — do not replace it, or you will lose your existing hooks.
 
 Default (SessionStart only):
 
@@ -243,8 +243,8 @@ Write; not recommended by default):
 
 ## Design Principles
 
-1. Never block on process monitoring — config-health warns; delivery-gate blocks
-2. Check what delivery-gate can't — config behavior vs filesystem state
+1. Never block on process monitoring — config-health warns; a Stop-hook gate blocks
+2. Check what a session-end gate can't — config behavior vs filesystem state
 3. Bias every judgement toward silence, and count what you did not judge. A
    path this monitor cannot build is unknown, not missing. A relative path is
    reported only when it is missing under every audited root. The asymmetry is

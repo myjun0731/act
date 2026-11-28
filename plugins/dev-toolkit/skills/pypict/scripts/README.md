@@ -66,7 +66,7 @@ Have a useful script to share?
 3. Add comments and examples in your script
 4. Submit a pull request
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+See the upstream pypict skill repository's contributing guide.
 
 ## Dependencies
 

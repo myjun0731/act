@@ -13,15 +13,17 @@ Spring Boot·Java 백엔드와 DB 작업에 쓰는 범용 스킬·에이전트 �
 | 스킬: DB 심화·배포 | postgresql-table-design, sql-optimization-patterns, database-migration, docker-patterns, deployment-patterns, canary-watch, hexagonal-architecture, contract-first, backend-patterns, data-throughput-accelerator |
 | 스킬: QA·분석·문서 | browser-qa, ai-regression-testing, test-collaboration, windows-desktop-e2e, codebase-onboarding, dashboard-builder, benchmark, config-health, living-docs-governance, documentation-lookup |
 | 스킬: 코드 품질·도구 (6) | coding-standards, error-handling, content-hash-cache-pattern, latency-critical-systems, code-tour(CodeTour 작성), terminal-opener(셸 없이 새 터미널 창 열기) — ECC 내재화 W2 |
+| 스킬: 외부 연동 (8, MCP·API 필요) | api-connector-builder, codehealth-mcp(CodeScene), exa-search, web-research-mcp(firecrawl·Exa), jira-integration, knowledge-ops, mailtrap-email-integration, plankton-code-quality — ECC 내재화 W5. 각 스킬 맨 위 `Requires:` 참고 |
 | 커맨드 (1) | `/dev-toolkit:test-coverage` — 커버리지 공백 분석과 테스트 생성 (JaCoCo·Jest·pytest 등) |
 | 에이전트 (16) | 리뷰어: java·security·typescript·react·vue-reviewer, database-reviewer / 전문: java-pro·sql-pro·database-architect·database-optimizer·legacy-modernizer·test-automator / 빌드·설계·문서: java-build-resolver·build-error-resolver·architect·doc-updater |
 | 규칙 원본 | `rules-payload/` (java 4종 + common/security). 플러그인으로는 배포되지 않아 `core:setup`이 복사한다 |
 
-## 동적 워크플로우 (10)
+## 동적 워크플로우 (11)
 
-`workflows/`에 멀티에이전트 오케스트레이션 스크립트 10종. 설치하면 슬래시 커맨드가 된다. 구조·전제·규모 가이드는 `workflows/README.md` 참조(오케스트레이터는 규모 `large` 권장).
+`workflows/`에 멀티에이전트 오케스트레이션 스크립트 11종. 설치하면 슬래시 커맨드가 된다. 구조·전제·규모 가이드는 `workflows/README.md` 참조(오케스트레이터는 규모 `large` 권장).
 
-- **리프 7**: `/dev-toolkit:review-changes` · `sql-db-audit` · `migration-verify` · `impact-analysis` · `codebase-map` · `test-coverage-boost` · `design-approaches`
+- **리프 8**: `/dev-toolkit:review-changes` · `sql-db-audit` · `migration-verify` · `impact-analysis` · `codebase-map` · `test-coverage-boost` · `design-approaches` · `db-diff`
+- `review-changes`는 lang-toolkit·mobile이 설치돼 있으면 Python·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 언어별 리뷰어로 보낸다(없으면 제네릭 리뷰).
 - **연계(오케스트레이터) 3**: `/dev-toolkit:pre-merge-gate` · `migration-readiness` · `onboard-pack` (리프를 `workflow()`로 엮음, 중첩 1단)
 
 ## 설치

@@ -15,6 +15,7 @@ ECC 이름 목록은 scripts/ecc_refs.json(gen_ecc_refs.py 로 고정 커밋에�
   ERROR  ECC 런타임 마커(~/.dsh, hermes, nanoclaw, /ck, cost-tracker, gateguard 등)
   ERROR  ECC 스킬·에이전트·커맨드 참조가 act 로컬 플러그인 어디에도 없음(설치 후 깨지는 참조)
   ERROR  scripts/ecc_refs.json 이 없음(ECC 참조 검사 불가)
+  ERROR  마크다운 상대 링크의 대상 파일이 없음(코드 블록·인라인 코드 안은 제외)
   WARN   알 수 없는 프론트매터 키 · description 1024자 초과
   WARN   참조가 act 가 아닌 공식 플러그인(feature-dev 등)에만 있음 — 그 플러그인을 의존성으로 두거나 "있으면 적용"으로 쓸 것
   WARN   metadata.origin 이 외부인데 플러그인에 ATTRIBUTION.md/THIRD_PARTY_NOTICES.md/NOTICE.md 가 없음
@@ -56,6 +57,10 @@ ALLOWED_KEYS = {
 }
 AGENT_KEYS = {"name", "description", "tools", "model", "color", "metadata", "license", "disallowedTools", "permissionMode",
               "skills", "effort", "maxTurns"}
+# 마크다운 상대 링크: [텍스트](경로). 코드 블록·인라인 코드 안의 것은 예시라 제외한다.
+MD_LINK = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\s]+)\)")
+FENCE = re.compile(r"```.*?```|~~~.*?~~~", re.S)
+INLINE_CODE = re.compile(r"`[^`\n]*`")
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 OWN_ORIGINS = {"", "act"}  # 이 값이면 외부 출처 아님
 
@@ -209,6 +214,14 @@ def check(root=ROOT, only=None):
     def scan(f, txt, own_kind, own_name):
         """한 파일 본문의 ECC 런타임 마커와 act 에 없는 ECC 스킬·에이전트·커맨드 참조."""
         frel = f.relative_to(root).as_posix()
+        if f.suffix.lower() == ".md":
+            body = INLINE_CODE.sub("", FENCE.sub("", txt))
+            for m in MD_LINK.finditer(body):
+                target = m.group(1).split("#", 1)[0]
+                if not target or re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith(("${", "<", "/")):
+                    continue
+                if not (f.parent / target).exists():
+                    add("ERROR", "broken-link", target, frel, f"상대 링크 '{m.group(1)}' 의 대상 파일이 없음")
         for label, rx in RUNTIME:
             m = rx.search(txt)
             if m:

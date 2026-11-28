@@ -74,7 +74,7 @@ If you'd like to help complete this documentation:
 2. Add content to this file
 3. Submit a pull request
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+See the upstream pypict skill repository's contributing guide.
 
 ## External Resources
 
