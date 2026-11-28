@@ -59,6 +59,8 @@ const VERDICT_SCHEMA = {
   required: ['real'],
   properties: {
     real: { type: 'boolean' },
+    // 파일을 열 수 없어 판정 자체를 못 했으면 true — real=false(오탐)와 구분해 지적을 '미검증'으로 보존한다
+    unreadable: { type: 'boolean' },
     reason: { type: 'string' },
   },
 }
@@ -87,13 +89,18 @@ const target = (typeof args === 'string' && args.trim())
   : (args && typeof args === 'object' && args.target) ? String(args.target).trim() : ''
 
 // 지적 1건을 반박 검증해 살아남으면 그 지적을, 아니면 null 을 돌려준다.
+// 검증 에이전트 실패(null)·파일 읽기 실패는 폐기하지 않고 '미검증'으로 보존한다(조용한 누락 방지).
 async function verify(f) {
   const v = await agent(
-    '다음 이관 검증 지적을 반박하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다.\n' +
+    `${scope}\n` +
+      '다음 이관 검증 지적을 반박하라. 해당 파일을 직접 열어 확인하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다. ' +
+      '단, 파일을 찾거나 열 수 없어 판정 자체를 못 했으면 real 대신 unreadable=true 로 답하라(오탐 판정과 구분).\n' +
       `파일: ${f.file}${f.line ? ':' + f.line : ''}\n분류: ${f.category || ''}\n심각도: ${f.severity}\n지적: ${f.summary}\n상세: ${f.detail || ''}`,
     { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${f.file}` },
   )
-  return (v && v.real) ? f : null
+  if (!v) return Object.assign({}, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증' })
+  if (v.unreadable) return Object.assign({}, f, { verifyNote: '⚠ 검증자가 파일을 열지 못함 — 미검증' })
+  return v.real ? f : null
 }
 
 // 1) 수집 -----------------------------------------------------------------
@@ -199,15 +206,59 @@ if (gaps.length) {
 } else {
   log('완전성 보강: 추가 위험 없음')
 }
-log(`최종 확인 지적 ${confirmed.length}건`)
+
+// 여러 감사 차원이 같은 근본 결함을 각자 보고한다(예: LIMIT a,b 를 정확성·방언·PG 함정이 모두 지적 — 실제 실행에서 한 결함이 최대 13회).
+// 에이전트가 같은 결함끼리 번호로 묶게 하고, 묶음이 모든 번호를 정확히 한 번씩 포함하지 않거나 실패하면 병합하지 않는다(fail-safe: 지적을 잃지 않음).
+const _SEV = Object.assign(Object.create(null), { critical: 0, high: 1, medium: 2, low: 3 })
+const _rk = (s) => (typeof _SEV[s] === 'number' ? _SEV[s] : 9)
+const GROUP_SCHEMA = { type: 'object', required: ['groups'], properties: { groups: { type: 'array', items: { type: 'array', items: { type: 'integer' } } } } }
+async function consolidate(list) {
+  if (list.length < 2) return list
+  let g = null
+  try {
+    g = await agent(
+      '다음 감사 지적 목록에서 "같은 파일의 같은 근본 결함"을 가리키는 항목끼리 번호로 묶어라. ' +
+        '줄 번호가 조금 다르거나 표현·언어·분류(category)가 달라도 같은 결함이면 한 묶음이다. 다른 결함은 절대 묶지 마라(같은 줄이라도 원인이 다르면 따로). ' +
+        '모든 번호가 정확히 한 묶음에 한 번씩 들어가야 한다(혼자인 항목은 [n] 하나짜리 묶음).\n' +
+        JSON.stringify(list.map((f, i) => ({ n: i, file: f.file, line: f.line, category: f.category, severity: f.severity, summary: f.summary }))),
+      { schema: GROUP_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: '의미 중복 병합' },
+    )
+  } catch (e) { log('의미 중복 병합 생략(예외) — 원 목록 그대로 사용'); return list }
+  const groups = (g && Array.isArray(g.groups)) ? g.groups : null
+  const flat = groups ? groups.flat() : []
+  const valid = groups && flat.length === list.length && flat.every((n) => Number.isInteger(n) && n >= 0 && n < list.length) &&
+    new Set(flat).size === list.length && groups.every((x) => Array.isArray(x) && x.length > 0)
+  if (!valid) { log('의미 중복 병합 결과가 유효하지 않음 — 원 목록 그대로 사용(지적 손실 방지)'); return list }
+  const warn = (f) => (f.verifyNote ? 1 : 0)
+  return groups.map((ix) => {
+    const members = ix.map((n) => list[n]).sort((a, b) => (_rk(a.severity) - _rk(b.severity)) || (warn(a) - warn(b)))
+    const rep = members[0]
+    if (members.length === 1) return rep
+    return Object.assign({}, rep, {
+      mergedCount: members.length,
+      mergedCategories: Array.from(new Set(members.map((m) => m.category).filter(Boolean))),
+      alsoReportedAs: members.slice(1, 4).map((m) => m.summary),
+    })
+  }).sort((a, b) => _rk(a.severity) - _rk(b.severity))
+}
+confirmed = await consolidate(confirmed)
+log(`최종 확인 지적 ${confirmed.length}건(의미 중복 병합 후), 미검증 보존 ${confirmed.filter((f) => f.verifyNote).length}건`)
 
 // 4) 리포트 ---------------------------------------------------------------
 phase('리포트')
 const report = await agent(
   '다음은 이관 검증에서 확인된 지적 목록(JSON)이다. 한국어 마크다운 이관 검증 리포트를 작성하라. 구성: ' +
     '① 위험 요약(심각도 high→low, 차원별), ② 롤백·무중단 준비 상태, ③ 테스트 공백과 추가 권고, ④ 단위별 상세(`파일:라인`·분류·요약·권고). ' +
-    '지적이 없으면 통과(PASS)임을 명시하라.\n\n' +
+    '지적이 없으면 통과(PASS)임을 명시하라. ' +
+    'mergedCount 가 있는 항목은 여러 차원이 같은 결함을 보고한 것이니 한 항목으로 쓰고 mergedCategories 를 함께 표기하라. ' +
+    'verifyNote 가 있는 항목은 반박 검증을 못 거친 것이니 별도 "미검증" 절로 모아 그 사실을 표시하고, 미검증 high 가 있으면 PASS 라고 쓰지 마라.\n\n' +
     JSON.stringify(confirmed),
   { model: 'sonnet', label: '리포트 작성' },
 )
-return report
+// 리포트 에이전트가 드물게 도구 호출을 본문으로 흘린다(`SubagentHandback({message: `…`})` + 꼬리말 — 실제 실행에서 관측). 본문만 남긴다.
+function cleanReport(s) {
+  if (typeof s !== 'string') return s
+  const m = s.match(/^\s*SubagentHandback\(\{\s*message:\s*`([\s\S]*)`\s*\}\)/)
+  return m ? m[1].replace(/\\`/g, '`').trim() : s
+}
+return cleanReport(report)

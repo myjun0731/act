@@ -254,16 +254,18 @@ phase('기록')
 const _fk = (x) => `${_nf(x.file)}:${x.line || 0}:${String(x.title || '')}`
 const fixedKeys = new Set(fixes.filter((x) => x.fixed).map(_fk))
 const unresolved = confirmed.filter((f) => f.severity !== 'low' && !fixedKeys.has(_fk(f)))
-await agent(
+const rec = await agent(
   `다음 리뷰 결과로 ${OUT} 를 한국어 마크다운으로 작성하라. 이미 파일이 있으면 새 회차 절을 덧붙여라. ` +
     '구성: 요약(차원별·심각도별 건수, 수정/미해결, 재테스트 결과), 확정 지적 표(심각도·차원·위치·내용·조치), 미해결 목록과 권고, low 지적 목록.\n' +
+    '파일을 쓴 뒤 같은 경로를 다시 읽어 실제로 저장됐는지 확인하고 { written, path, bytes, reason } 로 반환하라. 쓰기·확인에 실패했으면 written=false 와 reason. 확인하지 않은 written=true 는 금지.\n' +
     JSON.stringify({ base: base, files: files, confirmed: confirmed, fixes: fixes, retest: retest }),
-  { model: 'sonnet', phase: '기록', label: '리뷰 기록', effort: 'low' },
+  { schema: { type: 'object', required: ['written', 'path'], properties: { written: { type: 'boolean' }, path: { type: 'string' }, bytes: { type: 'integer' }, reason: { type: 'string' } } }, model: 'sonnet', phase: '기록', label: '리뷰 기록', effort: 'low' },
 )
 
 return {
   phase: 'review',
-  path: OUT,
+  path: (rec && rec.written === true) ? OUT : null,  // 기록 파일이 실제로 저장됐을 때만 경로를 준다
+  recordError: (rec && rec.written === true) ? null : ('기록 파일 작성 실패 — ' + String((rec && rec.reason) || '작성 에이전트 결과 없음').slice(0, 300)),
   confirmed: confirmed.length,
   bySeverity: ['critical', 'high', 'medium', 'low'].reduce((o, s) => { o[s] = confirmed.filter((f) => f.severity === s).length; return o }, {}),
   fixed: fixes.filter((x) => x.fixed).length,

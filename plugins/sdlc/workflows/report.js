@@ -29,9 +29,23 @@ const md = await agent(
     '## 4. 변경 내역 — 파일별 변경 요약(diff stat 근거)\n' +
     '## 5. 설계 이탈·결정 사항\n## 6. 남은 위험·미해결 항목\n## 7. 후속 조치 권고(커밋·PR·배포 전 확인 포함)\n' +
     (augment.length ? '## 8. 보강 분석 (dev-toolkit) — 영향·회귀·DB 감사·커버리지 등 하위 워크플로 결과를 요약(아래 보강 블록 근거, 게이트엔 미반영된 자문)\n' : '') +
-    '문서에 없는 사실을 지어내지 말고, 확인 못 한 항목은 "미확인"으로 표시하라. 코드는 수정하지 마라. 작성한 보고서 본문을 그대로 반환하라.\n\n' +
+    '문서에 없는 사실을 지어내지 말고, 확인 못 한 항목은 "미확인"으로 표시하라. 코드는 수정하지 마라. ' +
+    '파일을 쓴 뒤 같은 경로를 다시 읽어 실제로 저장됐는지 확인하고 { written, path, bytes, reason, report(보고서 본문) } 로 반환하라. ' +
+    '쓰기·확인에 실패했으면 written=false 와 reason 을 주고, 본문은 report 에 그대로 실어라(호출자가 대신 보존). 확인하지 않은 written=true 는 금지.\n\n' +
     `파이프라인 결과 요약(JSON): ${JSON.stringify({ outcome: (A.outcome && typeof A.outcome === 'object' && !Array.isArray(A.outcome)) ? Object.assign({}, A.outcome, { augment: augment.map((a) => ({ step: a.step, ok: a.ok })) }) : null, history: A.history || null }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').slice(0, 12000)}` +
     augGuard,
-  { model: 'sonnet', phase: '보고서', label: 'REPORT.md' },
+  {
+    schema: { type: 'object', required: ['written', 'path', 'report'], properties: { written: { type: 'boolean' }, path: { type: 'string' }, bytes: { type: 'integer' }, reason: { type: 'string' }, report: { type: 'string' } } },
+    model: 'sonnet', phase: '보고서', label: 'REPORT.md',
+  },
 )
-return { phase: 'report', path: OUT, report: md }
+// 실제로 저장된 경우에만 path 를 준다 — 쓰기가 거부돼도 path 를 돌려 deliver 가 없는 REPORT.md 를 보고하던 결함(실제 실행에서 관측).
+const written = !!(md && md.written === true && !(typeof md.bytes === 'number' && md.bytes <= 0))
+if (!written) log(`⚠ ${OUT} 작성 실패 — ${String((md && md.reason) || '보고서 에이전트 결과 없음').slice(0, 200)} (본문은 반환값 report 에 보존)`)
+return {
+  phase: 'report',
+  path: written ? OUT : null,
+  written: written,
+  error: written ? null : ('보고서 파일 작성 실패 — ' + String((md && md.reason) || '보고서 에이전트 결과 없음').slice(0, 300)),
+  report: md ? (md.report || '') : '',
+}

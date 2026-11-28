@@ -142,17 +142,19 @@ const build = await agent(
 // 4) 기록 -------------------------------------------------------------------
 phase('기록')
 const list = tasks.map((t) => results[t.id] || { id: t.id, status: 'failed', notes: '미실행' })
-await agent(
+const rec = await agent(
   `다음 구현 결과로 ${OUT} 를 한국어 마크다운으로 작성하라${only ? '(이번은 재시도 실행이니 기존 파일이 있으면 "재시도" 절을 덧붙여라)' : ''}. ` +
     '구성: 요약(완료/부분/실패 수, 빌드 결과), 작업별 표(ID·제목·상태·변경 파일·비고), 설계 이탈 사항, 빌드 로그 요약.\n' +
+    '파일을 쓴 뒤 같은 경로를 다시 읽어 실제로 저장됐는지 확인하고 { written, path, bytes, reason } 로 반환하라. 쓰기·확인에 실패했으면 written=false 와 reason. 확인하지 않은 written=true 는 금지.\n' +
     JSON.stringify({ tasks: list, build: build }),
-  { model: 'sonnet', phase: '기록', label: '구현 기록', effort: 'low' },
+  { schema: { type: 'object', required: ['written', 'path'], properties: { written: { type: 'boolean' }, path: { type: 'string' }, bytes: { type: 'integer' }, reason: { type: 'string' } } }, model: 'sonnet', phase: '기록', label: '구현 기록', effort: 'low' },
 )
 
 const failed = list.filter((r) => r.status !== 'done').map((r) => r.id)
 return {
   phase: 'implementation',
-  path: OUT,
+  path: (rec && rec.written === true) ? OUT : null,  // 기록 파일이 실제로 저장됐을 때만 경로를 준다
+  recordError: (rec && rec.written === true) ? null : ('기록 파일 작성 실패 — ' + String((rec && rec.reason) || '작성 에이전트 결과 없음').slice(0, 300)),
   buildOk: !!(build && build.buildOk),
   buildErrors: build ? build.errors || '' : '빌드 에이전트 실패',
   done: list.filter((r) => r.status === 'done').length,

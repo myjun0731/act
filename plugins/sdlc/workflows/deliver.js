@@ -115,4 +115,7 @@ return {
   review: review ? { confirmed: review.confirmed, fixed: review.fixed, unresolvedHigh: review.unresolvedHigh } : null,
   augment: augment.map((a) => ({ step: a.step, ok: a.ok })),
   reportPath: report ? report.path : null,
+  // 보고서 파일이 저장되지 않았으면(쓰기 거부 등) 경로 대신 원인과 본문을 돌려준다 — 없는 파일을 가리키지 않음
+  reportError: report ? (report.error || null) : '보고서 단계 실패',
+  report: (report && !report.path) ? (report.report || '') : undefined,
 }

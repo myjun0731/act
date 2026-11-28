@@ -20,13 +20,14 @@
 ```
 { label, dialect, scope:{schema, tableGlob},
   tables:[{ name,
-    columns:[{name, rawType, normType, nullable, default, ordinal}],
+    columns:[{name, rawType, normType, nullable, default, identity, ordinal}],
     primaryKey:[...], foreignKeys:[{columns,refTable,refColumns}],
     indexes:[{name,columns,unique}], constraints:[{name,kind,expr}] }] }
 ```
 - 계약에 **host·port·user·password·connectionString·실제 행값 필드가 아예 존재하지 않는다** → 비밀/IP/고객데이터가 리포트로 샐 구조 자체가 없음(보안이 설계로 보장).
 - `label`은 DSN이 아니라 db-targets.json의 **불투명 논리명**(예: `mariadb-legacy-6`).
 - 방언 손실 방지를 위해 `rawType`(원본 타입 문자열)과 `normType`(방언 중립 정규 타입)을 **둘 다** 보존.
+- `identity`는 자동 증가 컬럼(AUTO_INCREMENT·SERIAL·`GENERATED … AS IDENTITY`·nextval 기본값) 여부다(입력의 `autoIncrement`도 받는다). 기준선에 있고 대상에 없으면 `identity_dropped`=high — 컷오버 후 id 를 생략한 INSERT 가 실패한다(실제 실행에서 타입 비교만으로는 빠지던 차이).
 
 ### 3. 아웃바운드 포트 = DatabaseIntrospectionPort, 어댑터 3종
 db-diff는 "label에 대한 정규 스냅샷을 공급받는다"는 포트에만 의존:

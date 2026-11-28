@@ -52,7 +52,8 @@ const IMPACT_SCHEMA = {
 const VERDICT_SCHEMA = {
   type: 'object',
   required: ['real'],
-  properties: { real: { type: 'boolean' }, reason: { type: 'string' } },
+  // unreadable: 파일을 열 수 없어 판정 자체를 못 함 — real=false(오탐)와 구분해 '미검증'으로 보존
+  properties: { real: { type: 'boolean' }, unreadable: { type: 'boolean' }, reason: { type: 'string' } },
 }
 
 const target = (typeof args === 'string' && args.trim())
@@ -108,11 +109,16 @@ phase('검증')
 const confirmed = (await parallel(
   merged.map((it) => async () => {
     const v = await agent(
-      '다음 "영향받음" 주장을 반박하라. 실제로 변경에 의해 영향받지 않거나 근거가 약하면 real=false.\n' +
+      `${scope}\n` +
+        '다음 "영향받음" 주장을 반박하라. 실제로 변경에 의해 영향받지 않거나 근거가 약하면 real=false. ' +
+        '단, 파일을 찾거나 열 수 없어 판정 자체를 못 했으면 real 대신 unreadable=true 로 답하라(오탐 판정과 구분).\n' +
         `영역: ${it.area}\n파일: ${it.file || ''}\n각도: ${it.angle}\n근거: ${it.reason}`,
       { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${it.area}` },
     )
-    return (v && v.real) ? it : null
+    // 검증 에이전트 실패(null)·파일 읽기 실패는 폐기하지 않고 '미검증'으로 보존한다(영향 누락 = 회귀 누락)
+    if (!v) return Object.assign({}, it, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증' })
+    if (v.unreadable) return Object.assign({}, it, { verifyNote: '⚠ 검증자가 파일을 열지 못함 — 미검증' })
+    return v.real ? it : null
   }),
 )).filter(Boolean)
 log(`확인된 영향 ${confirmed.length}건`)
@@ -121,8 +127,15 @@ log(`확인된 영향 ${confirmed.length}건`)
 phase('계획')
 const plan = await agent(
   '다음은 변경의 확인된 영향 영역(JSON)이다. module-regression 스킬 지침이 있으면 적용해 한국어 마크다운 "회귀 테스트 계획"을 작성하라. ' +
-    '구성: ① 영향 요약(risk 높은 순·각도별), ② 재테스트 대상(모듈·화면·쿼리)과 우선순위, ③ 권장 회귀 범위. 영향이 없으면 그 사실을 명시.\n\n' +
+    '구성: ① 영향 요약(risk 높은 순·각도별), ② 재테스트 대상(모듈·화면·쿼리)과 우선순위, ③ 권장 회귀 범위. 영향이 없으면 그 사실을 명시. ' +
+    'verifyNote 가 있는 항목은 반박 검증을 못 거친 영향이니 버리지 말고 "미검증 영향"으로 따로 표시해 재테스트 대상에 포함하라.\n\n' +
     JSON.stringify(confirmed),
   { model: 'sonnet', label: '회귀 계획' },
 )
-return plan
+// 리포트 에이전트가 드물게 도구 호출을 본문으로 흘린다(`SubagentHandback({message: `…`})` + 꼬리말 — 실제 실행에서 관측). 본문만 남긴다.
+function cleanReport(s) {
+  if (typeof s !== 'string') return s
+  const m = s.match(/^\s*SubagentHandback\(\{\s*message:\s*`([\s\S]*)`\s*\}\)/)
+  return m ? m[1].replace(/\\`/g, '`').trim() : s
+}
+return cleanReport(plan)

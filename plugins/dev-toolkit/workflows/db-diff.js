@@ -123,6 +123,8 @@ function projColumn(c) {
   return {
     name: pStr(c.name), rawType: pStr(c.rawType), normType: pStr(c.normType),
     nullable: !!c.nullable, default: (c.default == null ? null : pStr(c.default)),
+    // 자동 증가(AUTO_INCREMENT·SERIAL·IDENTITY·nextval 기본값). 소실되면 id 를 생략한 INSERT 가 컷오버 후 실패한다
+    identity: !!(c.identity || c.autoIncrement),
     ordinal: (typeof c.ordinal === 'number' ? c.ordinal : null),
   }
 }
@@ -211,6 +213,9 @@ function computeDiffs(base, other) {
       if (ad !== bd) {
         out.push({ object: t + '.' + c, category: 'attribute', kind: 'default_changed', baseVal: ad || '(없음)', otherVal: bd || '(없음)' })
       }
+      if (!!a.identity !== !!b.identity) {
+        out.push({ object: t + '.' + c, category: 'attribute', kind: (a.identity ? 'identity_dropped' : 'identity_added'), baseVal: (a.identity ? 'identity/auto-increment' : '(없음)'), otherVal: (b.identity ? 'identity/auto-increment' : '(없음)') })
+      }
     }
     const bix = byName(bt[t].indexes), oix = byName(ot[t].indexes)
     const idd = diffNames(Object.keys(bix), Object.keys(oix))
@@ -269,7 +274,7 @@ function computeProfileDiffs(base, other) {
 
 // 에이전트 분류 누락 시 결정적 심각도 휴리스틱(백필 안전망)
 function heuristicSeverity(kind) {
-  if (kind === 'table_dropped' || kind === 'column_dropped' || kind === 'pk_changed') return 'high'
+  if (kind === 'table_dropped' || kind === 'column_dropped' || kind === 'pk_changed' || kind === 'identity_dropped') return 'high'
   if (kind === 'index_dropped' || kind === 'default_changed' || kind === 'type_changed' || kind === 'rowcount_changed' || kind === 'nullratio_changed') return 'medium'
   return 'low'
 }
@@ -321,8 +326,8 @@ const collected = await agent(
   '다음 입력에서 비교할 DB 스냅샷을 수집·정규화하라.\n입력(args): ' + (rawArgs || '(없음)') + '\n\n' +
     '규칙:\n' +
     '① 입력이 스냅샷 파일 경로면 읽고, 인라인 JSON/DDL이면 파싱해 "정규 스키마 계약"으로 변환한다. ' +
-    '계약 형태: { label, dialect, scope:{schema,tableGlob}, tables:[{ name, columns:[{name, rawType, normType, nullable, default, ordinal}], primaryKey:[...], foreignKeys:[...], indexes:[...], constraints:[...] }] }. ' +
-    'rawType(원본 타입 문자열)와 normType(방언 중립 정규 타입)을 모두 채운다.\n' +
+    '계약 형태: { label, dialect, scope:{schema,tableGlob}, tables:[{ name, columns:[{name, rawType, normType, nullable, default, identity, ordinal}], primaryKey:[...], foreignKeys:[...], indexes:[...], constraints:[...] }] }. ' +
+    'rawType(원본 타입 문자열)와 normType(방언 중립 정규 타입)을 모두 채운다. identity 는 자동 증가 컬럼(AUTO_INCREMENT·SERIAL·GENERATED … AS IDENTITY·nextval 기본값)이면 true.\n' +
     '② 보안(최우선): host·port·user·password·connectionString·DSN·실제 행값/데이터/샘플을 계약에 **절대 넣지 마라**. 스키마 구조만. label은 DSN/호스트가 아니라 db-targets.json 류의 불투명 논리명이어야 한다.\n' +
     '③ 유효 스냅샷이 2개 미만이면 needsSnapshot=true로 두고, instructions에 각 방언별 **읽기 전용** 조회 지시서(information_schema.columns·table_constraints·key_column_usage·statistics, PostgreSQL은 pg_indexes 등 — 쓰기 0)를 적어라. 사용자가 외부 DB 조회 도구로 실행해 결과를 재투입하면 2회차에 분석한다. 이 워크플로는 DB에 직접 접속하지 않는다.\n' +
     '④ provenance(각 스냅샷의 출처·시점 라벨, 비밀 아님)가 입력에 있으면 보존하라.\n' +
@@ -365,7 +370,7 @@ const perPair = await parallel(
     const diffs = computeDiffs(pair.base, pair.other)
     log(pair.other.label + ': 결정적 구조 차이 ' + diffs.length + '건')
     const instr = '기준선 "' + baseL + '"(' + safeLabel(pair.base.dialect) + ') 와 대상 "' + otherL + '"(' + safeLabel(pair.other.dialect) + ') 의 **결정적으로 계산된 구조 차이 목록(diffs)**을 이관 관점으로 분류하라. ' +
-      '심각도 기준: 데이터 손실/비호환(테이블·컬럼 삭제, 타입 축소 예: varchar(200)→varchar(100), 의미 비호환 예: tinyint(1)/smallint→boolean, 문자 일시 예: varchar(14)→timestamp, PK 변경)=high; 인덱스 삭제·기본값 변경=medium; 테이블·컬럼 추가(nullable)·타입 확장(varchar→text)·방언 등가(예: int(11)→integer)=low. ' +
+      '심각도 기준: 데이터 손실/비호환(테이블·컬럼 삭제, 타입 축소 예: varchar(200)→varchar(100), 의미 비호환 예: tinyint(1)/smallint→boolean, 문자 일시 예: varchar(14)→timestamp, PK 변경, 자동 증가/identity 소실)=high; 인덱스 삭제·기본값 변경=medium; 테이블·컬럼 추가(nullable)·타입 확장(varchar→text)·방언 등가(예: int(11)→integer)=low. ' +
       'MariaDB→PostgreSQL 함정(정수 setString, varchar(14) 캐스트, date_format·substring_index)은 detail에 후보로 명시(권위 판정은 도메인 플러그인 위임). postgresql-table-design·postgres-patterns·mysql-patterns 스킬 지침이 있으면 적용.'
     return classify(diffs, baseL, otherL, 'dev-toolkit:database-architect', '분류', '분류:' + otherL, instr)
   }),
@@ -438,4 +443,10 @@ const report = await agent(
     dataBlock({ meta: reportMeta, findings: confirmedAll }),
   { agentType: 'dev-toolkit:database-architect', label: 'diff 리포트' },
 )
-return report
+// 리포트 에이전트가 드물게 도구 호출을 본문으로 흘린다(`SubagentHandback({message: `…`})` + 꼬리말 — 실제 실행에서 관측). 본문만 남긴다.
+function cleanReport(s) {
+  if (typeof s !== 'string') return s
+  const m = s.match(/^\s*SubagentHandback\(\{\s*message:\s*`([\s\S]*)`\s*\}\)/)
+  return m ? m[1].replace(/\\`/g, '`').trim() : s
+}
+return cleanReport(report)

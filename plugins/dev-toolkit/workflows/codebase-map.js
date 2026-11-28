@@ -80,4 +80,10 @@ const map = await agent(
     JSON.stringify(summaries),
   { agentType: 'dev-toolkit:architect', label: '아키텍처 맵' },
 )
-return map
+// 리포트 에이전트가 드물게 도구 호출을 본문으로 흘린다(`SubagentHandback({message: `…`})` + 꼬리말 — 실제 실행에서 관측). 본문만 남긴다.
+function cleanReport(s) {
+  if (typeof s !== 'string') return s
+  const m = s.match(/^\s*SubagentHandback\(\{\s*message:\s*`([\s\S]*)`\s*\}\)/)
+  return m ? m[1].replace(/\\`/g, '`').trim() : s
+}
+return cleanReport(map)

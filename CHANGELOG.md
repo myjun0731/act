@@ -13,6 +13,15 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**실동작 테스트 2차 — 남은 워크플로 전부.** 결함을 심은 샘플 저장소(Python·SQLite + MariaDB 마이그레이션·MyBatis 매퍼·PG 스냅샷)에서 이전에 실제로 돌리지 않은 워크플로를 모두 실행했다: dev-toolkit `migration-readiness`(migration-verify·impact-analysis·db-diff 포함)·`onboard-pack`(codebase-map·sql-db-audit)·`pre-merge-gate`(review-changes·sql-db-audit·impact-analysis)·`design-approaches`·`test-coverage-boost`, sdlc `analyze`→`design`→`deliver`(implement·test·review·report). 에이전트 약 450개 실행, 오류 0. 찾은 결함:
+- **[high] sql-db-audit 중복 폭증**: 파일마다 5개 차원(정확성·방언·PG 함정·최적화·스키마)이 같은 결함을 각자 보고해 2개 파일에 확정 22~26건(high 15~17, `LIMIT a,b` 한 결함이 최대 13회)이 나왔다. sdlc review 와 같은 **의미 중복 병합**을 넣었다(묶음이 모든 번호를 정확히 한 번씩 포함하지 않거나 실패하면 병합 안 함). 실제 재실행에서 13건(high 7), 심은 결함 모두 유지. migration-verify 에도 같은 병합을 넣었다.
+- **[high] 없는 보고서 경로를 성공으로 보고**: sdlc `report`가 REPORT.md 쓰기가 거부돼도 `path`를 돌려줘, `deliver`가 존재하지 않는 `reportPath`로 completed 를 보고했다. analyze·design 이 쓰던 작성 결과 계약(`{written, path, bytes, reason}`, 다시 읽어 확인)을 report·implement·test·review 의 기록 단계에도 적용했다. 저장 안 되면 `path: null`과 `error`/`recordError`, report 는 본문을 반환값에 보존, deliver 는 `reportError`·`report`를 함께 돌려준다. 실제 재실행에서 written=true·파일 존재 확인.
+- **[medium] 검증 단계가 지적을 조용히 버림(나머지 3개 워크플로)**: review-changes 에서 고친 것과 같은 결함이 sql-db-audit·migration-verify·impact-analysis 에 남아 있었다. 검증 에이전트 실패(null)·파일 읽기 실패(`unreadable`)를 오탐과 구분해 '미검증'으로 보존하고, 검증 프롬프트에 범위·수집 경로를 준다. 리포트는 미검증을 별도 절로 표시.
+- **[medium] db-diff 가 자동 증가(identity) 소실을 못 잡음**: 스냅샷 계약에 자동 증가 필드가 없어 `orders.id` AUTO_INCREMENT → PG 일반 컬럼(컷오버 후 INSERT 실패)이 차이에서 빠졌다. 계약에 `identity`(`autoIncrement` 별칭 허용)를 추가하고 `identity_dropped`=high 로 결정적 계산. 실제 재실행에서 차이 9 → 10건(high 2 → 3).
+- **[low] 리포트 본문 오염**: 리포트 에이전트가 드물게 도구 호출을 본문으로 흘렸다(`SubagentHandback({message: …})` + 꼬리말, 실제 관측). dev-toolkit 워크플로 11개의 최종 반환에 래퍼 제거를 넣었다(정상 본문은 그대로).
+- 확인만 한 것: deliver 는 9개 작업 구현·테스트 39개 통과·리뷰 low 7건으로 정상 수렴, 기존 인젝션(기준선 커밋에 있던 줄)은 변경 범위 밖이라 리뷰 대상이 아님(정상). test-coverage-boost 는 기존 파일을 고치지 않고 새 테스트 3개 파일(29개)을 만들었고, 실패 2건은 심은 SQL 인젝션을 정확히 잡은 것. 목 런타임으로 병합 유효·무효·예외, null·unreadable 보존, 쓰기 거부 전파, identity 계산을 검증.
+- 범위 밖: 외부 키·MCP 가 필요한 스킬, macOS·Linux 는 이번에도 실행하지 않았다. pre-merge-gate·deliver 는 설치본(dev.3)으로 돌려 하위 review-changes·review 는 이전 버전이었다(수정본은 따로 실제 실행).
+
 **정밀 검증 3차.** 고친 것들이 실제 흐름에서 동작하는지 다시 돌려 봤다.
 - review-changes 수정본을 실제 저장소(Swift·Python·Go 변경)에서 실행: 지난 실행에서 검증 단계가 버리던 `worker.go` high 4건이 모두 반박 검증을 통과해 리포트에 남음(확정 16건, 미검증 0).
 - 격리 설정(`CLAUDE_CONFIG_DIR`)에 로컬 저장소를 디렉터리 마켓으로 붙여 설치: 로더가 센 스킬·에이전트 수가 18개 플러그인 모두 저장소와 일치(skills = 스킬 폴더 + commands). allinone 은 공식 마켓 의존(`pr-review-toolkit`)이라 공식 마켓이 없는 격리 환경에서 로드 실패 — 의도된 동작.

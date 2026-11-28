@@ -155,17 +155,19 @@ for (let r = 1; r <= maxFixRounds && run && !run.passed; r++) {
 
 // 5) 기록 -------------------------------------------------------------------
 phase('기록')
-await agent(
+const rec = await agent(
   `다음 테스트 결과로 ${OUT} 를 한국어 마크다운으로 작성하라${mode === 'verify' ? '(재검증 실행이니 기존 파일이 있으면 "재검증" 절을 덧붙여라)' : ''}. ` +
     `구성: 요약(통과 여부·총/실패 수·수정 라운드), AC 커버리지 표(설계서 ${design} 의 AC → TC → 테스트 파일 → 결과), ` +
     '라운드별 실패·수정 이력, 남은 실패와 원인 진단, 테스트를 수정한 경우 그 근거.\n' +
+    '파일을 쓴 뒤 같은 경로를 다시 읽어 실제로 저장됐는지 확인하고 { written, path, bytes, reason } 로 반환하라. 쓰기·확인에 실패했으면 written=false 와 reason. 확인하지 않은 written=true 는 금지.\n' +
     JSON.stringify({ mode: mode, written: written, rounds: rounds, last: run }),
-  { model: 'sonnet', phase: '기록', label: '테스트 기록', effort: 'low' },
+  { schema: { type: 'object', required: ['written', 'path'], properties: { written: { type: 'boolean' }, path: { type: 'string' }, bytes: { type: 'integer' }, reason: { type: 'string' } } }, model: 'sonnet', phase: '기록', label: '테스트 기록', effort: 'low' },
 )
 
 return {
   phase: 'test',
-  path: OUT,
+  path: (rec && rec.written === true) ? OUT : null,  // 기록 파일이 실제로 저장됐을 때만 경로를 준다
+  recordError: (rec && rec.written === true) ? null : ('기록 파일 작성 실패 — ' + String((rec && rec.reason) || '작성 에이전트 결과 없음').slice(0, 300)),
   mode: mode,
   planFailed: planFailed,
   passed: !!(run && run.passed && !((run.total || 0) === 0 && mode === 'full')),  // full 모드에서 실행 0건을 '빈 통과'로 보지 않음
