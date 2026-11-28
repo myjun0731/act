@@ -177,6 +177,32 @@ def main():
             else:
                 plugin_tags.append((tag, f"{name} {ver}"))
 
+    # 3-b) 프리릴리스: 이전 시드 이후 내용이 바뀐 플러그인은 version 도 바뀌어야 한다.
+    # Claude Code 는 플러그인 캐시를 version 으로 구분해, 같은 version 으로 내용만 바꿔 발행하면 이전 시드를 받은
+    # PC 는 "이미 최신"으로 보고 옛 내용을 계속 쓴다(2.1.0-dev.4 → dev.5 에서 core 0.5.1 로 실제 발생).
+    if cfg["kind"] == "pre" and base:
+        prev_n = [int(m.group(1)) for t in existing
+                  for m in [re.match(r"^v" + re.escape(base) + r"-" + cfg["suffix"] + r"\.(\d+)$", t)] if m]
+        prev = f"v{base}-{cfg['suffix']}.{max(prev_n)}" if prev_n else None
+        for e in (mkt.get("plugins", []) if prev else []):
+            src = e.get("source")
+            if not (isinstance(src, str) and src.startswith("./")):
+                continue
+            pdir = (ROOT / src).resolve()
+            rel = pdir.relative_to(ROOT).as_posix()
+            pj = load(pdir / ".claude-plugin" / "plugin.json")
+            old = git("show", f"{prev}:{rel}/.claude-plugin/plugin.json", check=False)
+            if old.returncode != 0:
+                continue  # 이전 시드에 없던 새 플러그인
+            try:
+                old_ver = json.loads(old.stdout).get("version")
+            except Exception:
+                continue
+            changed = git("diff", "--quiet", prev, "HEAD", "--", rel, check=False).returncode != 0
+            if changed and old_ver == pj.get("version"):
+                errors.append(f"{pj['name']}: {prev} 이후 내용이 바뀌었는데 version 이 {old_ver} 그대로입니다 — "
+                              f"이전 시드를 받은 PC 가 갱신되지 않습니다. 올리세요.")
+
     # 4) 플러그인 매니페스트 검증
     claude = shutil.which("claude")
     if claude:

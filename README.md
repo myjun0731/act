@@ -51,7 +51,7 @@ claude plugin marketplace add anthropics/claude-plugins-official
 |---|---|---|
 | allinone | 0.5.3 | 메타 플러그인: core·dev-toolkit·sdlc·design-eng·agentic·overkill·recursive-research + 공식 플러그인 8종 |
 | dev-toolkit | 0.12.1 | Java·Spring·DB·레거시·설계·협업·디버깅·TDD·PICT·MCP·코드 품질·외부 연동(Jira·CodeScene·Exa·웹 조사 등, MCP 필요) 스킬 62, 동적 워크플로 11, 리뷰·구현 에이전트 16, 커버리지 커맨드, 규칙 원본 |
-| core | 0.5.1 | 비밀파일 가드·prettier 훅, 상태줄, /remember·/recall, /core:setup, 설정 정리·스킬 점검 스킬 5 |
+| core | 0.5.2 | 비밀파일 가드·prettier 훅, 상태줄, /remember·/recall, /core:setup, 설정 정리·스킬 점검 스킬 5 |
 | sdlc | 0.6.0 | 분석→설계→구현→테스트→리뷰→보고서 동적 워크플로 7 + 진행 스킬(`/sdlc:pipeline`) + 스킬 17(orch-* 시나리오 오케스트레이션 6, production-audit, search-first, 이슈 리뷰·문서·모듈 거버넌스·스토리 진행·오픈소스 공개 파이프라인 등). 분석·설계는 사용자 지정 품질까지 반복, 이후 자동 연계. review는 2계층(제네릭+유형별 전문 리뷰어+보안 상시 레인), dev-toolkit 전문 에이전트·스킬 재사용(의존, 미설치 시 제네릭 폴백). 토큰 모델 라우팅(judges·리뷰어·verify→sonnet, 기계→haiku) |
 | agentic | 0.4.1 | 에이전트 아키텍처·루프·파이프라인·보안 설계·평가·멀티에이전트 협의 스킬 41 (외부 원본 내재화, MIT) |
 | design-eng | 0.2.0 | 디자인·애니메이션 스킬 7종 |

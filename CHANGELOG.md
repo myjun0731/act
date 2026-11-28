@@ -13,6 +13,8 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**배포 — core 0.5.2(2.1.0-dev.6).** core 는 2.1.0-dev.4 와 dev.5 에서 내용이 바뀌었는데 version 이 둘 다 0.5.1 이라, dev.4 를 받은 PC 는 dev.5 로 갱신해도 "이미 최신"으로 보고 format_on_edit 수정(npx → node 직접 실행)을 받지 못했다. core 를 0.5.2 로 올렸다. 재발 방지로 `release.py` 에 프리릴리스(dev·beta·rc) 검사를 추가했다 — 같은 채널의 이전 시드 태그 이후 내용이 바뀐 플러그인이 version 을 그대로 두면 발행을 막는다(이전엔 ga 에서만 검사). 실제 dev.4→dev.5 이력에 대해 core 를 잡는 것을 확인.
+
 **실동작 테스트 3차 — core 훅 3개와 스크립트가 있는 스킬 12개.** 훅은 실제 stdin 페이로드로, 스킬 스크립트는 격리 폴더에서 직접 실행했다. 가능한 곳은 ECC 원본 테스트 스위트를 이식본에 그대로 돌렸다(story-lifecycle 65/65, frontend-design-direction 6/6, frontend-slides export-pdf 2/2(네트워크 스텁), terminal-opener 25/27 — 실패 2건은 의도한 이식 차이: frontmatter `metadata` 추가, ECC 전용 `agents/openai.yaml` 제외). 찾은 결함:
 - **[high] guard_secrets 가 `.env`를 막지 않음**: `.env`·`.env.local`·`.env.production`, SSH 개인키 `id_ecdsa`·`id_dsa`, `.netrc` 쓰기가 통과했다. 패턴을 보강했다(예시본 `.env.example`·`.sample`·`.template` 은 통과, 공개키 `.pub` 통과).
 - **[medium] guard_secrets 오탐**: 이름에 `credential`만 들어가면 막아 `CredentialService.java`·`credential_validator.py`·`credentials-guide.md` 같은 일반 코드·문서 편집이 차단됐다. 자격 증명 파일 형태(`credentials`, `*-credentials.json` 등)만 막도록 좁혔다. 3개 도구(Write·Edit·MultiEdit) × 30개 경로 + 잘못된 stdin 4종으로 확인.
@@ -66,7 +68,7 @@
 - **sdlc 0.6.0**: `review` 단계 2계층 전문 리뷰가 13개 언어 유형을 lang-toolkit·mobile 리뷰어로 보낸다(dev-toolkit `review-changes`와 같은 라우팅). 미설치면 기존처럼 1계층 제네릭 5차원이 커버한다.
 - **문서**: 신규 플러그인 9개 README에 설치 명령과 스킬·에이전트 표(프론트매터에서 생성, `<!-- inventory -->` 블록), agentic README 신설, sdlc·dev-toolkit README에 추가 스킬 반영, overkill·recursive-research README 설치 줄. 루트·allinone README와 마켓 설명의 옛 수치(core 스킬 4→5, dev-toolkit 워크플로 10→11·스킬 48→62, agentic 12→41, 공식 플러그인 7→8종) 정정, allinone 설명에 agentic 추가.
 - 프론트매터: 스킬 3개의 무의미한 `tools:` 키 삭제, overkill description을 1,024자 이하로 줄임(플래그 설명은 본문에 남김).
-- 버전: core 0.5.1, dev-toolkit 0.12.1, agentic 0.4.1, sdlc 0.6.0, web-frontend 0.2.1, overkill 0.1.1, allinone 0.5.3.
+- 버전: core 0.5.2, dev-toolkit 0.12.1, agentic 0.4.1, sdlc 0.6.0, web-frontend 0.2.1, overkill 0.1.1, allinone 0.5.3.
 
 **act 단독 동작.** 다른 개인 저장소를 가리키던 플러그인을 정리했다. 공식 마켓(claude-plugins-official) 의존은 그대로 둔다.
 - `overkill`(santiago-vargas-de-kruijf/claude-overkill `60c7bbb`)·`recursive-research`(Anjos2/recursive-research `15ed326`): 외부 git 소스 대신 act 안의 사본(`plugins/overkill`·`plugins/recursive-research`, MIT, LICENSE·NOTICE 포함)을 배포한다. 업스트림 변경은 자동으로 들어오지 않는다. recursive-research는 SKILL.md 최상위 `version`·`author`·`repository` 키를 `metadata`로 옮겼다.
