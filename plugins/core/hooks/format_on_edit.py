@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 """PostToolUse: 편집한 파일을, 프로젝트가 prettier를 쓰도록 설정돼 있을 때만 자동 포맷.
 - prettier 설정(.prettierrc* · prettier.config.* · package.json 의 "prettier" 키)이 있고
-- 그 프로젝트에 prettier 가 설치돼 있을 때(npx --no-install)만 실행 → 아니면 조용히 no-op.
-- npx 는 현재 디렉터리의 node_modules 에서 prettier 를 찾으므로, 설정을 찾은 프로젝트 루트에서 실행한다
-  (세션 폴더와 다른 하위 패키지·모노레포에서 편집해도 동작 — 이전에는 조용히 아무것도 안 했다).
+- 그 프로젝트의 node_modules/prettier 가 있을 때만 실행 → 아니면 조용히 no-op.
+- 편집 파일에서 가장 가까운 node_modules/prettier 를 쓴다(세션 폴더와 다른 하위 패키지·모노레포에서도 동작).
 - 단, 실행 폴더와 편집 파일이 세션 작업 폴더 안이고 node_modules 밖일 때만 실행한다(남의 저장소·의존성
-  트리 안의 prettier 바이너리를 실행하지 않음).
+  트리 안의 prettier 를 실행하지 않음).
+- npx(.cmd 셈) 대신 node 로 prettier 의 JS 진입점을 직접 실행한다(셸·cmd.exe 를 거치지 않음 — 파일 이름의
+  & | 같은 문자가 명령으로 해석되지 않게).
 안전: 설정 안 한 프로젝트는 절대 건드리지 않음."""
 import sys, json, os, subprocess, shutil
 
@@ -61,9 +62,9 @@ def _inside(child, parent):
         return False
 
 def trusted_run_dir(path, root, workspace):
-    """prettier 를 실행할 폴더. npx 는 그 폴더의 node_modules/.bin 을 실행하므로, 세션 작업 폴더(workspace)
+    """prettier 를 실행할 폴더. 그 폴더의 node_modules/prettier 코드를 실행하므로, 세션 작업 폴더(workspace)
     안이면서 node_modules(남의 패키지 트리) 밖인 곳만 허용한다 — 받아 둔 저장소·의존성 안의 파일을 편집했다고
-    그 안의 prettier 바이너리가 실행되지 않게. 조건을 못 맞추면 None(포맷 안 함)."""
+    그 안의 prettier 코드가 실행되지 않게. 조건을 못 맞추면 None(포맷 안 함)."""
     ws = os.path.realpath(workspace)
     run_dir = os.path.realpath(install_root(path, root))
     target = os.path.realpath(path)
@@ -74,6 +75,23 @@ def trusted_run_dir(path, root, workspace):
         if "node_modules" in rel.replace("\\", "/").split("/"):
             return None
     return run_dir
+
+def prettier_entry(run_dir):
+    """run_dir/node_modules/prettier 의 package.json bin 이 가리키는 JS 진입점. 패키지 폴더 밖을 가리키면 None."""
+    pkg_dir = os.path.realpath(os.path.join(run_dir, "node_modules", "prettier"))
+    try:
+        with open(os.path.join(pkg_dir, "package.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except Exception:
+        return None
+    b = pkg.get("bin") if isinstance(pkg, dict) else None
+    rel = b if isinstance(b, str) else (b.get("prettier") if isinstance(b, dict) else None)
+    if not isinstance(rel, str) or not rel:
+        return None
+    entry = os.path.realpath(os.path.join(pkg_dir, rel))
+    if not _inside(entry, pkg_dir) or not os.path.isfile(entry):
+        return None
+    return entry
 
 def main():
     try:
@@ -94,12 +112,15 @@ def main():
     run_dir = trusted_run_dir(path, root, data.get("cwd") or os.getcwd())
     if not run_dir:
         sys.exit(0)
-    npx = shutil.which("npx") or shutil.which("npx.cmd")
-    if not npx:
+    entry = prettier_entry(run_dir)
+    node = shutil.which("node")
+    if not entry or not node or not node.lower().endswith(("node", "node.exe")):
         sys.exit(0)
     try:
-        subprocess.run([npx, "--no-install", "prettier", "--write", os.path.realpath(path)],
-                       cwd=run_dir, capture_output=True, timeout=30)
+        # npx(.cmd 셈)를 거치지 않고 node 로 prettier 진입점을 직접 실행한다. Windows 에서 .cmd 는 cmd.exe 가
+        # 인자를 다시 해석하므로, 파일 이름의 & | 같은 문자가 명령으로 주입될 수 있다(BatBadBut 류).
+        subprocess.run([node, entry, "--write", os.path.realpath(path)],
+                       cwd=run_dir, capture_output=True, timeout=30, shell=False)
     except Exception:
         pass
     sys.exit(0)
