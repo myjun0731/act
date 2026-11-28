@@ -13,6 +13,13 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**정밀 검증 2차.** 나머지 에이전트 16개(리뷰어 8·빌드 해결 8)를 결함을 심은 샘플·실제 형식의 빌드 오류 로그로 호출했다(23개 모두 검출·진단 정확, 쓰기 권한 있는 빌드 해결 에이전트도 '수정 금지' 지시 준수). sdlc `review`를 로컬 수정본으로 실제 저장소에서 실행해 Python·Go 변경이 `lang-toolkit:python-reviewer`·`go-reviewer`로 라우팅되는 것을 확인했다.
+- **[high] sdlc review 중복 폭증**: 제네릭 4차원·전문 리뷰어·보안 레인이 같은 결함을 다른 제목·언어로 보고해, 30줄 변경에 확정 지적 51건(critical 10·high 22, 같은 SQL 인젝션 5회)이 나왔다. 키 dedup(`파일:줄:제목`) 뒤에 **의미 중복 병합** 단계를 추가했다 — 에이전트가 같은 근본 결함을 번호로 묶고, 묶음이 모든 번호를 정확히 한 번씩 포함하지 않거나 실패하면 병합하지 않는다. 대표는 최고 severity·검증 통과 항목, `mergedCount`·`alsoReportedAs`로 출처 보존. 같은 실행에서 51 → 20건(critical 4·high 7), 심은 결함 9종 모두 유지.
+- **[high] config-health 스킬이 act 에서 동작하지 않음**(기존 부채): 실행 스크립트 4개가 동봉되지 않았고 설치가 ECC 설치기 전제였다. ECC 원본 스크립트(MIT, 표준 라이브러리만, 읽기 전용)를 스킬에 동봉하고 안내를 고쳤다. `--check`·`--pretool`·`--startup` 모두 이 PC에서 실행 확인.
+- **[medium] docker-patterns**: ECC 저장소의 `docker/plugin-setup/`을 전제로 한 하위 섹션 3개 삭제.
+- skillcheck 런타임 마커에 'ECC 설치기'(`npx ecc-universal install`·`ecc install --`·`docker/plugin-setup/`) 추가 — 수정 전 config-health 본문을 잡는 것 확인.
+- 점검만 한 것: 스킬 본문의 `${CLAUDE_PLUGIN_ROOT}/…` 경로 30개(예시 2개 외 모두 존재), 본문 속 `scripts/`·`references/` 경로, 트리거 문구 없는 description 19개(대부분 무엇을 하는지는 명확해 유지), 40KB 넘는 SKILL.md 없음.
+
 **실동작 테스트에서 찾은 결함 수정.** 언어 리뷰어 6개·pytorch-build-resolver를 결함을 심은 샘플로 실제 호출(심은 결함 모두 검출), `review-changes`를 실제 저장소에서 실행, 동봉 스크립트를 실제 입력으로 실행했다.
 - **[high] review-changes 검증 단계가 지적을 조용히 버림**: 리뷰어가 상대 경로(`worker.go`)로 보고하면 검증 에이전트가 파일을 못 찾아 real=false 로 판정해, 실제 critical 결함 6건이 리포트에서 사라졌다. 검증 프롬프트에 리뷰 범위와 분류 단계 경로를 넘기고, 판정 스키마에 `unreadable`을 추가해 파일을 못 연 지적·검증 에이전트 실패(null)는 '미검증'으로 보존한다(리포트에 별도 절, 미검증 high 가 있으면 PASS 아님). sdlc `review`의 반박 검증도 같은 `unreadable` 구분을 넣었다(dev-toolkit 0.12.1, sdlc 0.6.0에 포함).
 - **[medium] Windows 한국어 콘솔(cp949)에서 스크립트가 죽음**: agent-self-evaluation `evaluate.py`(막대 문자 █ 출력에서 UnicodeEncodeError). 같은 위험이 있는 frontend-slides `extract-pptx.py`, mcp-builder `evaluation.py`와 함께 UTF-8 출력 설정을 넣었다.

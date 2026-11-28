@@ -37,6 +37,12 @@ codebase-onboarding, dashboard-builder, benchmark, config-health — 출처 ECC,
 - 외부 의존이 있는 스킬은 제목 아래에 `> **Requires:**` 줄로 필요한 MCP·API 키·도구를 적었다.
 - 변경: codehealth-mcp — ECC MCP 템플릿·`ECC_DISABLED_MCPS`·"Pairing with ECC" 표를 일반 안내로, `verification-loop`·`tdd-workflow`·`/quality-gate` → dev-toolkit 이름. plankton-code-quality — "Pairing with ECC"·"ECC v1.8 Additions"(`ECC_HOOK_PROFILE` 등)를 걷어내고, act `core`의 Prettier 훅과 충돌할 수 있다는 안내로. exa-search — 관련 스킬을 `web-research-mcp`로, `market-research`(제외) 삭제. api-connector-builder — `mcp-server-patterns` → `mcp-builder`, `github-ops` 삭제. mailtrap — 최상위 `origin` → `metadata`.
 
+## config-health 스크립트 동봉 (0.12.1)
+`skills/config-health/scripts/`: `config-health.py`, `config_health_constants.py`, `config_health_paths.py`, `config_health_scan.py` — 출처 ECC@`4adeee6` 저장소 루트 `scripts/`, MIT.
+- 스킬만 있고 실행 스크립트가 빠져 있어 act 에서 동작하지 않던 것을 고쳤다. 설치 안내의 ECC 설치기(`npx ecc-universal install …`)는 스킬 폴더 기준 실행·수동 훅 연결 안내로 바꿨다.
+- 스크립트 주석의 ECC 표현(delivery-gate, `rules/ecc/` 예시)만 일반화했다. 동작은 원본 그대로(읽기 전용, 항상 exit 0).
+- docker-patterns: ECC 저장소의 `docker/plugin-setup/` 파일을 전제로 한 "ECC Plugin Setup Harness" 세 하위 섹션을 걷어내고 일반 지침으로 바꿨다.
+
 ---
 
 아래 항목은 wshobson/agents(https://github.com/wshobson/agents, MIT License, © 2024 Seth Hobson)에서 선별 내재화했다.

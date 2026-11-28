@@ -177,7 +177,40 @@ for (const f of all) {
   const k = _dk(f); const prev = _byKey.get(k)
   if (!prev || _rk(f.severity) < _rk(prev.severity)) _byKey.set(k, f)
 }
-const confirmed = Array.from(_byKey.values())
+// 의미 중복 병합: 제네릭 4차원·전문 리뷰어·보안 레인이 같은 결함을 다른 제목·언어·줄로 각각 보고한다.
+// 위 키 dedup 은 제목이 완전히 같아야 합쳐지므로, 같은 파일의 같은 근본 결함을 에이전트가 번호로 묶게 한다.
+// 묶음이 모든 번호를 정확히 한 번씩 포함하지 않거나 에이전트가 실패하면 병합하지 않는다(fail-safe: 지적을 잃지 않음).
+const GROUP_SCHEMA = { type: 'object', required: ['groups'], properties: { groups: { type: 'array', items: { type: 'array', items: { type: 'integer' } } } } }
+async function consolidate(list) {
+  if (list.length < 2) return list
+  let g = null
+  try {
+    g = await agent(
+      '다음 리뷰 지적 목록에서 "같은 파일의 같은 근본 결함"을 가리키는 항목끼리 번호로 묶어라. ' +
+        '줄 번호가 조금 다르거나 표현·언어(한국어/영어)가 달라도 같은 결함이면 한 묶음이다. 다른 결함은 절대 묶지 마라(같은 줄이라도 원인이 다르면 따로). ' +
+        '모든 번호가 정확히 한 묶음에 한 번씩 들어가야 한다(혼자인 항목은 [n] 하나짜리 묶음).\n' +
+        JSON.stringify(list.map((f, i) => ({ n: i, file: f.file, line: f.line, severity: f.severity, title: f.title }))),
+      { schema: GROUP_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: '의미 중복 병합' },
+    )
+  } catch (e) { log('의미 중복 병합 생략(예외) — 키 dedup 결과 그대로 사용'); return list }
+  const groups = (g && Array.isArray(g.groups)) ? g.groups : null
+  const flat = groups ? groups.flat() : []
+  const valid = groups && flat.length === list.length && flat.every((n) => Number.isInteger(n) && n >= 0 && n < list.length) &&
+    new Set(flat).size === list.length && groups.every((x) => Array.isArray(x) && x.length > 0)
+  if (!valid) { log('의미 중복 병합 결과가 유효하지 않음 — 키 dedup 결과 그대로 사용(지적 손실 방지)'); return list }
+  const warn = (f) => (f.verifyNote && String(f.verifyNote).includes('⚠') ? 1 : 0)
+  return groups.map((ix) => {
+    const members = ix.map((n) => list[n]).sort((a, b) => (_rk(a.severity) - _rk(b.severity)) || (warn(a) - warn(b)))
+    const rep = members[0]
+    if (members.length === 1) return rep
+    return Object.assign({}, rep, {
+      mergedCount: members.length,
+      mergedDims: Array.from(new Set(members.map((m) => m.dim).filter(Boolean))),
+      alsoReportedAs: members.slice(1, 4).map((m) => m.title),
+    })
+  })
+}
+const confirmed = await consolidate(Array.from(_byKey.values()))
 confirmed.sort((a, b) => RANK[a.severity] - RANK[b.severity])
 log(`확정 지적 ${confirmed.length}건 (critical ${confirmed.filter((f) => f.severity === 'critical').length}, high ${confirmed.filter((f) => f.severity === 'high').length})`)
 

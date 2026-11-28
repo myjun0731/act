@@ -202,21 +202,18 @@ references, and it does not count how many places a script is wired.
 
 ## Install
 
-**ECC users:** install the `config-health` module with an explicit hook decision — `npx ecc-universal install --modules config-health --enable-hooks` for the default SessionStart wiring, or the `full` profile with hook consent. The installer refuses to apply a hook-shipping module without `--enable-hooks` or `--no-hooks`. It is a **Claude-only** module; PreToolUse is opt-in. It does not target other harnesses, so it stays isolated from shared 13-harness modules.
+The monitor ships with this skill: `scripts/config-health.py` plus its three helper modules
+(`config_health_constants.py`, `config_health_paths.py`, `config_health_scan.py`), which must stay in the
+same directory. It is read-only and never blocks. Run it once by hand first:
 
-The module ships its own hook config (`manifests/install-assets/config-health-hooks.json`), merged into `settings.json` at install time with the install root substituted for `${CLAUDE_PLUGIN_ROOT}` — so a home install points at `~/.claude/scripts/config-health.py` and a project install at `<project>/.claude/scripts/config-health.py`. Because that merge is a settings write, it is gated by hook consent:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/config-health/scripts/config-health.py" --check
+```
 
-- `npx ecc-universal install --modules config-health --enable-hooks` wires the SessionStart hook.
-- `npx ecc-universal install --modules config-health --no-hooks` installs the script and skill only; nothing is written to `settings.json`, and you wire it yourself from the JSON below.
-
-Uninstall removes the hook entry along with the files.
-
-**Standalone:** copy `scripts/config-health.py` and the three helper modules
-(`config_health_constants.py`, `config_health_paths.py`, `config_health_scan.py`)
-to `${CLAUDE_CONFIG_DIR:-~/.claude}/scripts/` and verify the entry point exists
-before enabling. The helpers must sit in the same directory as the entry point.
-If your launcher sets `CLAUDE_CONFIG_DIR`, use that path in the hook command;
-`~/.claude` is not the file Claude loads in that setup.
+Wiring it as a hook is opt-in and is a settings change, so do it only when the user asks. The plugin cache
+path changes when the plugin updates, so copy the four files to a stable place first — for example
+`${CLAUDE_CONFIG_DIR:-~/.claude}/scripts/` — and point the hook there. If your launcher sets
+`CLAUDE_CONFIG_DIR`, use that path in the hook command; `~/.claude` is not the file Claude loads in that setup.
 
 **Important:** Merge these hook entries into your existing `hooks` object — do not replace it, or you will lose your existing hooks.
 
