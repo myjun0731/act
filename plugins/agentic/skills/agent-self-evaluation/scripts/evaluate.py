@@ -25,6 +25,13 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
+try:  # Windows 콘솔(cp949 등)에서 비ASCII 출력으로 죽지 않게
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 # Tunable thresholds for evaluation heuristics
 WALL_OF_TEXT_WORDS = 200
 SUMMARY_CHECK_WORDS = 300

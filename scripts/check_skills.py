@@ -75,6 +75,7 @@ RUNTIME = [
     ("ECC 훅", r"\bgateguard\b|\bdelivery-gate\b|hooks/memory-persistence"),
     ("ECC instinct", r"/instinct-(?:status|import|export)\b"),
     ("ECC2 대시보드", r"\becc2\b|\becc_dashboard\b"),
+    ("ECC 규칙 파일", r"\bsee rules: `[a-z]+/|\brules/ecc/"),
 ]
 RUNTIME = [(label, re.compile(rx, re.I)) for label, rx in RUNTIME]
 

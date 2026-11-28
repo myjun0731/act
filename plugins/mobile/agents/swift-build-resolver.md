@@ -167,4 +167,4 @@ Remaining errors: 3
 
 Final: `Build Status: SUCCESS/FAILED | Errors Fixed: N | Files Modified: list`
 
-For detailed Swift patterns and rules, see rules: `swift/coding-style`, `swift/patterns`, `swift/security`. See also skill: `swift-concurrency-6-2`, `swift-actor-persistence`.
+For detailed Swift patterns, follow the project's own coding rules if it keeps any. See also skill: `swift-concurrency-6-2`, `swift-actor-persistence`.

@@ -66,6 +66,8 @@ const VERDICT_SCHEMA = {
   required: ['real'],
   properties: {
     real: { type: 'boolean' },
+    // 파일을 열 수 없어 판정 자체를 못 했으면 true — real=false(오탐)와 구분해 지적을 '미검증'으로 보존한다
+    unreadable: { type: 'boolean' },
     reason: { type: 'string' },
   },
 }
@@ -173,12 +175,19 @@ const perFile = await pipeline(
     if (!fs.length) return []
     const verified = await parallel(
       fs.map((f) => async () => {
+        // 리뷰어가 상대 경로·파일명만 적어도 검증자가 같은 파일을 열도록, 분류 단계의 경로를 함께 준다
+        const path = reviewed.file.path || f.file
         const v = await agent(
-          '다음 리뷰 지적을 반박하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다.\n' +
+          `${scope}\n리뷰 대상 파일(분류 단계 경로): ${path}\n` +
+            '다음 리뷰 지적을 반박하라. 위 경로의 파일을 직접 열어 확인하라. 재현되지 않거나 근거가 약하면 real=false. 확신이 없으면 real=false로 기운다. ' +
+            '단, 파일을 찾거나 열 수 없어 판정 자체를 못 했으면 real 대신 unreadable=true 로 답하라(오탐 판정과 구분).\n' +
             `파일: ${f.file}${f.line ? ':' + f.line : ''}\n심각도: ${f.severity}\n지적: ${f.summary}\n상세: ${f.detail || ''}`,
-          { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${f.file}` },
+          { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${path}` },
         )
-        return (v && v.real) ? f : null
+        // 검증 에이전트 실패(null)·파일 읽기 실패는 폐기하지 않고 '미검증'으로 보존한다(조용한 누락 방지)
+        if (!v) return Object.assign({}, f, { file: path, verifyNote: '⚠ 검증 에이전트 실패 — 미검증' })
+        if (v.unreadable) return Object.assign({}, f, { file: path, verifyNote: '⚠ 검증자가 파일을 열지 못함 — 미검증' })
+        return v.real ? Object.assign({}, f, { file: path }) : null
       }),
     )
     return verified.filter(Boolean)
@@ -186,13 +195,15 @@ const perFile = await pipeline(
 )
 
 const confirmed = perFile.flat().filter(Boolean)
-log(`확인된 지적 ${confirmed.length}건`)
+const unverified = confirmed.filter((f) => f.verifyNote)
+log(`확인된 지적 ${confirmed.length - unverified.length}건, 미검증 보존 ${unverified.length}건`)
 
 // 4) 요약 -----------------------------------------------------------------
 phase('요약')
 const report = await agent(
   '다음은 검증을 통과한 리뷰 지적 목록(JSON)이다. 심각도(high→medium→low)·파일별로 묶어 한국어 마크다운 리뷰 리포트를 작성하라. ' +
-    '각 항목은 `파일:라인` · 심각도 · 요약 · 권고를 포함하고, 지적이 없으면 통과(PASS)임을 명시하라.\n\n' +
+    '각 항목은 `파일:라인` · 심각도 · 요약 · 권고를 포함하고, 지적이 없으면 통과(PASS)임을 명시하라. ' +
+    'verifyNote 가 있는 항목은 반박 검증을 못 거친 것이니 별도 "미검증" 절로 모아 그 사실을 표시하고, 미검증 high 가 있으면 PASS 라고 쓰지 마라.\n\n' +
     JSON.stringify(confirmed),
   { model: 'sonnet', label: '리포트 작성' },
 )

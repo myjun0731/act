@@ -14,6 +14,13 @@ import os
 import sys
 from pptx import Presentation
 
+try:  # Windows 콘솔(cp949 등)에서 비ASCII 출력으로 죽지 않게
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 
 def extract_pptx(file_path, output_dir="."):
     """

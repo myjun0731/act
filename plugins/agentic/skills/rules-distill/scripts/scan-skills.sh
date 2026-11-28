@@ -13,6 +13,11 @@
 
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  echo "rules-distill: jq is required (https://jqlang.org/download/). Install it and rerun." >&2
+  exit 2
+fi
+
 GLOBAL_DIR="${RULES_DISTILL_GLOBAL_DIR:-$HOME/.claude/skills}"
 CWD_SKILLS_DIR="${RULES_DISTILL_PROJECT_DIR:-${1:-$PWD/.claude/skills}}"
 # Validate CWD_SKILLS_DIR looks like a .claude/skills path (defense-in-depth).

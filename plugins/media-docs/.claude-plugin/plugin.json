@@ -1,6 +1,6 @@
 {
   "name": "media-docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "미디어·문서 스킬: Manim·Remotion 영상, UI 데모 녹화, HTML 슬라이드, 영상 편집·생성(MCP/API 키 선택). ECC(MIT) 내재화.",
   "author": {
     "name": "Kim Myoung-jun"

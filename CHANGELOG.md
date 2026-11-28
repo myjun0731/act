@@ -13,6 +13,15 @@
 - `dev-toolkit` 0.12.0: `review-changes` 워크플로가 Python(Django·FastAPI 구분)·Go·Rust·Kotlin·C++·C#·F#·PHP·Ruby·GDScript·Dart·Swift 변경을 위 리뷰어로 보낸다. 해당 opt-in 플러그인이 없거나 실패하면 같은 지시로 제네릭 리뷰한다(리뷰 누락 없음).
 - skillcheck가 `agents/*.md`도 검사한다(name=파일명·description·ECC 결합). 기존 dev-toolkit 에이전트 5개의 ECC 참조 10건은 베이스라인으로 기록했다(26 → 36).
 
+**실동작 테스트에서 찾은 결함 수정.** 언어 리뷰어 6개·pytorch-build-resolver를 결함을 심은 샘플로 실제 호출(심은 결함 모두 검출), `review-changes`를 실제 저장소에서 실행, 동봉 스크립트를 실제 입력으로 실행했다.
+- **[high] review-changes 검증 단계가 지적을 조용히 버림**: 리뷰어가 상대 경로(`worker.go`)로 보고하면 검증 에이전트가 파일을 못 찾아 real=false 로 판정해, 실제 critical 결함 6건이 리포트에서 사라졌다. 검증 프롬프트에 리뷰 범위와 분류 단계 경로를 넘기고, 판정 스키마에 `unreadable`을 추가해 파일을 못 연 지적·검증 에이전트 실패(null)는 '미검증'으로 보존한다(리포트에 별도 절, 미검증 high 가 있으면 PASS 아님). sdlc `review`의 반박 검증도 같은 `unreadable` 구분을 넣었다(dev-toolkit 0.12.1, sdlc 0.6.0에 포함).
+- **[medium] Windows 한국어 콘솔(cp949)에서 스크립트가 죽음**: agent-self-evaluation `evaluate.py`(막대 문자 █ 출력에서 UnicodeEncodeError). 같은 위험이 있는 frontend-slides `extract-pptx.py`, mcp-builder `evaluation.py`와 함께 UTF-8 출력 설정을 넣었다.
+- **[medium] rules-distill `scan-skills.sh`·`scan-rules.sh`**: jq 가 없으면 `command not found`를 반복하며 진행하던 것을, 시작 시 jq 를 확인해 안내 후 종료(코드 2)하게 했다.
+- **[low] docs-governance `audit-docs.py`**: `python -I`(격리 모드)로 실행하면 같은 폴더 헬퍼 모듈을 못 찾던 것을 고쳤다.
+- **[low] 에이전트 3개(ruby-reviewer, swift-reviewer, swift-build-resolver)에 ECC 규칙 파일 참조**("see rules: swift/coding-style" 같은 문구)가 남아 있었다 — 실제 호출한 swift-reviewer가 "규칙을 찾을 수 없다"고 보고해 발견. 지우고, skillcheck 런타임 마커에 'ECC 규칙 파일'("see rules: 언어/…" 형태와 `rules/ecc/`)을 추가했다.
+- 확인만 한 것: 스킬 본문의 `${CLAUDE_PLUGIN_ROOT}`가 로드 시 실제 설치 경로로 치환됨, story-lifecycle `ledger.js` init/status, terminal-opener `--detect`, yoruba 예제 테스트 6/6, docs-governance 감사(act 전체 통과).
+- 버전: lang-toolkit 0.2.1, mobile 0.2.1, media-docs 0.1.1.
+
 **전체 점검 후 정비(부채 해소).** dev 2.1.0-dev.3 기준 전수 점검에서 나온 결함과 기존 부채를 정리했다.
 - **기존 ECC 참조 부채 36건 → 0**(`skillcheck_baseline.json` 비움): core(config-gc·mcp-dependency-review·skill-scout·skill-stocktake), dev-toolkit(config-health의 delivery-gate 전제 → 일반 Stop 훅 게이트, contract-first, dashboard-builder, build-error-resolver·doc-updater·react·typescript·vue-reviewer의 ECC 커맨드·규칙 경로), agentic(agent-introspection-debugging, agent-architecture-audit, benchmark-optimization-loop, blueprint의 ECC 설치 안내, continuous-agent-loop의 NanoClaw·`/quality-gate`·`/harness-audit`, iterative-retrieval).
 - `pypict` 스킬 name을 디렉터리와 같은 `pypict`로 바꿨다(이전 `pict-test-designer`). 호출 이름이 `/dev-toolkit:pypict`가 된다.

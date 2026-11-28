@@ -11,6 +11,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+# 같은 폴더의 헬퍼 모듈을 실행 방식(python -I 등)과 무관하게 찾는다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from markdown_links import (
     markdown_link_targets,
     normalize_link_target,

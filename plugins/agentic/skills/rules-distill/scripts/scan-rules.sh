@@ -8,6 +8,11 @@
 
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  echo "rules-distill: jq is required (https://jqlang.org/download/). Install it and rerun." >&2
+  exit 2
+fi
+
 RULES_DIR="${RULES_DISTILL_DIR:-${1:-$HOME/.claude/rules}}"
 
 if [[ ! -d "$RULES_DIR" ]]; then

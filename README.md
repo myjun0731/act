@@ -57,15 +57,15 @@ claude plugin marketplace add anthropics/claude-plugins-official
 | design-eng | 0.2.0 | 디자인·애니메이션 스킬 7종 |
 | overkill | 0.1.1 | 더 고급·극대화된 대안을 복잡도 점수와 함께 제시 (santiago-vargas-de-kruijf/claude-overkill 사본, MIT) |
 | recursive-research | 2.2.0 | 출처 등급·체크포인트를 갖춘 재귀 심층 조사 (Anjos2/recursive-research 사본, MIT) |
-| lang-toolkit | 0.2.0 | 언어·백엔드 프레임워크 스킬 (C++·C#·F#·Go·Kotlin·Perl·Python·Rust·TypeScript·Bun, Django·FastAPI·Laravel·NestJS·Prisma·Quarkus·Rails·Ktor·tinystruct, Godot) 43, 언어별 리뷰어·빌드 해결 에이전트 17. ECC 내재화, allinone 미포함 |
+| lang-toolkit | 0.2.1 | 언어·백엔드 프레임워크 스킬 (C++·C#·F#·Go·Kotlin·Perl·Python·Rust·TypeScript·Bun, Django·FastAPI·Laravel·NestJS·Prisma·Quarkus·Rails·Ktor·tinystruct, Godot) 43, 언어별 리뷰어·빌드 해결 에이전트 17. ECC 내재화, allinone 미포함 |
 | security | 0.1.0 | 보안 리뷰·OWASP Top 10:2025 외곽 진단·버그바운티·리버스 엔지니어링·트레이딩 에이전트 보안·Claude 설정 스캔(AgentShield) 스킬 6. ECC 내재화, allinone 미포함 |
 | data-db | 0.1.0 | ClickHouse·Redis 스킬 2. ECC 내재화, allinone 미포함 |
 | web-frontend | 0.2.1 | React·Vue·Angular·Nuxt·Next.js·Vite, 접근성·i18n·모션·디자인 시스템 스킬 22(React 패턴·성능·테스트, SEO 포함), react-build-resolver 에이전트. ECC 내재화, allinone 미포함 |
-| mobile | 0.2.0 | Android/KMP·Compose·Flutter·SwiftUI·Swift 동시성·iOS 아이콘 스킬 12, Flutter·Swift 리뷰어·빌드 해결 에이전트 4. ECC 내재화, allinone 미포함 |
+| mobile | 0.2.1 | Android/KMP·Compose·Flutter·SwiftUI·Swift 동시성·iOS 아이콘 스킬 12, Flutter·Swift 리뷰어·빌드 해결 에이전트 4. ECC 내재화, allinone 미포함 |
 | infra-devops | 0.1.0 | Kubernetes·Terraform·Flox·Uncloud, 홈랩 네트워크·네트워크 진단·Platform Factory 스킬 15. ECC 내재화, allinone 미포함 |
 | web3 | 0.1.0 | DeFi AMM 보안·EVM 소수점·keccak256·예측시장 검토 스킬 5. ECC 내재화, allinone 미포함 |
 | ml | 0.2.0 | PyTorch·ML 도입·추천 파이프라인·벵골어 NLP·MLE 워크플로 스킬 5, pytorch-build-resolver 에이전트. ECC 내재화, allinone 미포함 |
-| media-docs | 0.1.0 | Manim 영상·UI 데모 녹화·HTML 슬라이드 + 외부 서비스 연동(fal.ai·VideoDB·Nutrient·Google Workspace·Blender) 스킬 9. ECC 내재화, allinone 미포함 |
+| media-docs | 0.1.1 | Manim 영상·UI 데모 녹화·HTML 슬라이드 + 외부 서비스 연동(fal.ai·VideoDB·Nutrient·Google Workspace·Blender) 스킬 9. ECC 내재화, allinone 미포함 |
 | obsidian | 0.1.3 | Obsidian MCP (API 키는 설치 시 입력, allinone 미포함) |
 
 ## 메인테이너

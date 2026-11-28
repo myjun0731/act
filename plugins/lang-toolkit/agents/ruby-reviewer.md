@@ -105,7 +105,7 @@ Fix: What to change
 
 ## Reference
 
-For detailed Ruby and Rails patterns, security guidance, and testing conventions, see rules: `ruby/coding-style`, `ruby/patterns`, `ruby/security`, `ruby/testing`, and skill: `rails-patterns`.
+For detailed Ruby and Rails patterns, security guidance, and testing conventions, see the `rails-patterns` and `rails-security` skills, and the project's own coding rules if it keeps any.
 
 ---
 

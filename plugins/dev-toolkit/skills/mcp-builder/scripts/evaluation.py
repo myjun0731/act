@@ -18,6 +18,13 @@ from anthropic import Anthropic
 
 from connections import create_connection
 
+try:  # Windows 콘솔(cp949 등)에서 비ASCII 출력으로 죽지 않게
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 EVALUATION_PROMPT = """You are an AI assistant with access to tools.
 
 When given a task, you MUST:

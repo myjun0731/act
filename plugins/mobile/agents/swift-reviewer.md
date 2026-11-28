@@ -111,6 +111,6 @@ if command -v swift-format >/dev/null 2>&1; then swift-format lint -r . 2>&1 | h
 - **Warning**: MEDIUM issues only
 - **Block**: CRITICAL or HIGH issues found
 
-For detailed Swift patterns and rules, see rules: `swift/coding-style`, `swift/patterns`, `swift/security`, `swift/testing`. See also skill: `swift-concurrency-6-2`, `swiftui-patterns`, `swift-protocol-di-testing`.
+For detailed Swift patterns, follow the project's own coding rules if it keeps any. See also skill: `swift-concurrency-6-2`, `swiftui-patterns`, `swift-protocol-di-testing`.
 
 Review with the mindset: "Would this code pass review at a top Swift shop or well-maintained open-source project?"

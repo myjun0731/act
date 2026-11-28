@@ -54,7 +54,7 @@ const FIND_SCHEMA = {
 const VERDICT_SCHEMA = {
   type: 'object',
   required: ['refuted'],
-  properties: { refuted: { type: 'boolean' }, reason: { type: 'string' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] } },
+  properties: { refuted: { type: 'boolean' }, unreadable: { type: 'boolean' }, reason: { type: 'string' }, severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] } },
 }
 // 지적 1건을 반박 검증(제네릭 5차원·전문/보안 레인 공용 — 한쪽만 고쳐 기준이 어긋나지 않도록 단일 헬퍼).
 // 검증 에이전트 실패(null)는 폐기하지 않고 미검증으로 보존한다. dimKey 가 있으면 dim 을 부여(없으면 f 의 기존 dim 유지).
@@ -62,11 +62,13 @@ function verifyFinding(f, dimKey) {
   const tag = dimKey ? dimKey + ':' : ''
   const dimObj = dimKey ? { dim: dimKey } : {}
   return agent(
-    '다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true.\n' +
+    '다음 리뷰 지적을 반박하려 시도하라. 코드를 직접 열어 확인하라. 실제 결함이 아니거나 확신할 수 없으면 refuted=true. ' +
+      '단, 파일을 찾거나 열 수 없어 판정 자체를 못 했으면 refuted 대신 unreadable=true 로 답하라(반박과 구분).\n' +
       '실제라면 refuted=false 와 적절한 severity 를 반환하라.\n지적: ' + JSON.stringify(f),
     { schema: VERDICT_SCHEMA, model: 'sonnet', effort: 'low', phase: '검증', label: `검증:${tag}${(f.file || '').split('/').pop()}` },
   ).then((v) => (v
-    ? (v.refuted ? null : Object.assign({}, dimObj, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
+    ? (v.unreadable ? Object.assign({}, dimObj, f, { verifyNote: '⚠ 검증자가 파일을 열지 못함 — 미검증 상태로 보존' })
+      : v.refuted ? null : Object.assign({}, dimObj, f, { severity: v.severity || f.severity, verifyNote: v.reason || '' }))
     : Object.assign({}, dimObj, f, { verifyNote: '⚠ 검증 에이전트 실패 — 미검증 상태로 보존(조용히 폐기하지 않음)' })))
 }
 const DIMS = [
